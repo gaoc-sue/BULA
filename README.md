@@ -10,7 +10,7 @@ App Android para idosos com baixa visão ou pouca leitura. A pessoa aponta o cel
 - **Boas-vindas:** no primeiro uso, o app pergunta o nome e quem da família recebe os avisos. A opção "Ver demonstração" abre com dados de exemplo.
 - **Agenda e alarme:** o familiar cadastra os horários e o Android avisa na hora, mesmo com o app fechado. A pessoa aperta TOMEI.
 - **Conferir caixa:** na hora da dose, a câmera confirma se é o remédio certo.
-- **Onde pegar de graça:** mostra quais remédios da pessoa são gratuitos na Farmácia Popular, o que levar, as 52 farmácias credenciadas do Recife por bairro (com mapa) e uma frase pronta para ligar antes de ir.
+- **Onde pegar de graça:** botão "Farmácias perto de mim", que abre o mapa com as farmácias da Farmácia Popular mais próximas. Também mostra quais remédios da pessoa são gratuitos na Farmácia Popular, o que levar, as 52 farmácias credenciadas do Recife por bairro (com mapa) e uma frase pronta para ligar antes de ir.
 - **Toque para ouvir:** tocar num remédio da lista ou da agenda fala de novo para que serve.
 - **Família e WhatsApp:** depois do TOMEI, o app oferece avisar o familiar no WhatsApp com a mensagem pronta. A tela Família mostra confirmações, alertas e resumo semanal, cada um com botão para enviar no WhatsApp.
 
@@ -30,6 +30,8 @@ scripts/              cópia de bibliotecas e ajustes do Android
 
 ## Avisos
 
+O Remédio Falado é um **lembrete**: não indica nem muda dose. Ao colocar um remédio na agenda, a pessoa copia a quantidade e os horários da receita do médico e confirma que conferiu. Nada vem marcado por padrão.
+
 Protótipo acadêmico. Os textos simplificados ainda precisam de revisão de farmacêutico. O app não muda dose e não substitui o médico. Os códigos de barras vêm da lista de preços CMED/Anvisa, que pode conter erros e é atualizada todo mês.
 
 ## Licença
@@ -38,4 +40,4 @@ Todos os direitos reservados. Veja o arquivo `LICENSE`.
 
 ## Autor
 
-Guilherme, Análise e Desenvolvimento de Sistemas, CESAR School (Recife).
+Criado por Gaoc · Squad 4 · CESAR School (Recife) · 2026.

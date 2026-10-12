@@ -115,7 +115,8 @@ details.demo summary{cursor:pointer;font-weight:700}
 .form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
 .field{display:flex;flex-direction:column;gap:6px}
 .field select,.field input{min-height:54px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);width:100%}
-.times{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.times input{min-width:0;padding-inline:6px}
 .linkbtn{background:none;border:0;color:var(--bad);font-weight:700;cursor:pointer;padding:6px 0;text-align:left}
 
 /* família */
@@ -145,7 +146,7 @@ nav.tabs button[aria-current="page"]{background:var(--sunk);color:var(--fg)}
 .alarm .in{max-width:520px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:16px;text-align:center}
 .alarm .hour{font-size:3.6rem}
 .alarm .btn-ghost{background:transparent;border-color:var(--accent-ink);color:var(--accent-ink)}
-.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:20;max-width:90vw}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:20;max-width:90vw}
 @media (prefers-reduced-motion:no-preference){.alarm .bell{animation:ring 1s ease-in-out infinite}}
 @keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
 .open-out{background:var(--warn-soft);border:2px solid var(--warn);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
@@ -182,7 +183,25 @@ button.dose:first-child{border-top:0}
 .outro{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .outro input{min-height:52px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface)}
 .stack{display:flex;flex-direction:column;gap:8px}
-.autor{font-size:.8rem;color:var(--muted);text-align:center;margin-top:4px}
+.credito{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;padding-top:16px;border-top:1px solid var(--line)}
+.credito-logo{width:40px;height:40px;flex:none}
+.credito p{margin:0;line-height:1.3}
+.credito-nome{font-weight:700;font-size:.95rem;color:var(--fg)}
+.credito-por{font-size:.85rem;color:var(--fg)}
+.credito-por b{color:var(--accent)}
+.credito-esc{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.direitos{text-align:center;font-size:.72rem;color:var(--muted)}
+.bv .credito{margin-top:20px}
+.opts4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.receita{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);border-radius:12px;padding:12px}
+.receita svg{width:30px;height:30px;flex:none;color:var(--warn)}
+.conferi{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--surface);font-weight:700;text-align:left;cursor:pointer;width:100%}
+.conferi .caixa{width:30px;height:30px;border-radius:8px;border:3px solid var(--fg);display:grid;place-items:center;flex:none;font-size:1.1rem}
+.conferi[aria-pressed="true"]{border-color:var(--ok)}
+.conferi[aria-pressed="true"] .caixa{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.btn[aria-disabled="true"]{opacity:.55}
+.conferi-lbl{display:flex;align-items:center;gap:10px;font-weight:700;min-height:48px}
+.conferi-lbl input{width:26px;height:26px}
 footer{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
 </style>
 </head>
@@ -205,8 +224,12 @@ footer{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;ga
 
   <footer>
     <p>Códigos de barras: lista de preços CMED/Anvisa de 23/09/2026, com <span id="nCodes">…</span> códigos. Explicação geral para todos e completa para 10 remédios de pressão e diabetes.</p>
-    <p>Textos de demonstração, ainda sem revisão de farmacêutico. O app não muda dose e não substitui o médico.</p>
-    <p class="autor">Remédio Falado · Criado por Guilherme · Análise e Desenvolvimento de Sistemas · CESAR School, Recife · © 2026. Todos os direitos reservados.</p>
+    <p><b>O Remédio Falado é um lembrete.</b> Não indica nem muda dose e não substitui o médico ou o farmacêutico. Siga sempre a receita. Textos de demonstração, ainda sem revisão de farmacêutico.</p>
+    <div class="credito" role="contentinfo">
+      <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Gaoc</b> · Squad 4</p><p class="credito-esc">CESAR School · 2026</p></div>
+    </div>
+    <p class="direitos">© 2026 Gaoc · Squad 4 · CESAR School. Todos os direitos reservados.</p>
   </footer>
 </div>
 
@@ -574,39 +597,56 @@ function unidade(apres){ const a=' '+apres.toUpperCase()+' ';
   if(/XPE|SUS OR|SOL OR/.test(a)) return ['medida','medidas'];
   return ['dose','doses']; }
 let addSel=null;
+/* cadastro na agenda: a pessoa COPIA o que está na receita. O app não sugere quantidade nem horário. */
+const novoSel = () => ({q:null,outroQ:'',h:[],outro:'',conferi:false});
+function faltaSel(){ const f=[];
+  if(!addSel.q || (addSel.q==='outra' && !addSel.outroQ.trim())) f.push('quanto tomar');
+  if(!addSel.h.length && !addSel.outro) f.push('o horário');
+  if(!addSel.conferi) f.push('confirmar que conferiu com a receita');
+  return f; }
 function formAgenda(it){
   const u=unidade(it.apres), ja=agendaDe(chaveIt(it));
   if(ja) return `<div class="msg ok">Este remédio já está na sua agenda: ${esc(ja.como)}, às ${ja.horarios.join(' e ')}.</div>`;
   if(!addSel) return `<button class="btn btn-pill" id="bAddAg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Colocar na minha agenda</button>`;
-  const qs=[['1','1',u[0]],['2','2',u[1]],['meio','Meio',u[0]]];
+  const qs=[['1','1',u[0]],['2','2',u[1]],['meio','Meio',u[0]],['outra','Outra','quantidade']];
   const hs=[['08:00','Manhã','8h'],['12:00','Almoço','12h'],['20:00','Noite','20h']];
+  const falta=faltaSel();
   return `<div class="addag" id="addag">
-    <p class="label">Quanto tomar de cada vez?</p>
-    <div class="opts">${qs.map(([k,t,un])=>`<button type="button" class="opt" data-q="${k}" aria-pressed="${addSel.q===k}" aria-label="${esc(t+' '+un)}"><b>${esc(t)}</b><small>${esc(un)}</small></button>`).join('')}</div>
-    <p class="label">Em que horários? Pode marcar mais de um</p>
+    <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+      <div><b>Copie da receita do médico</b><br><span class="small">Pegue a receita e marque igual está escrito. O app não indica dose.</span></div></div>
+    <p class="label">Quanto tomar de cada vez, pela receita?</p>
+    <div class="opts opts4">${qs.map(([k,t,un])=>`<button type="button" class="opt" data-q="${k}" aria-pressed="${addSel.q===k}" aria-label="${esc(t+' '+un)}"><b>${esc(t)}</b><small>${esc(un)}</small></button>`).join('')}</div>
+    ${addSel.q==='outra'?`<input class="bv-in" id="qOutra" placeholder="Como está na receita. Ex.: 1/4 de comprimido, 10 gotas" value="${esc(addSel.outroQ)}">`:''}
+    <p class="label">Em que horários, pela receita? Pode marcar mais de um</p>
     <div class="opts">${hs.map(([h,t,c])=>`<button type="button" class="opt" data-h="${h}" aria-pressed="${addSel.h.includes(h)}"><b>${c}</b><small>${t}</small></button>`).join('')}</div>
     <div class="outro"><label for="hOutro">Outro horário</label><input type="time" id="hOutro" value="${addSel.outro||''}"></div>
-    <button class="btn btn-ok" id="bSalvarAg">Salvar na agenda</button>
+    <button type="button" class="conferi" id="bConferi" aria-pressed="${addSel.conferi}"><span class="caixa" aria-hidden="true">${addSel.conferi?'✓':''}</span>Conferi com a receita do médico</button>
+    <button class="btn btn-ok" id="bSalvarAg" aria-disabled="${falta.length>0}">Salvar na agenda</button>
+    ${falta.length?`<p class="hint" id="faltaTxt">Para salvar, falta: ${esc(listaFala(falta))}.</p>`:''}
     <button class="btn btn-ghost" id="bCancelAg">Cancelar</button>
   </div>`;
 }
 function ligarFormAgenda(it){
-  const b=$('#bAddAg'); if(b) b.onclick=()=>{ addSel={q:'1',h:['08:00'],outro:''}; mostrarResultado(it,resultado.code); falar('Quanto tomar de cada vez? E em que horários? Toque nos botões.'); const f=$('#addag'); if(f) f.scrollIntoView({behavior:'smooth',block:'center'}); };
+  const redesenha=()=>{ const y=window.scrollY; mostrarResultado(it,resultado.code); window.scrollTo(0,y); };
+  const b=$('#bAddAg'); if(b) b.onclick=()=>{ addSel=novoSel(); redesenha(); falar('Pegue a receita do médico. Marque quanto tomar e os horários, igual está escrito na receita.'); const f=$('#addag'); if(f) f.scrollIntoView({behavior:'smooth',block:'start'}); };
   if(!$('#addag')) return;
-  document.querySelectorAll('#addag [data-q]').forEach(x=>x.onclick=()=>{ addSel.q=x.dataset.q; mostrarResultado(it,resultado.code); });
-  document.querySelectorAll('#addag [data-h]').forEach(x=>x.onclick=()=>{ const h=x.dataset.h; addSel.h=addSel.h.includes(h)?addSel.h.filter(y=>y!==h):addSel.h.concat(h); mostrarResultado(it,resultado.code); });
-  $('#hOutro').onchange=e=>{ addSel.outro=e.target.value; };
-  $('#bCancelAg').onclick=()=>{ addSel=null; mostrarResultado(it,resultado.code); };
+  document.querySelectorAll('#addag [data-q]').forEach(x=>x.onclick=()=>{ addSel.q=x.dataset.q; redesenha(); if(addSel.q==='outra'){ const q=$('#qOutra'); if(q) q.focus(); } });
+  const qo=$('#qOutra'); if(qo) qo.oninput=e=>{ addSel.outroQ=e.target.value; };
+  document.querySelectorAll('#addag [data-h]').forEach(x=>x.onclick=()=>{ const h=x.dataset.h; addSel.h=addSel.h.includes(h)?addSel.h.filter(y=>y!==h):addSel.h.concat(h); redesenha(); });
+  $('#hOutro').onchange=e=>{ addSel.outro=e.target.value; redesenha(); };
+  $('#bConferi').onclick=()=>{ addSel.conferi=!addSel.conferi; redesenha(); };
+  $('#bCancelAg').onclick=()=>{ addSel=null; redesenha(); };
   $('#bSalvarAg').onclick=()=>{
+    const falta=faltaSel();
+    if(falta.length){ const t='Para salvar, falta '+listaFala(falta)+'.'; toast(t); falar(t); return; }
     const hs=[...new Set(addSel.h.concat(addSel.outro?[addSel.outro]:[]))].sort();
-    if(!hs.length){ toast('Escolha pelo menos um horário.'); falar('Escolha pelo menos um horário.'); return; }
-    const u=unidade(it.apres), como = addSel.q==='meio' ? 'meio '+u[0] : addSel.q==='2' ? '2 '+u[1] : '1 '+u[0];
+    const u=unidade(it.apres), como = addSel.q==='outra' ? addSel.outroQ.trim() : addSel.q==='meio' ? 'meio '+u[0] : addSel.q==='2' ? '2 '+u[1] : '1 '+u[0];
     const i=it.info;
     S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
       cor: INFO[it.principio] ? INFO[it.principio].cor : PALETA[S.agenda.length%PALETA.length],
-      serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,horarios:hs,produto:it.produto});
+      serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,horarios:hs,produto:it.produto,receita:true});
     save(); agendarAlarmes(true); addSel=null; resultado=null;
-    falar(`Pronto. Vou lembrar o ${i.apelido} às ${listaFala(hs.map(falaHora))}.`);
+    falar(`Pronto. Vou lembrar o ${i.apelido}, ${como}, às ${listaFala(hs.map(falaHora))}, como está na receita.`);
     toast('Salvo na agenda.'); go('hoje');
   };
 }
@@ -656,9 +696,10 @@ function renderAgenda(){
     <form class="form" id="fAg" style="margin-top:12px;border:0;padding:0">
       <div class="field"><label class="label" for="agP">Remédio</label><select id="agP">${opts}</select></div>
       <div class="field"><label class="label" for="agD">Dose (como está na caixa)</label><input id="agD" placeholder="Ex.: 25 mg" required></div>
-      <div class="field"><label class="label" for="agC">Como o médico mandou</label><input id="agC" placeholder="Ex.: 1 comprimido" required></div>
+      <div class="field"><label class="label" for="agC">Quanto tomar, como está na receita</label><input id="agC" placeholder="Copie da receita" required></div>
       <div class="field"><span class="label">Horários</span><div class="times">
-        <input type="time" id="agH1" value="08:00" aria-label="Horário 1" required><input type="time" id="agH2" aria-label="Horário 2"><input type="time" id="agH3" aria-label="Horário 3"></div></div>
+        <input type="time" id="agH1" aria-label="Horário 1" required><input type="time" id="agH2" aria-label="Horário 2"><input type="time" id="agH3" aria-label="Horário 3"></div></div>
+      <label class="conferi-lbl"><input type="checkbox" id="agConf" required> Conferi com a receita do médico</label>
       <button class="btn btn-main" type="submit">Salvar na agenda</button>
     </form></details>
     <div class="form"><h3>Configurações</h3>
@@ -673,7 +714,8 @@ function renderAgenda(){
   $('#fAg').onsubmit=e=>{ e.preventDefault();
     const hs=['agH1','agH2','agH3'].map(id=>$('#'+id).value).filter(Boolean).sort();
     if(!hs.length) return;
-    S.agenda.push({id:'a'+Date.now(),principio:$('#agP').value,dose:$('#agD').value.trim(),como:$('#agC').value.trim(),horarios:[...new Set(hs)]});
+    if(!$('#agConf').checked){ toast('Confira com a receita antes de salvar.'); return; }
+    S.agenda.push({id:'a'+Date.now(),principio:$('#agP').value,dose:$('#agD').value.trim(),como:$('#agC').value.trim(),horarios:[...new Set(hs)],receita:true});
     save(); agendarAlarmes(true); render(); toast('Salvo na agenda.'); };
   $('#bCfg').onclick=()=>{ if(S.demo){ toast('Saia da demonstração para usar seu nome.'); return; } S.pessoa=$('#cfgNome').value.trim(); S.familiar=$('#cfgFam').value.trim(); save(); topo(); toast('Salvo.'); };
   let confirma='';
@@ -778,6 +820,8 @@ function renderGratis(){
   const frase=`Olá. Vocês têm ${listaFala(remTxt)} pela Farmácia Popular? Quero retirar de graça.`;
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>Onde pegar de graça</h2>
+    <a class="btn btn-pill" id="bPerto" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Farmácia Popular perto de mim')}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Farmácias perto de mim</a>
+    <p class="hint" style="margin-top:-8px">Abre o mapa com as farmácias da Farmácia Popular mais perto de você.</p>
     <div class="free"><p class="label">Seus remédios são grátis</p>
       ${meus.length? meus.map(p=>`<p><button class="fala" data-fala="${p}">${dot(p)}<b>${esc(INFO[p].nome)}</b></button> <span class="muted">grátis na dose ${esc(GRATIS[p])}</span></p>`).join('') : '<p>Cadastre seus remédios na Agenda para ver quais são grátis.</p>'}
       <p class="small">Na farmácia credenciada, leve <b>documento com foto e CPF</b> e a <b>receita</b> (do SUS ou particular).</p>
@@ -839,10 +883,10 @@ function ean13svg(code){
 let passo=0, bvAberto=false;
 function abrirBoasVindas(){ passo=0; bvAberto=true; $('#bv').hidden=false; renderBV(); }
 function fecharBV(depois){ bvAberto=false; $('#bv').hidden=true; topo(); go('hoje'); if(depois) depois(); }
-const FALA_BV=['Olá! Eu sou o Remédio Falado. Eu leio a caixa do remédio, falo para que serve e lembro a hora de tomar. Toque em começar.',
+const FALA_BV=['Olá! Eu sou o Remédio Falado. Eu leio a caixa do remédio, falo para que serve e lembro a hora de tomar. Eu não indico dose: siga sempre a receita do médico. Toque em começar.',
   'Qual é o seu nome? Escreva ou peça ajuda a alguém. Se preferir, toque em pular.',
   'Quem da família vai receber os avisos? Se preferir, toque em pular.',
-  'Vamos colocar o primeiro remédio? Pegue a caixa e toque em ler a caixa do remédio.'];
+  'Vamos colocar o primeiro remédio? Pegue a caixa e a receita do médico, e toque em ler a caixa do remédio.'];
 function renderBV(){
   const el=$('#bv'), dots=`<div class="bv-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=passo?'on':''}"></i>`).join('')}</div>`;
   const ouvir=`<button class="btn btn-ghost" id="bvOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>`;
@@ -850,9 +894,13 @@ function renderBV(){
   if(passo===0) h=`<div class="bv-logo"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8M30.5 13.5c3.5 3.5 3.5 9.5 0 13" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
     <h2 id="bvT">Olá! Eu sou o Remédio Falado</h2>
     <p>Eu leio a caixa do remédio, <b>falo para que serve</b> e <b>lembro a hora de tomar</b>.</p>
+    <p class="small muted">Sou um lembrete: não indico nem mudo dose. Siga sempre a receita do médico.</p>
     <button class="btn btn-pill" id="bvComecar" type="button">Começar</button>${ouvir}
     <button class="btn btn-ghost" id="bvDemo" type="button">Ver demonstração</button>
-    <p class="autor">Criado por Guilherme · CESAR School · © 2026</p>`;
+    <div class="credito" role="contentinfo">
+      <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Gaoc</b> · Squad 4</p><p class="credito-esc">CESAR School · 2026</p></div>
+    </div>`;
   if(passo===1) h=`${dots}<h2 id="bvT">Qual é o seu nome?</h2>
     <input class="bv-in" id="bvNome" placeholder="Seu nome" autocomplete="given-name" value="${esc(S.pessoa)}">
     <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${ouvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
@@ -862,7 +910,7 @@ function renderBV(){
     <input class="bv-in" id="bvWa" inputmode="tel" placeholder="WhatsApp com DDD (opcional)" value="${esc(S.whats||'')}">
     <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${ouvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
   if(passo===3) h=`${dots}<h2 id="bvT">Vamos colocar o primeiro remédio?</h2>
-    <p>Pegue a caixa do remédio. Eu leio o código de barras e você só escolhe os horários.</p>
+    <p>Pegue a <b>caixa</b> e a <b>receita</b>. Eu leio o código de barras e você marca o que está na receita.</p>
     <button class="btn btn-pill" id="bvLer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler a caixa do remédio</button>${ouvir}
     <button class="linkbtn bv-pular" id="bvDepois" type="button">Fazer isso depois</button>`;
   el.innerHTML=`<div class="bv-in-wrap">${h}</div>`;
