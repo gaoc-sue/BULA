@@ -379,6 +379,45 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--f
 .semana .hd svg{width:26px;height:26px}
 .logo{width:44px;height:44px}
 
+/* bula completa */
+.bsec{border:2.5px solid var(--line);border-radius:16px;background:var(--surface);padding:0}
+.bsec summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;min-height:72px;font-weight:700;font-size:1.12rem}
+.bsec summary::-webkit-details-marker{display:none}
+.bsec summary::after{content:"+";font-size:1.6rem;line-height:1;color:var(--accent)}
+.bsec[open] summary::after{content:"–"}
+.bsec[open] summary{border-bottom:1px solid var(--soft-line)}
+.bn{width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700}
+.btxt{padding:12px 16px 4px;font-size:1.12rem;line-height:1.65;display:flex;flex-direction:column;gap:10px}
+.bsec .btn{margin:6px 16px 14px;width:calc(100% - 32px)}
+#bulaT:focus{outline:none}
+
+/* ===== Identidade v4: roxo da aquarela =====
+   Roxo escuro (#4B2A7B, contraste 11:1 com branco) nos botões; lilás claro só em fundos; verde só para "tomado".
+   A aquarela fica na abertura, no topo da tela Hoje e no "Pronto!"; texto sempre sobre fundo liso (NIA: sem fundo com textura atrás do texto).
+   Modo calmo e alto contraste tiram a aquarela. */
+:root{ --bg:#F8F5FB; --sunk:#EFEAF5; --accent:#4B2A7B; --accent-ink:#FFFFFF; --accent-soft:#EEE4F6; --pill:#4B2A7B; --pill-ink:#FFFFFF; --chat:#F1EAF8; --line:#8A8292; --soft-line:#DCD3E6 }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#15121A; --surface:#1F1A26; --sunk:#29222F; --muted:#CEC5D9; --line:#8B8296; --soft-line:#3A3243;
+  --accent:#CDB6F2; --accent-ink:#1E0F36; --accent-soft:#33264A; --pill:#CDB6F2; --pill-ink:#1E0F36; --chat:#271F31 }}
+:root[data-theme="dark"]{ --bg:#15121A; --surface:#1F1A26; --sunk:#29222F; --muted:#CEC5D9; --line:#8B8296; --soft-line:#3A3243;
+  --accent:#CDB6F2; --accent-ink:#1E0F36; --accent-soft:#33264A; --pill:#CDB6F2; --pill-ink:#1E0F36; --chat:#271F31 }
+:root[data-contraste="1"]{ --bg:#FFFFFF; --sunk:#F2F2F2; --accent:#3A1A66; --accent-ink:#FFFFFF; --accent-soft:#EFE6FA; --pill:#3A1A66; --pill-ink:#FFFFFF; --line:#000000; --soft-line:#000000 }
+.aq-topo{background:#E9DDF5 url(img/aquarela-topo.jpg) center/cover;border-radius:22px;padding:14px}
+.aq-topo .placa{background:var(--surface);border-radius:16px;padding:12px 16px}
+.bv.aq0{background:#E9DDF5 url(img/aquarela-fundo.jpg) center/cover}
+.bv.aq0 .bv-in-wrap{background:var(--surface);border-radius:28px;padding:22px 18px;min-height:0;margin-top:8vh}
+.pronto{position:fixed;inset:0;z-index:13;background:#E9DDF5 url(img/aquarela-fundo.jpg) center/cover;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.pronto .in{background:var(--surface);border-radius:28px;padding:26px 20px;max-width:480px;width:100%;display:flex;flex-direction:column;gap:14px;text-align:center}
+.pronto .ok-c{width:110px;height:110px;border-radius:50%;background:var(--ok);color:var(--ok-ink);display:grid;place-items:center;margin:0 auto}
+.pronto .ok-c svg{width:64px;height:64px}
+.pronto h2{font-size:2.2rem}
+#prontoT:focus{outline:none}
+.pronto .btn-main{background:var(--accent);color:var(--accent-ink)}
+.cx.ativo:not(.late){border-color:var(--accent)}
+.cx.ativo:not(.late) .cx-st{background:var(--accent);color:var(--accent-ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .aq-topo,:root:not([data-theme="light"]) .bv.aq0,:root:not([data-theme="light"]) .pronto{background-image:linear-gradient(rgba(21,18,26,.62),rgba(21,18,26,.62)),url(img/aquarela-fundo.jpg)}}
+:root[data-calmo="1"] .aq-topo,:root[data-contraste="1"] .aq-topo{background:var(--sunk)}
+:root[data-calmo="1"] .bv.aq0,:root[data-contraste="1"] .bv.aq0,:root[data-calmo="1"] .pronto,:root[data-contraste="1"] .pronto{background:var(--bg)}
+
 /* ===== Modo calmo: sem animação, uma cor de destaque, voz só ao tocar em Ouvir ===== */
 :root[data-calmo="1"] *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 :root[data-calmo="1"] .btn-pill{background:var(--accent);color:var(--accent-ink);box-shadow:none}
@@ -429,6 +468,8 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--f
 </nav>
 
 <div class="bv" id="bv" hidden role="dialog" aria-modal="true" aria-label="Boas-vindas"></div>
+<div class="pronto" id="pronto" hidden role="dialog" aria-modal="true" aria-labelledby="prontoT"></div>
+<div class="bv" id="bulaV" hidden role="dialog" aria-modal="true" aria-labelledby="bulaT" style="z-index:12"><div class="bv-in-wrap" style="justify-content:flex-start" id="bulaIn"></div></div>
 <div class="bv" id="wiz" hidden role="dialog" aria-modal="true" aria-labelledby="wizT" style="z-index:11"><div class="bv-in-wrap" style="justify-content:flex-start" id="wizIn"></div></div>
 <div class="bv" id="energia" hidden role="dialog" aria-modal="true" aria-labelledby="energiaT" style="z-index:12"><div class="bv-in-wrap" style="justify-content:flex-start" id="energiaIn"></div></div>
 <div class="bv" id="termos" hidden role="dialog" aria-modal="true" aria-labelledby="termosT" style="z-index:12"><div class="bv-in-wrap" style="justify-content:flex-start">
@@ -441,7 +482,7 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--f
       <b>Notificações e alarmes:</b> avisar a hora do remédio, mesmo com o app fechado.<br>
       <b>Contatos:</b> só quando você toca em "escolher da agenda". O app guarda apenas o nome e o número que você escolher.<br>
       <b>Localização:</b> só quando você toca em "Farmácias perto de mim". Ela é usada no celular para calcular a distância e não é enviada.<br>
-      <b>Internet:</b> abrir o mapa, a bula oficial e o WhatsApp. A voz mais natural do Google também usa a internet para falar o texto.</p></div>
+      <b>Internet:</b> abrir o mapa e o WhatsApp, e baixar a bula oficial do site da Anvisa (só o número de registro do remédio é enviado). A voz mais natural do Google também usa a internet para falar o texto.</p></div>
     <div class="block"><p class="label">4. Aviso pelo WhatsApp</p><p>O app só prepara a mensagem. <b>Quem decide e envia é você.</b> Depois de enviada, ela segue as regras do WhatsApp.</p></div>
     <div class="block"><p class="label">5. Informações sobre remédios</p><p>Vêm da lista oficial de preços CMED/Anvisa e das bulas. Podem ter erros ou estar desatualizadas. Confira sempre com a receita e a bula. Em caso de dúvida, pergunte ao farmacêutico.</p></div>
     <div class="block"><p class="label">6. Como apagar seus dados</p><p>Em Agenda, toque em "Apagar tudo e recomeçar". Desinstalar o app também apaga tudo.</p></div>
@@ -482,9 +523,9 @@ const TTS = plug('TextToSpeech'), NOTIF = plug('LocalNotifications'), SCAN = plu
 
 /* ---------- textos simples por princípio ativo (demonstração) ---------- */
 const INFO = {
-  losartana:{nome:'Losartana',apelido:'remédio da pressão',cor:'#1F5FBF',
-    serve:'Controla a pressão alta. Ajuda a proteger o coração e os rins.',
-    cuidado:'Não pare de tomar mesmo se se sentir bem. A pressão alta quase nunca avisa. Se sentir tontura, levante devagar e avise o médico.'},
+  losartana:{nome:'Losartana',apelido:'remédio da pressão',cor:'#1F5FBF',bula:'bula de losartana potássica, Anvisa, 18/12/2025',
+    serve:'Trata a pressão alta e o coração fraco (insuficiência cardíaca). Em quem tem diabetes tipo 2 e perde proteína na urina, ajuda a proteger os rins.',
+    cuidado:'Pode dar tontura, principalmente ao levantar: levante devagar. Se esquecer uma dose, não tome em dobro; tome a próxima na hora de sempre.'},
   captopril:{nome:'Captopril',apelido:'remédio da pressão',cor:'#B8327A',
     serve:'Controla a pressão alta.',
     cuidado:'Pode dar uma tosse seca. Se acontecer, avise o médico. Não pare sozinho.'},
@@ -500,16 +541,16 @@ const INFO = {
   propranolol:{nome:'Propranolol',apelido:'remédio da pressão e do coração',cor:'#D9730D',
     serve:'Baixa a pressão e deixa o coração bater mais calmo.',
     cuidado:'Nunca pare de uma vez. Parar de repente pode fazer mal ao coração. Fale antes com o médico.'},
-  anlodipino:{nome:'Anlodipino',apelido:'remédio da pressão',cor:'#D9730D',
-    serve:'Relaxa os vasos do sangue e baixa a pressão.',
-    cuidado:'Pode inchar um pouco os tornozelos. Se acontecer, avise o médico. Não pare sozinho.'},
+  anlodipino:{nome:'Anlodipino',apelido:'remédio da pressão',cor:'#D9730D',bula:'bula de besilato de anlodipino, Anvisa, 10/09/2026',
+    serve:'Trata a pressão alta e a angina, que é a dor no peito por falta de sangue no coração.',
+    cuidado:'Pode dar inchaço nos tornozelos, dor de cabeça, tontura ou rosto vermelho. Se esquecer, tome quando lembrar; se já estiver perto da próxima dose, pule. Nunca tome em dobro.'},
   espironolactona:{nome:'Espironolactona',apelido:'remédio que faz urinar',cor:'#1F5FBF',
     serve:'Tira o excesso de água do corpo. É usado para a pressão e para o coração.',
     cuidado:'Não pare sem falar com o médico. Pergunte ao médico antes de usar sal light ou vitamina com potássio.'},
-  metformina:{nome:'Metformina',apelido:'remédio do açúcar no sangue',cor:'#7A3E9D',
-    serve:'Ajuda a controlar o açúcar no sangue, no diabetes.',
-    cuidado:'Tome junto com a comida ou logo depois, para não incomodar o estômago. Não pare mesmo se se sentir bem.'},
-  glibenclamida:{nome:'Glibenclamida',apelido:'remédio do açúcar no sangue',cor:'#B8327A',
+  metformina:{nome:'Metformina',apelido:'remédio do açúcar no sangue',cor:'#B8327A',bula:'bula de Glifage (metformina), Anvisa, 14/09/2026',
+    serve:'Ajuda a controlar o açúcar no sangue no diabetes tipo 2, junto com a dieta.',
+    cuidado:'Tome durante ou logo depois da refeição, com um copo de água. No começo pode dar enjoo, diarreia ou dor na barriga. Se esquecer, não tome em dobro.'},
+  glibenclamida:{nome:'Glibenclamida',apelido:'remédio do açúcar no sangue',cor:'#8A5A00',
     serve:'Faz o corpo baixar o açúcar no sangue, no diabetes.',
     cuidado:'Não pule refeição depois de tomar. Se sentir tremor, suor frio ou fraqueza, coma algo doce e chame alguém.'}
 };
@@ -527,8 +568,8 @@ function listaFala(arr){ return arr.length<2? arr.join('') : arr.slice(0,-1).joi
 function titulo(s){ return s.toLowerCase().replace(/(^|\s)\S/g, c=>c.toUpperCase()); }
 
 const GENERICO_COR='#5C6670';
-const PALETA=['#1F5FBF','#D9730D','#B8327A','#7A3E9D','#7A4A1E','#222222','#0F6E75'];
-const COR_ANTIGA={'#2E7D32':'#7A3E9D','#2F6FDB':'#1F5FBF','#D97706':'#D9730D','#15803D':'#7A3E9D','#B83280':'#B8327A','#0891B2':'#1F5FBF','#7A4FD0':'#B8327A','#C2410C':'#7A4A1E','#65A30D':'#7A3E9D'};
+const PALETA=['#1F5FBF','#D9730D','#B8327A','#0F6E75','#7A4A1E','#222222','#8A5A00'];
+const COR_ANTIGA={'#2E7D32':'#B8327A','#7A3E9D':'#B8327A','#2F6FDB':'#1F5FBF','#D97706':'#D9730D','#15803D':'#B8327A','#B83280':'#B8327A','#0891B2':'#1F5FBF','#7A4FD0':'#B8327A','#C2410C':'#7A4A1E','#65A30D':'#B8327A'};
 function corDe(a){ if(a && INFO[a.principio]) return INFO[a.principio].cor; const c=(a&&a.cor)||GENERICO_COR; return COR_ANTIGA[c]||c; }
 function bolinha(cor,nome){ return `<span class="dot" style="background:${cor}" aria-hidden="true">${esc(String(nome||'?').trim()[0]||'?').toUpperCase()}</span>`; }
 function novaCor(){ const usadas=S.agenda.map(corDe); return PALETA.find(c=>!usadas.includes(c)) || PALETA[S.agenda.length%PALETA.length]; }
@@ -749,6 +790,155 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden||!nativo) 
 setTimeout(()=>checarEnergia().then(()=>{ if(atual==='hoje' && !bvAberto) renderHoje(); }),800);
 document.addEventListener('click',e=>{ if(e.target.closest('[data-energia]')){ e.preventDefault(); abrirEnergia(); } });
 
+/* ---------- bula completa ----------
+   Guarda no celular a bula do paciente oficial dos remédios da pessoa.
+   1) bulas já incluídas no app (www/bulas.json, extraídas do Bulário da Anvisa);
+   2) no app instalado, baixa a bula oficial pelo número de registro (API do Bulário Eletrônico) e guarda;
+   3) se não der, abre o QR code da caixa ou o site da Anvisa. Os dados do fabricante ficam de fora. */
+const PERG_BULA={1:'Para que este medicamento é indicado?',2:'Como este medicamento funciona?',3:'Quando não devo usar este medicamento?',
+  4:'O que devo saber antes de usar este medicamento?',5:'Onde, como e por quanto tempo posso guardar este medicamento?',6:'Como devo usar este medicamento?',
+  7:'O que devo fazer quando eu me esquecer de usar este medicamento?',8:'Quais os males que este medicamento pode me causar?',
+  9:'O que fazer se alguém usar uma quantidade maior do que a indicada deste medicamento?'};
+const BULAS_KEY='remedio-falado-bulas';
+let BULAS_LOCAL={}; try{ BULAS_LOCAL=JSON.parse(localStorage.getItem(BULAS_KEY))||{}; }catch(e){}
+let BULAS_APP=null;
+const bulasApp = () => BULAS_APP ? Promise.resolve(BULAS_APP) : fetch('bulas.json').then(r=>r.json()).then(j=>(BULAS_APP=j)).catch(()=>(BULAS_APP={}));
+const reg9 = r => String(r||'').replace(/\D/g,'').slice(0,9);
+async function bulaDe(registro){ const r=reg9(registro); if(!r) return null; if(BULAS_LOCAL[r]) return BULAS_LOCAL[r]; const a=await bulasApp(); return a[r]||null; }
+function guardarBula(b){ BULAS_LOCAL[b.registro]=b; try{ localStorage.setItem(BULAS_KEY,JSON.stringify(BULAS_LOCAL)); return true; }catch(e){ delete BULAS_LOCAL[b.registro]; toast('Sem espaço para guardar a bula. Ela abre só com internet.'); return false; } }
+const ANVISA='https://consultas.anvisa.gov.br/api/consulta';
+const HDR={'Authorization':'Guest','Accept':'application/json, text/plain, */*','Referer':'https://consultas.anvisa.gov.br/'};
+const httpPlug = () => nativo && CAP.Plugins && CAP.Plugins.CapacitorHttp;
+async function getJson(url,params){ const r=await httpPlug().request({method:'GET',url,params,headers:HDR,responseType:'json',connectTimeout:20000,readTimeout:30000});
+  if(r.status>=400) throw new Error('http '+r.status); return typeof r.data==='string'? JSON.parse(r.data) : r.data; }
+async function getPdf(url){ const r=await httpPlug().request({method:'GET',url,headers:HDR,responseType:'blob',connectTimeout:20000,readTimeout:60000});
+  if(r.status>=400) throw new Error('http '+r.status);
+  const d=r.data; if(d instanceof ArrayBuffer) return new Uint8Array(d);
+  if(typeof d==='string'){ const bin=atob(d.replace(/^data:[^,]*,/,'')); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+  throw new Error('pdf'); }
+async function produtoAnvisa(r){ const busca=await getJson(ANVISA+'/bulario',{count:'10',page:'1','filter[numeroRegistro]':r}); const prod=(busca.content||[])[0]; if(!prod) throw new Error('nao-achou'); return prod; }
+async function baixarBulaOficial(registro){
+  if(!httpPlug()) throw new Error('web');
+  const r=reg9(registro), prod=await produtoAnvisa(r);
+  const hist=await getJson(ANVISA+'/bulario/'+prod.idProduto,{count:'5'});
+  const v=(((hist.historico||{}).content)||[]).filter(x=>x.idBulaPaciente||x.idBulaPacienteProtegido)
+    .sort((a,b)=>String(b.dataPublicacao).localeCompare(String(a.dataPublicacao)))[0];
+  if(!v) throw new Error('sem-bula');
+  const bytes=await getPdf(`${ANVISA}/medicamentos/arquivo/bula/parecer/${v.idBulaPaciente||v.idBulaPacienteProtegido}/?Authorization=`);
+  const secoes=await extrairSecoes(bytes, prod.razaoSocial||'');
+  if(Object.keys(secoes).length<5) throw new Error('nao-leu');
+  const b={registro:r,produto:prod.nomeProduto||'',data:String(v.dataPublicacao||prod.data||'').slice(0,10),baixada:dayKey(new Date()),conferida:dayKey(new Date()),
+    fonte:'Bula do paciente oficial (Bulário Eletrônico da Anvisa)',secoes};
+  guardarBula(b); return b;
+}
+/* leitura do PDF (pdf.js, versão para WebView antigo) */
+let pdfjsPronto=null;
+function carregarPdfjs(){ if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib); if(pdfjsPronto) return pdfjsPronto;
+  pdfjsPronto=new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='lib/pdfjs/pdf.min.js';
+    sc.onload=()=>{ window.pdfjsLib.GlobalWorkerOptions.workerSrc='lib/pdfjs/pdf.worker.min.js'; res(window.pdfjsLib); }; sc.onerror=()=>{ pdfjsPronto=null; rej(new Error('pdfjs')); }; document.head.appendChild(sc); });
+  return pdfjsPronto; }
+async function linhasDoPdf(bytes){
+  const lib=await carregarPdfjs(), doc=await lib.getDocument({data:bytes}).promise, paginas=[];
+  for(let p=1;p<=doc.numPages;p++){
+    const tc=await (await doc.getPage(p)).getTextContent(), linhas=[]; let y=null, at='';
+    tc.items.forEach(it=>{ const yy=Math.round(it.transform[5]); if(y!==null && Math.abs(yy-y)>2 && at.trim()){ linhas.push(at); at=''; } at+=it.str; y=yy; if(it.hasEOL){ if(at.trim()) linhas.push(at); at=''; } });
+    if(at.trim()) linhas.push(at);
+    paginas.push(linhas.map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean));
+  }
+  // cabeçalho e rodapé que se repetem nas páginas saem
+  const conta={}; paginas.forEach(pg=>[...new Set(pg)].forEach(l=>conta[l]=(conta[l]||0)+1));
+  const rep = l => paginas.length>2 && conta[l]>=Math.ceil(paginas.length/2);
+  return paginas.reduce((acc,pg)=>acc.concat(pg.filter(l=>!rep(l))),[]);
+}
+const LIXO_BULA=/(_VPS?\b|VPS?_V\d|_V\d{1,3}\b|^V\d{2,3}$|CNPJ|\bSAC\b|Ltda|\bS\.?\/?A\.?\b|Farm\.?\s*Resp|Respons[áa]vel\s+t[ée]cnic|Registrado\s+(e\s+produzido\s+)?por|Fabricado\s+por|Embalado\s+por|Produzido\s+por|Importado\s+por|www\.|@|Ind[úu]stria\s+Brasileira|^\s*\d+\s*(de|\/)\s*\d+\s*$|^\s*\d{1,3}\s*$)/i;
+const maiusc = t => { const l=t.replace(/[^A-Za-zÀ-ÿ]/g,''); return l.length>5 && l.replace(/[^A-ZÀ-Þ]/g,'').length/l.length>0.8; };
+async function extrairSecoes(bytes, empresa){
+  const ls=await linhasDoPdf(bytes);
+  const pal=(String(empresa).split(/[^A-Za-zÀ-ÿ]+/).find(w=>w.length>=4 && !/^(LABORAT|FARMAC|IND[UÚ]STRIA|BRASIL|COM[EÉ]RCIO|PRODUTOS)/i.test(w))||'');
+  const emp = pal ? new RegExp(pal.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i') : null;
+  const sec={}; let n=0, buf=[];
+  const fecha=()=>{ if(n) sec[n]=buf; buf=[]; };
+  for(let i=0;i<ls.length;i++){
+    let l=ls[i];
+    if(/DIZERES LEGAIS|HIST[ÓO]RICO DE ALTERA/i.test(l) || (n>=9 && /^III\s*[-–).]/.test(l))) break;
+    const m=/^([1-9])\s*[.)\-–]\s*(.+)$/.exec(l);
+    if(m && +m[1]===n+1 && maiusc(m[2])){
+      let t=m[2]; while(!/\?\s*$/.test(t) && i+1<ls.length && maiusc(ls[i+1]) && t.length<160){ i++; t+=' '+ls[i]; }
+      fecha(); n=+m[1]; continue;
+    }
+    if(n) buf.push(l);
+  }
+  fecha();
+  const out={};
+  Object.entries(sec).forEach(([k,linhas])=>{
+    let txt=''; linhas.filter(l=>!LIXO_BULA.test(l) && !(emp&&emp.test(l))).forEach(l=>{
+      if(!txt) txt=l;
+      else if(/^[-•–]\s|^[a-z]\)\s/.test(l) || /[.:;!?]$/.test(txt)) txt+='\n'+l;
+      else txt+=(txt.endsWith('-')? '' : ' ')+l;
+    });
+    if(txt.trim()) out[k]=txt.trim();
+  });
+  return out;
+}
+/* voz para textos longos: fala em partes */
+let longoId=0;
+async function ouvirLongo(t){
+  const partes=[]; let at='';
+  (String(t).replace(/\n+/g,' ').match(/[^.;:!?]+[.;:!?]*\s*/g)||[]).map(f=>f.trim()).filter(Boolean).forEach(f=>{ if((at+' '+f).length>1100 && at){ partes.push(at); at=f; } else at=at?at+' '+f:f; });
+  if(at) partes.push(at);
+  const id=++longoId, v=vozAtual(), rate=AP.vel||0.92;
+  if(TTS){ await TTS.stop().catch(()=>{}); for(const p of partes){ if(id!==longoId) return; const o={text:p,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'}; if(v) o.voice=v.i;
+      try{ await TTS.speak(o); }catch(e){ try{ delete o.voice; await TTS.speak(o); }catch(x){ semVoz(); return; } } } return; }
+  if(!('speechSynthesis' in window)){ toast('Este aparelho não tem voz. Leia o texto na tela.'); return; }
+  speechSynthesis.cancel(); partes.forEach(p=>{ const u=new SpeechSynthesisUtterance(p); u.lang='pt-BR'; u.rate=rate; if(v&&v.ref) u.voice=v.ref; speechSynthesis.speak(u); });
+}
+function pararLongo(){ longoId++; calar(); }
+const paras = t => esc(t).split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+let bulaAberta=null;
+async function abrirBula(registro,nome,url){
+  const el=$('#bulaV'); el.hidden=false; el.scrollTop=0;
+  $('#bulaIn').innerHTML='<p class="msg info">Abrindo a bula...</p>';
+  const b=await bulaDe(registro); bulaAberta={registro,nome,url};
+  renderBula(b);
+  // confere versão nova (no máximo 1 vez a cada 30 dias)
+  if(b && httpPlug() && navigator.onLine && (!b.conferida || (Date.now()-new Date(b.conferida).getTime())>30*864e5)){
+    try{ const prod=await produtoAnvisa(reg9(registro)); const nova=String(prod.data||'').slice(0,10);
+      b.conferida=dayKey(new Date());
+      if(nova && nova>b.data){ const nb=await baixarBulaOficial(registro); if(bulaAberta&&bulaAberta.registro===registro){ renderBula(nb); toast('A bula foi atualizada para a versão mais nova.'); } }
+      else guardarBula(b);
+    }catch(e){}
+  }
+}
+function renderBula(b,estado){
+  const {registro,nome,url}=bulaAberta||{};
+  let h=`<h2 id="bulaT" tabindex="-1">Bula completa</h2><p class="wz-med"><b>${esc(nome||(b&&b.produto)||'')}</b></p>`;
+  if(!b){
+    h+= estado==='baixando' ? `<p class="msg info" role="status">Baixando a bula oficial da Anvisa...</p>`
+      : estado ? `<p class="msg warn" role="alert">${esc(estado)}</p>` : '';
+    h+= httpPlug() ? `<button class="btn btn-main" id="bBaixarBula" type="button">Baixar a bula oficial</button><p class="hint">Precisa de internet só agora. Depois ela fica guardada no celular e funciona sem internet.</p>`
+      : `<p class="msg info">Pelo navegador, a bula abre no site da Anvisa. No app instalado no celular, ela fica guardada e funciona sem internet.</p>`;
+    h+=`<a class="btn btn-ghost" href="${esc(url||'#')}" target="_blank" rel="noopener">Ver no site da Anvisa</a>`;
+  } else {
+    h+=`<p class="small muted">${esc(b.fonte||'Bula do paciente oficial')}, versão de ${esc(fmtData(b.data))}. Guardada neste celular: funciona sem internet.</p>
+      <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><div><b>Siga sempre a receita do médico.</b><br><span class="small">Em dúvida, pergunte ao farmacêutico. Toque numa pergunta para abrir.</span></div></div>
+      ${Object.keys(PERG_BULA).filter(n=>b.secoes[n]).map(n=>`<details class="bsec" ${n==='1'?'open':''}><summary><span class="bn">${n}</span><span>${PERG_BULA[n]}</span></summary>
+        <div class="btxt">${paras(b.secoes[n])}</div><button class="btn btn-ghost btn-s" type="button" data-ouvirsec="${n}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir esta parte</button></details>`).join('')}
+      ${httpPlug()?`<button class="btn btn-ghost" id="bAtuBula" type="button">Ver se tem versão nova</button>`:''}`;
+  }
+  h+=`<button class="btn btn-main" id="bFecharBula" type="button">Fechar</button>`;
+  $('#bulaIn').innerHTML=h;
+  document.querySelectorAll('#bulaIn [data-ouvirsec]').forEach(x=>x.onclick=()=>{ const n=x.dataset.ouvirsec; ouvirLongo(PERG_BULA[n]+' '+b.secoes[n]); });
+  const bb=$('#bBaixarBula'); if(bb) bb.onclick=async()=>{ renderBula(null,'baixando');
+    try{ const nb=await baixarBulaOficial(registro); renderBula(nb); toast('Pronto. Bula guardada no celular.'); falar('Pronto. A bula foi guardada no celular.'); }
+    catch(e){ const m=String(e&&e.message||e); renderBula(null, m==='nao-achou'?'Não achei a bula deste registro na Anvisa. Use o QR code da caixa ou o site da Anvisa.' : m==='nao-leu'?'Baixei a bula, mas não consegui separar o texto. Abra no site da Anvisa.' : 'Não consegui baixar agora. Confira a internet e tente de novo.'); } };
+  const ba=$('#bAtuBula'); if(ba) ba.onclick=async()=>{ ba.textContent='Conferindo...'; try{ const prod=await produtoAnvisa(reg9(registro)); const nova=String(prod.data||'').slice(0,10);
+      if(nova && nova>b.data){ const nb=await baixarBulaOficial(registro); renderBula(nb); toast('A bula foi atualizada para a versão mais nova.'); } else { b.conferida=dayKey(new Date()); guardarBula(b); toast('Esta já é a versão mais nova.'); ba.textContent='Ver se tem versão nova'; } }
+    catch(e){ toast('Não consegui conferir agora. Tente com internet.'); ba.textContent='Ver se tem versão nova'; } };
+  $('#bFecharBula').onclick=()=>{ $('#bulaV').hidden=true; pararLongo(); bulaAberta=null; };
+  const t=$('#bulaT'); if(t) t.focus();
+}
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-bula]'); if(b){ e.preventDefault(); abrirBula(b.dataset.bula,b.dataset.nome||'',b.dataset.url||''); } });
+
 /* ---------- privacidade e termos ---------- */
 const FALA_TERMOS='Privacidade e termos. Um: o Remédio Falado é um lembrete. Não indica nem muda dose e não substitui o médico. Siga sempre a receita. Dois: seus dados ficam só neste celular. O Squad 4 não recebe nada. Três: a câmera, os contatos e a localização só são usados quando você toca no botão. Quatro: no WhatsApp, quem envia a mensagem é você. Cinco: as informações vêm da Anvisa e das bulas, e podem ter erros. Em dúvida, pergunte ao farmacêutico. Seis: para apagar tudo, use apagar tudo e recomeçar, na Agenda, ou desinstale o app.';
 let termosVolta=null;
@@ -792,7 +982,7 @@ const MOMENTOS=[
   {k:'tarde',nome:'Tarde',de:'da tarde',ini:900,fim:1079},
   {k:'jantar',nome:'Jantar',de:'do jantar',ini:1080,fim:1259},
   {k:'dormir',nome:'Antes de dormir',de:'de antes de dormir',ini:1260,fim:239}];
-const MOM=Object.fromEntries(MOMENTOS.map(m=>[m.k,m]));
+const MOM=MOMENTOS.reduce((o,m)=>(o[m.k]=m,o),{});
 const ROTINA_PADRAO={cafe:'07:00',almoco:'12:00',jantar:'19:00',dormir:'21:30'};
 const rot = k => (S.rotina && S.rotina[k]) || ROTINA_PADRAO[k];
 function momentoDe(h){ const m=toMin(h); return MOMENTOS.find(x=> x.k==='dormir' ? (m>=1260||m<240) : m>=x.ini && m<=x.fim) || MOM.dormir; }
@@ -824,7 +1014,21 @@ function tomarVarios(ds,via){
     : `${nomeP()} tomou os remédios ${m.de} (${d0.h}): ${listaFala(novos.map(d=>`${med(d.a).nome} ${d.a.dose}, ${comoEm(d.a,d.h)}`))}.`;
   S.feed.push({t:'ok',em,txt}); S.aviso={dia:k,txt}; save();
   const pronto = um ? 'Pronto. Anotei que você tomou o '+med(d0.a).apelido+'.' : `Pronto. Anotei os remédios ${m.de}.`;
-  falar('Muito bem. '+pronto.slice(8)); toast(pronto); render();
+  falar('Muito bem. '+pronto.slice(8)); render();
+  if(AP.calmo || AP.contraste) toast(pronto); else mostrarPronto(um ? 'Anotei o '+med(d0.a).apelido+'.' : `Anotei os remédios ${m.de}.`, txt);
+}
+let prontoT=null;
+function mostrarPronto(frase, aviso){
+  const el=$('#pronto');
+  el.innerHTML=`<div class="in"><span class="ok-c">${CHECK}</span><h2 id="prontoT" tabindex="-1">Pronto!</h2><p style="font-size:1.25rem">${esc(frase)}</p>
+    ${S.familiar||S.whats?`<button class="btn btn-wa" id="prWa" type="button">${WA_SVG}Avisar ${esc(nomeFam())} no WhatsApp</button>`:''}
+    <button class="btn btn-main" id="prOk" type="button">Voltar para hoje</button></div>`;
+  el.hidden=false;
+  const fechar=()=>{ el.hidden=true; clearTimeout(prontoT); };
+  $('#prOk').onclick=fechar;
+  const w=$('#prWa'); if(w) w.onclick=()=>{ fechar(); S.aviso=null; save(); renderHoje(); enviarWhats(aviso); };
+  clearTimeout(prontoT); prontoT=setTimeout(fechar,12000);
+  $('#prontoT').focus();
 }
 function tomar(a,h,via){ tomarVarios([{a,h}],via); }
 
@@ -865,7 +1069,7 @@ function renderHoje(){
       <div class="btn-row"><button class="btn btn-wa" id="bWaAviso">${WA_SVG}Avisar no WhatsApp</button><button class="btn btn-ghost" id="bWaNao">Agora não</button></div></div>` : ''}
     ${S.agenda.length && energiaFalta() && S.energiaAdiar!==dayKey(new Date()) ? `<div class="msg warn alerta" role="status"><b>O alarme pode não tocar neste celular.</b><span class="alerta-txt">Alguns celulares fecham o app para economizar bateria. Leva 1 minuto para arrumar.</span>
       <div class="btn-row"><button class="btn btn-main" type="button" data-energia="1">Arrumar agora</button><button class="btn btn-ghost" type="button" id="bEnerDepois">Depois</button></div></div>` : ''}
-    <div><p class="hoje-data">${DIAS_LONGO[hoje.getDay()]}, ${hoje.getDate()} de ${MESES[hoje.getMonth()]}</p><h2>${esc(saudacao())}</h2></div>
+    <div class="aq-topo"><div class="placa"><p class="hoje-data">${DIAS_LONGO[hoje.getDay()]}, ${hoje.getDate()} de ${MESES[hoje.getMonth()]}</p><h2>${esc(saudacao())}</h2></div></div>
     ${todosOk?`<div class="msg ok">${CHECK.replace('<svg','<svg width="22" height="22" style="vertical-align:-4px"')} Todos os remédios de hoje foram tomados.</div>`:''}
     ${cards}
     <button class="btn btn-pill" data-go="ler" data-scan="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Que remédio é este?</button>
@@ -885,7 +1089,7 @@ function renderHoje(){
 /* ---------- tela LER ---------- */
 let alvo=null, resultado=null, lendo=false, reader=null;
 function renderLer(){
-  const exemplos=['7891317427542','7897595631770','7891721027437','7896004706474'];
+  const exemplos=['7891317427542','7896004703305','7891721027437','7891721201806'];
   const amostras=exemplos.map(c=>{ const it=buscar(c); return it?`<button class="sample" data-code="${c}">${ean13svg(c)}<span><b>${esc(it.produto)}</b><br><span class="small muted">${esc(it.dose)} · ${c}</span></span></button>`:''; }).join('');
   const conf = alvo? `<div class="msg info">Conferindo os remédios das ${alvo.h}. Mostre a caixa.</div>`:'';
   $('#view-ler').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
@@ -1025,7 +1229,7 @@ function textoFala(it){
   return `Este é o ${i.apelido}. ${i.nome}${dose}. Para que serve: ${i.serve} Como tomar: ${como} Cuidado: ${i.cuidado}`;
 }
 /* bula oficial no Bulário Eletrônico da Anvisa (precisa de internet) */
-function bulaUrl(it){ return 'https://consultas.anvisa.gov.br/#/bulario/q/?nomeProduto='+encodeURIComponent(it.principio? INFO[it.principio].nome : it.produto); }
+function bulaUrl(it){ const r=String(it.registro||'').replace(/\D/g,'').slice(0,9); return r ? 'https://consultas.anvisa.gov.br/#/bulario/q/?numeroRegistro='+r : 'https://consultas.anvisa.gov.br/#/bulario/q/?nomeProduto='+encodeURIComponent(it.principio? INFO[it.principio].nome : it.produto); }
 /* unidade do remédio pela apresentação da caixa */
 function unidade(apres){ const a=' '+apres.toUpperCase()+' ';
   if(/\bCAP\b|CAPS/.test(a)) return ['cápsula','cápsulas'];
@@ -1153,13 +1357,15 @@ function salvarWizard(it){
   const i=it.info;
   S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
     cor: INFO[it.principio] ? INFO[it.principio].cor : novaCor(),
-    serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto,receita:true,foto:addSel.foto||'',
+    serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto,registro:it.registro||'',receita:true,foto:addSel.foto||'',
     mgDia:tot.mg, acimaBula:tot.acima});
   const novo=S.agenda[S.agenda.length-1];
   save(); agendarAlarmes(true); $('#wiz').hidden=true; addSel=null; resultado=null;
   falar(`Pronto. Vou lembrar o ${i.apelido}, ${comoFala(novo)}, como está na receita.`);
   toast(`Pronto. Salvo na agenda: ${comoTxt(novo)}.`); go('hoje');
   if(S.agenda.length===1) setTimeout(()=>checarEnergia().then(()=>{ if(energiaFalta()) abrirEnergia(); }),1500);
+  // guarda a bula oficial no celular, sem atrapalhar
+  if(it.registro && httpPlug() && navigator.onLine) bulaDe(it.registro).then(b=>{ if(!b) baixarBulaOficial(it.registro).catch(()=>{}); });
 }
 function mostrarResultado(it,code,falarAgora){
   const i=it.info, ag=agendaDe(chaveIt(it));
@@ -1181,8 +1387,9 @@ function mostrarResultado(it,code,falarAgora){
     <div class="block"><p class="label">Como tomar</p><p>${ag? `${esc(comoTxt(ag))}.` : 'Do jeito que o médico mandou.'}</p></div>
     <div class="warnbox block"><p class="label">Cuidado</p><p>${esc(i.cuidado)}</p></div>
     <div class="block"><p class="label">Bula completa</p>
-      <p class="small" style="margin:0 0 10px">Muitas caixas têm um <b>QR code</b> que abre a bula digital oficial (Lei 14.338/2022). Também dá para ver a bula no site da Anvisa. Precisa de internet.</p>
-      <div class="stack"><button class="btn btn-ghost" id="bQR" type="button">${QR_SVG}Ler o QR code da bula</button>
+      <p class="small" style="margin:0 0 10px">A bula oficial inteira, com letra grande e voz. Fica guardada no celular. Também dá para abrir pelo <b>QR code</b> da caixa (Lei 14.338/2022).</p>
+      <div class="stack"><button class="btn btn-main" type="button" data-bula="${esc(it.registro)}" data-nome="${esc(it.produto+(it.dose?' '+it.dose:''))}" data-url="${esc(bulaUrl(it))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Ler a bula completa</button>
+      <button class="btn btn-ghost" id="bQR" type="button">${QR_SVG}Ler o QR code da bula</button>
       <div id="qrBox" aria-live="polite"></div>
     <a class="btn btn-ghost" href="${bulaUrl(it)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Ver a bula oficial (Anvisa)</a></div></div>
     <p class="fine">${i.geral?'O tipo de remédio vem da classificação registrada na Anvisa. ':i.bula?'Texto simplificado da bula do paciente ('+esc(i.bula)+'). ':'Texto provisório: será substituído pelo texto da bula oficial. '}${it.hosp?'Uso hospitalar. ':''}Código ${esc(code)} · Registro Anvisa ${esc(it.registro)}</p>
@@ -1216,6 +1423,7 @@ function renderAgenda(){
   const itens=S.agenda.map(a=>`<div class="agenda-item">
     <div class="medlinha">${a.foto?fotoDe(a):dotA(a)}<div style="min-width:0"><h3><button class="fala" data-fala="ag:${a.id}">${esc(med(a).nome)} ${esc(a.dose)}</button></h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
     <ul class="ag-mom">${a.horarios.map(h=>{ const m=momentoDe(h); return `<li>${ICO[m.k]}${esc((a.mom&&a.mom[h])?MOM[a.mom[h]].nome:m.nome)} · ${h}<span>— ${esc(comoEm(a,h))}</span></li>`; }).join('')}</ul>
+    ${a.registro?`<button class="btn btn-ghost btn-s" style="width:100%" type="button" data-bula="${esc(a.registro)}" data-nome="${esc((a.produto||med(a).nome)+(a.dose?' '+a.dose:''))}" data-url="${esc('https://consultas.anvisa.gov.br/#/bulario/q/?numeroRegistro='+reg9(a.registro))}">Ler a bula completa</button>`:''}
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button><button class="linkbtn" data-del="${a.id}">Remover</button></div></div>`).join('');
   const opts=Object.entries(INFO).map(([k,v])=>`<option value="${k}">${v.nome} (${v.apelido})</option>`).join('');
   $('#view-agenda').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
@@ -1599,6 +1807,7 @@ function renderBV(){
     <p>Pegue a <b>caixa</b> e a <b>receita</b>. Eu leio o código de barras e você marca o que está na receita.</p>
     <button class="btn btn-pill" id="bvLer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler a caixa do remédio</button>${ouvir}
     <button class="linkbtn bv-pular" id="bvDepois" type="button">Fazer isso depois</button>`;
+  el.classList.toggle('aq0',passo===0);
   el.innerHTML=`<div class="bv-in-wrap">${h}</div>`;
   $('#bvOuvir').onclick=()=>ouvir(FALA_BV[passo]);
   const seg=()=>{ passo++; renderBV(); falar(FALA_BV[passo]); const f=el.querySelector('input'); if(f) setTimeout(()=>f.focus(),300); };

@@ -11,8 +11,9 @@ O app funciona como uma **caixinha de remédios** digital: a tela Hoje mostra os
 | Doses amarradas a momentos da rotina, não só a horários | Pistas de rotina dão horários mais regulares e ajudam a formar o hábito (Valenzuela-Beltrán et al., 2022, *Healthcare*; van de Vijver et al., 2023, *Frontiers in Psychology*) |
 | Cadastro com uma pergunta por tela, barra de progresso e "Voltar" escrito | Idosos se perderam em apps de remédio com menus e submenus e não entenderam "+" e "cancelar" (Grindrod et al., 2014, *JMIR mHealth*) |
 | Botões principais de 88 px e demais de 72 px (~14 mm e ~11 mm) | Alvos de ~14 mm tiveram o melhor desempenho com idosos (Leitão e Silva, 2012) |
-| Fundo papel, tinta preta, destaque terracota, verde só para "tomado" | O NIA/NLM recomenda evitar azul, amarelo e verde lado a lado e usar texto escuro em fundo claro; contraste de texto ≥ 4,5:1 e de bordas ≥ 3:1 (WCAG 2.2) |
+| Fundo claro liso, texto preto, destaque roxo escuro (#4B2A7B, contraste 11:1), verde só para "tomado"; aquarela só na abertura, no topo da tela Hoje e no "Pronto!", nunca atrás de texto | O NIA/NLM recomenda evitar azul, amarelo e verde lado a lado e usar texto escuro em fundo claro; contraste de texto ≥ 4,5:1 e de bordas ≥ 3:1 (WCAG 2.2) |
 | Ícone + texto + voz em tudo, estado escrito (não só pela cor) | 51% dos brasileiros de 50 a 64 anos são analfabetos funcionais (Inaf 2024) |
+| Tela "Pronto!" depois do Tomei (desligada no modo calmo) | Reforço positivo logo após a ação ajuda a formar o hábito (Valenzuela-Beltrán et al., 2022) |
 | "Semana de…" para a família, com resumo pronto para o WhatsApp | Medir e devolver o padrão de doses é uma das recomendações de Valenzuela-Beltrán et al. (2022) |
 
 ## O que o app faz
@@ -22,7 +23,7 @@ O app funciona como uma **caixinha de remédios** digital: a tela Hoje mostra os
 - **Ler e colocar na agenda:** depois de ler a caixa, 4 perguntas, uma por tela: em que momento a receita manda tomar (café, almoço, jantar, dormir ou outro horário), quanto em cada momento, conferir com a receita (com total do dia) e foto da caixa (opcional). A pessoa copia da receita do médico; o app não sugere dose.
 - **Horários da rotina:** em Agenda, a pessoa muda a hora do café, almoço, jantar e de dormir, e os lembretes mudam juntos.
 - **Total do dia e aviso de dose:** o app soma o que foi marcado ("4 comprimidos de 500 mg = 2.000 mg por dia. Está igual à receita?"). Nos 10 remédios com texto próprio, se o total passar da maior dose por dia citada na bula, aparece um aviso pedindo para conferir a receita e, na dúvida, perguntar ao farmacêutico. O aviso não bloqueia (o médico pode receitar diferente) e só pede uma confirmação a mais. Os limites estão em `MAXDIA` no `www/index.html`, com as bulas usadas como fonte.
-- **Bula completa:** botão para ler o QR code da caixa, que abre a bula digital oficial (Lei 14.338/2022), mostrando antes qual site vai abrir; e link para a bula no Bulário Eletrônico da Anvisa.
+- **Bula completa:** a bula do paciente oficial inteira, dividida nas 9 perguntas da bula, com letra grande e o botão "Ouvir esta parte". Funciona sem internet. 69 bulas já vêm no app (`www/bulas.json`, entre elas losartana, metformina e anlodipino). Para as outras, o app instalado baixa a bula oficial do Bulário Eletrônico da Anvisa pelo número de registro, extrai o texto do PDF (pdf.js), tira os dados do fabricante e guarda no celular; a cada 30 dias confere se saiu versão nova. Se não der, abre pelo QR code da caixa (Lei 14.338/2022) ou pelo site da Anvisa.
 - **Foto da caixa (opcional):** dá para tirar uma foto da caixa no cadastro ou depois, na Agenda. A foto aparece na tela Hoje, no alarme e na agenda, e fica guardada só no celular.
 - **Boas-vindas:** no primeiro uso, o app pergunta o nome e quem da família recebe os avisos. A opção "Ver demonstração" abre com dados de exemplo.
 - **Agenda e alarme:** o familiar cadastra os horários e o Android avisa na hora, mesmo com o app fechado. A pessoa aperta TOMEI.
@@ -68,6 +69,13 @@ O Remédio Falado é um **lembrete**: não indica nem muda dose. Ao colocar um r
 **Privacidade e termos:** tela dentro do app (rodapé, boas-vindas e Agenda → Configurações) e a mesma página em `www/privacidade.html`, pronta para virar o link de política de privacidade exigido pela Google Play. Os dados ficam só no celular; não há servidor, cadastro ou propaganda (LGPD, Lei 13.709/2018).
 
 Protótipo acadêmico. Os textos simplificados ainda precisam de revisão de farmacêutico. O app não muda dose e não substitui o médico. Os códigos de barras vêm da lista de preços CMED/Anvisa, que pode conter erros e é atualizada todo mês.
+
+## Créditos de dados
+
+- Lista de preços CMED/Anvisa (códigos de barras) e Bulário Eletrônico da Anvisa.
+- Textos das bulas incluídas: extraídos pelo projeto [buladiff](https://github.com/vasfvitor/buladiff) (licença MIT) a partir do Bulário Eletrônico da Anvisa; o script `scripts/bulas_seed.py` monta o `www/bulas.json`.
+- A busca de bulas usa a API interna do Bulário (a mesma do site), que não é documentada e pode mudar.
+- Postos de saúde: dados abertos da Prefeitura do Recife.
 
 ## Licença
 
