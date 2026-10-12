@@ -13,7 +13,8 @@ const perms = [
   'android.permission.READ_CONTACTS',
   'android.permission.WRITE_CONTACTS',
   'android.permission.ACCESS_COARSE_LOCATION',
-  'android.permission.ACCESS_FINE_LOCATION'
+  'android.permission.ACCESS_FINE_LOCATION',
+  'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'
 ];
 for (const p of perms) {
   if (!m.includes(`"${p}"`)) m = m.replace('</manifest>', `    <uses-permission android:name="${p}" />\n</manifest>`);
@@ -49,8 +50,14 @@ if (!g.includes('remedio-falado-teste.jks')) {
         }
     }`);
 }
+// plugin próprio "Energia": abre as telas de bateria e início automático (Xiaomi, Huawei, Oppo, Vivo, Samsung...)
+const javaDir = path.join(res, 'java', 'br', 'com', 'remediofalado', 'app');
+fs.mkdirSync(javaDir, { recursive: true });
+for (const f of ['EnergiaPlugin.java', 'MainActivity.java']) {
+  fs.copyFileSync(path.join(__dirname, '..', 'android-src', f), path.join(javaDir, f));
+}
 // número da versão sobe a cada compilação no GitHub
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 g = g.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
 fs.writeFileSync(gradlePath, g);
-console.log('Android ajustado: permissões, ícone de notificação e voz.');
+console.log('Android ajustado: permissões, ícone de notificação, voz e plugin de bateria.');
