@@ -276,6 +276,109 @@ nav.tabs button{font-size:14px}
 .dose{grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px}
 .dose .dot{margin-right:0}
 
+/* ===== Identidade v3: a caixinha de remédios (papel, tinta e terracota) =====
+   Base em estudos: NIA/NLM (evitar azul, amarelo e verde lado a lado; texto escuro em fundo claro; sans-serif),
+   Leitão e Silva 2012 (alvos de toque de ~14 mm), Grindrod et al. 2014 (navegação linear, palavras em vez de símbolos),
+   WCAG 2.2 (contraste de texto >= 4,5:1 e de bordas >= 3:1). */
+:root{ --bg:#FAF7F2; --surface:#FFFFFF; --sunk:#F1ECE4; --fg:#1A1A1A; --muted:#4A4540; --line:#8A837A; --soft-line:#D9D1C5;
+  --accent:#B83A0F; --accent-ink:#FFFFFF; --accent-soft:#FCEEE6; --pill:#B83A0F; --pill-ink:#FFFFFF;
+  --main:#1A1A1A; --main-ink:#FFFFFF;
+  --ok:#1E6B35; --ok-ink:#FFFFFF; --ok-soft:#E6F2E8; --warn:#9A4A00; --warn-soft:#FBECD9; --bad:#B42318; --bad-soft:#FBE3E0; --chat:#F4EEE6; --r:18px }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#161412; --surface:#201D1A; --sunk:#2A2622; --fg:#F5F1EA; --muted:#CFC7BB; --line:#8C8378; --soft-line:#3A352F;
+  --accent:#FF9B6E; --accent-ink:#2A0E02; --accent-soft:#3A2116; --pill:#FF9B6E; --pill-ink:#2A0E02; --main:#F5F1EA; --main-ink:#161412;
+  --ok:#6FD38F; --ok-ink:#0B1F12; --ok-soft:#173322; --warn:#F2B261; --warn-soft:#3A2A14; --bad:#FF8A7E; --bad-soft:#3D1A17; --chat:#26211D; color-scheme:dark }}
+:root[data-theme="dark"]{ --bg:#161412; --surface:#201D1A; --sunk:#2A2622; --fg:#F5F1EA; --muted:#CFC7BB; --line:#8C8378; --soft-line:#3A352F;
+  --accent:#FF9B6E; --accent-ink:#2A0E02; --accent-soft:#3A2116; --pill:#FF9B6E; --pill-ink:#2A0E02; --main:#F5F1EA; --main-ink:#161412;
+  --ok:#6FD38F; --ok-ink:#0B1F12; --ok-soft:#173322; --warn:#F2B261; --warn-soft:#3A2A14; --bad:#FF8A7E; --bad-soft:#3D1A17; --chat:#26211D; color-scheme:dark }
+:root[data-contraste="1"]{ --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F2F2F2; --fg:#000000; --muted:#111111; --line:#000000; --soft-line:#000000;
+  --accent:#8A2A07; --accent-ink:#FFFFFF; --accent-soft:#FFE9DE; --pill:#8A2A07; --pill-ink:#FFFFFF; --main:#000000; --main-ink:#FFFFFF;
+  --ok:#0A5A25; --ok-ink:#FFFFFF; --ok-soft:#E3F3E7; --warn:#6A3C00; --warn-soft:#FFF1D6; --bad:#9E1B10; --bad-soft:#FFE5E1; --chat:#F4F4F4; color-scheme:light }
+.btn{min-height:72px;border-radius:16px;font-size:1.15rem}
+.btn-ghost{background:var(--surface);border:2.5px solid var(--fg);color:var(--fg)}
+.btn-main{background:var(--main);color:var(--main-ink)}
+.btn-pill{background:var(--accent);color:var(--accent-ink);min-height:88px;border-radius:20px;box-shadow:none;font-size:1.3rem}
+.btn-ok,:root .btn-ok,:root[data-theme="light"] .btn-ok,:root:not([data-theme="light"]) .btn-ok{background:var(--ok);color:var(--ok-ink);min-height:88px;font-size:1.4rem}
+.btn-s{min-height:56px;font-size:1.05rem;width:auto;padding:8px 16px}
+.now,.farm,.agenda-item,.day,.form,.result,details.demo{border:2px solid var(--line)}
+.result{border-color:var(--fg)}
+.opt,.seg button,.conferi,.qh,.total,.passo-e,.manual input,.field select,.field input,.outro input,.bv-in{border-color:var(--line)}
+.opt{min-height:80px}
+.seg button{min-height:64px}
+.opt[aria-pressed="true"],.seg button[aria-pressed="true"],.letra button[aria-pressed="true"]{background:var(--main);color:var(--main-ink);border-color:var(--main)}
+.opt[aria-pressed="true"] small{color:var(--main-ink)}
+.passo{color:var(--accent)}
+.label{color:var(--fg)}
+.linkbtn{color:var(--bad)}
+.dist{color:var(--accent)}
+nav.tabs{border-top:2px solid var(--line)}
+nav.tabs button{min-height:68px;color:var(--muted)}
+nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--fg);box-shadow:inset 0 4px 0 var(--accent)}
+.alarm{background:var(--bg);color:var(--fg);border-top:16px solid var(--accent)}
+.alarm .bell{color:var(--accent)}
+.alarm .btn-ghost{background:var(--surface);border-color:var(--fg);color:var(--fg)}
+.free{background:var(--ok-soft)} .wa-bar{background:var(--ok-soft)}
+.receita{background:var(--accent-soft)} .receita svg{color:var(--accent)}
+.bv-dots i.on{background:var(--accent)}
+.video-box .aim{border-color:var(--accent)}
+/* caixinha do dia */
+.hoje-data{color:var(--muted);font-size:1rem}
+.cx{background:var(--surface);border:2.5px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px}
+.cx.ativo{border:4px solid var(--fg)}
+.cx.late{border:4px solid var(--warn)}
+.cx.ok{background:var(--ok-soft);border-color:var(--ok)}
+.cx.later{background:var(--sunk);border-style:dashed}
+.cx-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
+.cx-ico{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.cx-ico svg,.mom svg,.mom-ico svg{width:30px;height:30px}
+.cx.ok .cx-ico{background:var(--surface);color:var(--ok)}
+.cx h3{font-size:1.3rem}
+.cx-st{font-weight:700;font-size:.95rem;padding:5px 11px;border-radius:999px;background:var(--sunk);white-space:nowrap}
+.cx.ok .cx-st{background:transparent;color:var(--ok)}
+.cx.late .cx-st{background:var(--warn-soft);color:var(--warn)}
+.cx.ativo .cx-st{background:var(--fg);color:var(--bg)}
+.cx.ativo.late .cx-st{background:var(--warn);color:var(--bg)}
+.cx-meds{display:flex;flex-direction:column;gap:8px}
+.cx-med{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;background:none;border:0;padding:4px 0;text-align:left;cursor:pointer;font:inherit;color:inherit;width:100%}
+.cx-med .dot{margin:0}
+.cx-med .foto{width:52px;height:52px}
+.cx-med small{display:block;color:var(--muted);font-size:1rem}
+.cx-ck{color:var(--ok);font-weight:700}
+.cx .linkbtn{color:var(--fg);text-decoration:underline;text-underline-offset:3px;font-size:1.05rem;align-self:center}
+/* cadastro em perguntas */
+.wz-top{display:flex;flex-direction:column;gap:8px}
+.barra{height:10px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.barra i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.wz-med{display:flex;align-items:center;gap:8px;font-size:1.05rem}
+.wz-med .dot{margin:0}
+.mom{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;min-height:88px;padding:12px 16px;border-radius:18px;border:2.5px solid var(--line);background:var(--surface);color:var(--fg);text-align:left;cursor:pointer;width:100%;font:inherit}
+.mom b{display:block;font-size:1.25rem}
+.mom small{color:var(--muted);font-size:1rem}
+.mom > svg{color:var(--accent)}
+.mom[aria-pressed="true"]{border:4px solid var(--accent);background:var(--accent-soft)}
+.mom-ck{width:34px;height:34px;border-radius:10px;border:2.5px solid var(--line);display:grid;place-items:center;color:var(--accent-ink)}
+.mom[aria-pressed="true"] .mom-ck{background:var(--accent);border-color:var(--accent)}
+.mom-ck svg{width:22px;height:22px}
+.wz-voltar{color:var(--fg)!important;text-decoration:underline;text-underline-offset:3px;text-align:center;font-size:1.15rem;min-height:56px}
+.resumo-li{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--soft-line)}
+.resumo-li:first-child{border-top:0}
+.mom-ico{color:var(--accent);display:inline-grid;place-items:center}
+/* agenda e semana */
+.ag-mom{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ag-mom li{display:flex;align-items:center;gap:10px;background:var(--sunk);border-radius:12px;padding:8px 10px;font-weight:700}
+.ag-mom li span{font-weight:400}
+.ag-mom svg{width:26px;height:26px;color:var(--accent);flex:none}
+.semana{display:grid;gap:6px;align-items:center;text-align:center}
+.semana .d{text-align:left;font-weight:700}
+.semana .c{min-height:44px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:.95rem}
+.semana .c svg{width:22px;height:22px}
+.semana .ok{background:var(--ok);color:var(--ok-ink)}
+.semana .falta{border:2.5px solid var(--bad);color:var(--bad)}
+.semana .parte{border:2.5px solid var(--warn);color:var(--warn)}
+.semana .futuro{border:2px dashed var(--line);color:var(--muted);font-weight:400}
+.semana .hd{color:var(--accent)}
+.semana .hd svg{width:26px;height:26px}
+.logo{width:44px;height:44px}
+
 /* ===== Modo calmo: sem animação, uma cor de destaque, voz só ao tocar em Ouvir ===== */
 :root[data-calmo="1"] *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 :root[data-calmo="1"] .btn-pill{background:var(--accent);color:var(--accent-ink);box-shadow:none}
@@ -291,7 +394,7 @@ nav.tabs button{font-size:14px}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8M30.5 13.5c3.5 3.5 3.5 9.5 0 13" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <div><h1>Remédio Falado</h1><div class="who" id="who"></div></div>
     </div>
     <button class="aa" id="bLetra" type="button" aria-label="Aumentar o tamanho da letra">A<span>A</span></button>
@@ -307,7 +410,7 @@ nav.tabs button{font-size:14px}
     <p>Códigos de barras: lista de preços CMED/Anvisa de 23/09/2026, com <span id="nCodes">…</span> códigos. Explicação geral para todos e completa para 10 remédios de pressão e diabetes.</p>
     <p><b>O Remédio Falado é um lembrete.</b> Não indica nem muda dose e não substitui o médico ou o farmacêutico. Siga sempre a receita. Textos de demonstração, ainda sem revisão de farmacêutico.</p>
     <div class="credito" role="contentinfo">
-      <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Squad 4</b></p><p class="credito-esc">CESAR School · 2026</p></div>
     </div>
     <p><button class="linkbtn" type="button" data-termos="1">Privacidade e termos de uso</button></p>
@@ -326,6 +429,7 @@ nav.tabs button{font-size:14px}
 </nav>
 
 <div class="bv" id="bv" hidden role="dialog" aria-modal="true" aria-label="Boas-vindas"></div>
+<div class="bv" id="wiz" hidden role="dialog" aria-modal="true" aria-labelledby="wizT" style="z-index:11"><div class="bv-in-wrap" style="justify-content:flex-start" id="wizIn"></div></div>
 <div class="bv" id="energia" hidden role="dialog" aria-modal="true" aria-labelledby="energiaT" style="z-index:12"><div class="bv-in-wrap" style="justify-content:flex-start" id="energiaIn"></div></div>
 <div class="bv" id="termos" hidden role="dialog" aria-modal="true" aria-labelledby="termosT" style="z-index:12"><div class="bv-in-wrap" style="justify-content:flex-start">
     <h2 id="termosT">Privacidade e termos de uso</h2>
@@ -387,7 +491,7 @@ const INFO = {
   enalapril:{nome:'Enalapril',apelido:'remédio da pressão',cor:'#7A4A1E',
     serve:'Controla a pressão alta e ajuda o coração.',
     cuidado:'Pode dar uma tosse seca. Se acontecer, avise o médico. Não pare sozinho.'},
-  hidroclorotiazida:{nome:'Hidroclorotiazida',apelido:'remédio da pressão que faz urinar',cor:'#2E7D32',
+  hidroclorotiazida:{nome:'Hidroclorotiazida',apelido:'remédio da pressão que faz urinar',cor:'#0F6E75',
     serve:'Tira o excesso de água do corpo e baixa a pressão.',
     cuidado:'Faz ir mais vezes ao banheiro. Por isso costuma ser tomado de manhã. Não pare sem falar com o médico.'},
   atenolol:{nome:'Atenolol',apelido:'remédio da pressão e do coração',cor:'#222222',
@@ -402,7 +506,7 @@ const INFO = {
   espironolactona:{nome:'Espironolactona',apelido:'remédio que faz urinar',cor:'#1F5FBF',
     serve:'Tira o excesso de água do corpo. É usado para a pressão e para o coração.',
     cuidado:'Não pare sem falar com o médico. Pergunte ao médico antes de usar sal light ou vitamina com potássio.'},
-  metformina:{nome:'Metformina',apelido:'remédio do açúcar no sangue',cor:'#2E7D32',
+  metformina:{nome:'Metformina',apelido:'remédio do açúcar no sangue',cor:'#7A3E9D',
     serve:'Ajuda a controlar o açúcar no sangue, no diabetes.',
     cuidado:'Tome junto com a comida ou logo depois, para não incomodar o estômago. Não pare mesmo se se sentir bem.'},
   glibenclamida:{nome:'Glibenclamida',apelido:'remédio do açúcar no sangue',cor:'#B8327A',
@@ -423,8 +527,8 @@ function listaFala(arr){ return arr.length<2? arr.join('') : arr.slice(0,-1).joi
 function titulo(s){ return s.toLowerCase().replace(/(^|\s)\S/g, c=>c.toUpperCase()); }
 
 const GENERICO_COR='#5C6670';
-const PALETA=['#1F5FBF','#D9730D','#B8327A','#2E7D32','#7A4A1E','#222222'];
-const COR_ANTIGA={'#2F6FDB':'#1F5FBF','#D97706':'#D9730D','#15803D':'#2E7D32','#B83280':'#B8327A','#0891B2':'#1F5FBF','#7A4FD0':'#B8327A','#C2410C':'#7A4A1E','#65A30D':'#2E7D32'};
+const PALETA=['#1F5FBF','#D9730D','#B8327A','#7A3E9D','#7A4A1E','#222222','#0F6E75'];
+const COR_ANTIGA={'#2E7D32':'#7A3E9D','#2F6FDB':'#1F5FBF','#D97706':'#D9730D','#15803D':'#7A3E9D','#B83280':'#B8327A','#0891B2':'#1F5FBF','#7A4FD0':'#B8327A','#C2410C':'#7A4A1E','#65A30D':'#7A3E9D'};
 function corDe(a){ if(a && INFO[a.principio]) return INFO[a.principio].cor; const c=(a&&a.cor)||GENERICO_COR; return COR_ANTIGA[c]||c; }
 function bolinha(cor,nome){ return `<span class="dot" style="background:${cor}" aria-hidden="true">${esc(String(nome||'?').trim()[0]||'?').toUpperCase()}</span>`; }
 function novaCor(){ const usadas=S.agenda.map(corDe); return PALETA.find(c=>!usadas.includes(c)) || PALETA[S.agenda.length%PALETA.length]; }
@@ -464,18 +568,20 @@ const KEY='remedio-falado-demo-v1';
 function seed(){
   const hoje=new Date(); const log=[];
   const agenda=[
-    {id:'a1',principio:'losartana',dose:'50 mg',como:'1 comprimido',horarios:['08:00','20:00']},
-    {id:'a2',principio:'anlodipino',dose:'5 mg',como:'1 comprimido',horarios:['08:00']},
-    {id:'a3',principio:'metformina',dose:'850 mg',como:'1 comprimido, depois do almoço',horarios:['12:30']}
+    {id:'a1',principio:'losartana',dose:'50 mg',como:'1 comprimido',horarios:['07:00','19:00'],mom:{'07:00':'cafe','19:00':'jantar'}},
+    {id:'a2',principio:'anlodipino',dose:'5 mg',como:'1 comprimido',horarios:['07:00'],mom:{'07:00':'cafe'}},
+    {id:'a3',principio:'metformina',dose:'850 mg',como:'1 comprimido',horarios:['12:00','19:00'],mom:{'12:00':'almoco','19:00':'jantar'}}
   ];
   for(let i=6;i>=1;i--){
     const d=new Date(hoje); d.setDate(d.getDate()-i); const k=dayKey(d);
     agenda.forEach(a=>a.horarios.forEach(h=>{
-      const miss = (i===4 && h==='20:00') || (i===2 && a.principio==='metformina');
+      const miss = (i===4 && h==='19:00') || (i===2 && h==='12:00');
       if(!miss) log.push({dia:k,ag:a.id,h,em:h,ok:true});
     }));
   }
-  return {pessoa:'Dona Lúcia',familiar:'Carla (filha)',agenda,log,feed:[],tocados:{},demo:true};
+  const k0=dayKey(hoje), agoraMin=hoje.getHours()*60+hoje.getMinutes();
+  agenda.forEach(a=>a.horarios.forEach(h=>{ if(toMin(h)<agoraMin-90) log.push({dia:k0,ag:a.id,h,em:addMin(h,8),ok:true}); }));
+  return {pessoa:'Dona Lúcia',familiar:'Carla (filha)',agenda,log,feed:[],tocados:{},demo:true,rotina:Object.assign({},ROTINA_PADRAO)};
 }
 function novo(){ return {pessoa:'',familiar:'',whats:'',agenda:[],log:[],feed:[],tocados:{},demo:false}; }
 let S=null;
@@ -493,17 +599,19 @@ async function agendarAlarmes(pedir){
     if(p.display!=='granted') return;
     const pend=await NOTIF.getPending(); if(pend.notifications.length) await NOTIF.cancel({notifications:pend.notifications.map(n=>({id:n.id}))});
     const lista=[]; let id=1;
-    S.agenda.forEach(a=>a.horarios.forEach(h=>{ const [hh,mm]=h.split(':').map(Number); const i=med(a);
-      lista.push({id:id++,title:'Hora do '+i.apelido,body:`${i.nome} ${a.dose} · ${comoEm(a,h)}. Toque para confirmar.`,
-        schedule:{on:{hour:hh,minute:mm},allowWhileIdle:true},extra:{ag:a.id,h}}); }));
+    const porHora={}; S.agenda.forEach(a=>a.horarios.forEach(h=>(porHora[h]=porHora[h]||[]).push(a)));
+    Object.keys(porHora).sort().forEach(h=>{ const as=porHora[h], [hh,mm]=h.split(':').map(Number), m=momentoDe(h), um=as.length===1;
+      lista.push({id:id++,title: um?'Hora do '+med(as[0]).apelido : 'Hora dos remédios '+m.de,
+        body: as.map(a=>`${med(a).nome} ${a.dose} · ${comoEm(a,h)}`).join('; ')+'. Toque para confirmar.',
+        schedule:{on:{hour:hh,minute:mm},allowWhileIdle:true},extra:{h}}); });
     if(lista.length) await NOTIF.schedule({notifications:lista});
   }catch(e){ console.warn('alarmes',e); }
 }
 if(NOTIF){
   NOTIF.addListener('localNotificationActionPerformed',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
-    const a=S.agenda.find(q=>q.id===x.ag); if(a){ go('hoje'); abrirAlarme({a,h:x.h}); } });
+    if(x.h){ go('hoje'); abrirAlarmeGrupo(x.h); } });
   NOTIF.addListener('localNotificationReceived',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
-    const a=S.agenda.find(q=>q.id===x.ag); const k=dayKey(new Date())+x.ag+x.h; if(a && $('#alarm').hidden && !S.tocados[k]){ S.tocados[k]=1; save(); abrirAlarme({a,h:x.h}); } });
+    if(!x.h) return; const k=dayKey(new Date())+'g'+x.h; if($('#alarm').hidden && !S.tocados[k]){ S.tocados[k]=1; save(); abrirAlarmeGrupo(x.h); } });
 }
 function topo(){ $('#who').textContent = S.demo ? 'Demonstração: Dona Lúcia, 68 anos, Recife' : (S.pessoa ? 'Olá, '+S.pessoa : 'Seu remédio, falado'); }
 topo();
@@ -668,59 +776,110 @@ function dosesHoje(){
   }));
   return out.sort((x,y)=>toMin(x.h)-toMin(y.h));
 }
+/* ---------- momentos do dia: a dose fica amarrada a uma rotina (café, almoço, jantar, dormir) ----------
+   Estudos: Valenzuela-Beltrán et al. 2022 e van de Vijver et al. 2023 (pistas de rotina dão horários mais regulares). */
+const ICO={
+  cafe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 19h18M7 19a5 5 0 0 1 10 0M12 5v4M5.6 10.6l1.6 1.6M18.4 10.6l-1.6 1.6M2.5 15h2M19.5 15h2"/></svg>',
+  almoco:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>',
+  tarde:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="4"/><path d="M3 20h18M12 4v2.5M4.5 7.5l1.7 1.7M19.5 7.5l-1.7 1.7"/></svg>',
+  jantar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 17h18M6 21h12M7 17a5 5 0 0 1 10 0M12 4v4l-2-2M12 8l2-2"/></svg>',
+  dormir:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 6.8 6.8 0 0 0 20 14.5z"/></svg>'};
+const XIS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const MOMENTOS=[
+  {k:'cafe',nome:'Café da manhã',de:'do café da manhã',ini:240,fim:659},
+  {k:'almoco',nome:'Almoço',de:'do almoço',ini:660,fim:899},
+  {k:'tarde',nome:'Tarde',de:'da tarde',ini:900,fim:1079},
+  {k:'jantar',nome:'Jantar',de:'do jantar',ini:1080,fim:1259},
+  {k:'dormir',nome:'Antes de dormir',de:'de antes de dormir',ini:1260,fim:239}];
+const MOM=Object.fromEntries(MOMENTOS.map(m=>[m.k,m]));
+const ROTINA_PADRAO={cafe:'07:00',almoco:'12:00',jantar:'19:00',dormir:'21:30'};
+const rot = k => (S.rotina && S.rotina[k]) || ROTINA_PADRAO[k];
+function momentoDe(h){ const m=toMin(h); return MOMENTOS.find(x=> x.k==='dormir' ? (m>=1260||m<240) : m>=x.ini && m<=x.fim) || MOM.dormir; }
+function gruposHoje(){
+  const g=[];
+  dosesHoje().forEach(d=>{ let x=g.find(y=>y.h===d.h); if(!x){ x={h:d.h,m:momentoDe(d.h),ds:[]}; g.push(x); } x.ds.push(d); });
+  g.forEach(x=>{ x.pend=x.ds.filter(d=>!d.reg);
+    x.st = !x.pend.length?'ok' : x.pend.some(d=>d.st==='late')?'late' : x.pend.some(d=>d.st==='next')?'next' : 'later';
+    x.em = x.pend.length? '' : x.ds.map(d=>d.reg.em).sort().pop(); });
+  return g;
+}
+function falaGrupo(x){
+  const pend=x.pend.length?x.pend:x.ds;
+  if(pend.length===1){ const d=pend[0]; return `${vocativo()}${x.st==='late'?'está atrasado o':'é hora do'} ${med(d.a).apelido}. ${med(d.a).nome}, ${comoEm(d.a,d.h)}. Quando tomar, aperte o botão verde: tomei.`; }
+  return `${vocativo()}${x.st==='late'?'estão atrasados os remédios':'é hora dos remédios'} ${x.m.de}: ${listaFala(pend.map(d=>med(d.a).nome+', '+comoEm(d.a,d.h)))}. Quando tomar, aperte o botão verde.`;
+}
 function doseFoco(ds){ return ds.find(d=>d.st==='late') || ds.find(d=>d.st==='next') || ds.find(d=>d.st==='later') || null; }
 const STL={ok:['Tomou','st-ok'],late:['Atrasada','st-late'],next:['Agora','st-next'],later:['Mais tarde','st-next']};
 function dot(p){ return bolinha((INFO[p]||{cor:GENERICO_COR}).cor, INFO[p]?INFO[p].nome:'?'); }
 
-function tomar(a,h,via){
-  const k=dayKey(new Date());
-  if(S.log.some(l=>l.dia===k&&l.ag===a.id&&l.h===h)) return;
-  const em=nowHM();
-  S.log.push({dia:k,ag:a.id,h,em,ok:true});
-  S.feed.push({t:'ok',em,txt:`${nomeP()} tomou ${med(a).nome} ${a.dose} (${comoEm(a,h)}, dose das ${h})${via==='caixa'?', conferido pela caixa':''}.`});
-  const pronto='Pronto. Anotei que você tomou o '+med(a).apelido+'.';
-  save(); falar('Muito bem. '+pronto.slice(7));
-  S.aviso={dia:k,txt:S.feed[S.feed.length-1].txt};
-  save(); toast(pronto); render();
+function tomarVarios(ds,via){
+  const k=dayKey(new Date()), em=nowHM();
+  const novos=ds.filter(d=>!S.log.some(l=>l.dia===k&&l.ag===d.a.id&&l.h===d.h));
+  if(!novos.length) return;
+  novos.forEach(d=>S.log.push({dia:k,ag:d.a.id,h:d.h,em,ok:true}));
+  const m=momentoDe(novos[0].h), um=novos.length===1, d0=novos[0];
+  const txt = um
+    ? `${nomeP()} tomou ${med(d0.a).nome} ${d0.a.dose} (${comoEm(d0.a,d0.h)}, dose das ${d0.h})${via==='caixa'?', conferido pela caixa':''}.`
+    : `${nomeP()} tomou os remédios ${m.de} (${d0.h}): ${listaFala(novos.map(d=>`${med(d.a).nome} ${d.a.dose}, ${comoEm(d.a,d.h)}`))}.`;
+  S.feed.push({t:'ok',em,txt}); S.aviso={dia:k,txt}; save();
+  const pronto = um ? 'Pronto. Anotei que você tomou o '+med(d0.a).apelido+'.' : `Pronto. Anotei os remédios ${m.de}.`;
+  falar('Muito bem. '+pronto.slice(8)); toast(pronto); render();
 }
+function tomar(a,h,via){ tomarVarios([{a,h}],via); }
 
 /* ---------- tela HOJE ---------- */
+let algunsAbertos={};
+const DIAS_LONGO=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function saudacao(){ const h=new Date().getHours(); return (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite')+(S.pessoa?', '+S.pessoa.replace(/^Dona\s+/,'Dona '):''); }
+function medLinha(d,botao){
+  const i=med(d.a);
+  return `<div class="cx-med-wrap" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center">
+    <button class="cx-med" data-fala="ag:${d.a.id}" aria-label="${esc(i.nome)}, ${esc(comoEm(d.a,d.h))}. Toque para ouvir para que serve.">
+      ${d.a.foto?fotoDe(d.a):dotA(d.a)}<span><b>${esc(i.nome)} ${esc(d.a.dose)}</b><small>${esc(comoEm(d.a,d.h))}</small></span>${d.reg?`<span class="cx-ck">${CHECK.replace('<svg','<svg width="26" height="26"')}</span>`:''}</button>
+    ${botao && !d.reg?`<button class="btn btn-ok btn-s" data-tomar1="${d.a.id}|${d.h}">Tomei</button>`:''}</div>`;
+}
+function cardGrupo(x){
+  const ativo = x.st==='late' || x.st==='next';
+  const est = x.st==='ok' ? `Tomado ${x.em}` : x.st==='late' ? 'Atrasado' : x.st==='next' ? 'Agora' : 'Mais tarde';
+  const n=x.ds.length, alguns=!!algunsAbertos[x.h];
+  return `<section class="cx ${x.st==='ok'?'ok':x.st==='late'?'late ativo':ativo?'ativo':'later'}" aria-label="${esc(x.m.nome)}, ${x.h}, ${est}">
+    <div class="cx-head"><span class="cx-ico">${ICO[x.m.k]}</span><div><h3>${esc(x.m.nome)}</h3><p class="small muted">${x.h} · ${n} ${n>1?'remédios':'remédio'}</p></div><span class="cx-st">${x.st==='ok'?CHECK.replace('<svg','<svg width="18" height="18" style="vertical-align:-3px"')+' ':''}${est}</span></div>
+    ${x.st==='ok' && !ativo ? '' : `<div class="cx-meds">${x.ds.map(d=>medLinha(d,alguns)).join('')}</div>`}
+    ${ativo && !alguns ? `<button class="btn btn-ok" data-tomarg="${x.h}">${CHECK}${x.pend.length>1?'Tomei os '+esc(x.m.de):'TOMEI'}</button>` : ''}
+    ${ativo ? `<div class="btn-row"><button class="btn btn-ghost" data-ouvirg="${x.h}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>
+      <button class="btn btn-ghost" data-conferirg="${x.h}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Conferir caixa</button></div>
+      ${x.pend.length>1?`<button class="linkbtn" data-alguns="${x.h}">${alguns?'Voltar para tomar todos':'Tomei só alguns'}</button>`:''}` : ''}
+  </section>`;
+}
 function renderHoje(){
-  const ds=dosesHoje(), f=doseFoco(ds);
-  let foco='';
-  if(f){
-    const i=med(f.a);
-    foco=`<div class="now ${f.st==='late'?'late':''}">
-      <div class="now-head"><span class="hour">${f.h}</span><span class="state ${STL[f.st][1]}">${STL[f.st][0]}</span></div>
-      <div class="medlinha">${fotoDe(f.a)}<div><button class="fala medname" data-fala="ag:${f.a.id}">${dotA(f.a)}${esc(cap(i.apelido))}</button>
-      <p class="muted">${esc(i.nome)} ${esc(f.a.dose)} · ${esc(comoEm(f.a,f.h))}</p></div></div>
-      <button class="btn btn-ok" id="bTomei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>TOMEI</button>
-      <div class="btn-row">
-        <button class="btn btn-ghost" id="bOuvirDose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>
-        <button class="btn btn-ghost" id="bConferir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Conferir caixa</button>
-      </div></div>`;
-  } else if(!S.agenda.length) foco=`<div class="now"><h2>Nenhum remédio na agenda ainda</h2><p class="muted">Leia a caixa do remédio e escolha os horários. Não precisa digitar nada.</p>
-      <button class="btn btn-main" data-go="ler" data-scan="1">Colocar meu primeiro remédio</button></div>`;
-  else foco=`<div class="now"><h2>Tudo certo por hoje</h2><p class="muted">Todos os remédios de hoje foram tomados.</p></div>`;
-  const lista=ds.map(d=>`<button class="dose" data-fala="ag:${d.a.id}" aria-label="Ouvir para que serve ${esc(med(d.a).nome)}"><span class="t">${d.h}</span>${dotA(d.a)}<span class="n"><b>${esc(med(d.a).nome)} ${esc(d.a.dose)}</b><span class="small muted" style="display:block;line-height:1.3">${esc(med(d.a).apelido)}</span></span><span class="state ${STL[d.st][1]}">${STL[d.st][0]}</span></button>`).join('');
-  $('#view-hoje').innerHTML=`<div class="wrap-in" style="display:flex;flex-direction:column;gap:18px">
+  const gs=gruposHoje(), hoje=new Date();
+  const todosOk = gs.length && gs.every(x=>x.st==='ok');
+  const cards = !S.agenda.length
+    ? `<div class="cx ativo"><h3>Nenhum remédio na sua caixinha ainda</h3><p class="muted">Leia a caixa do remédio e responda 4 perguntas fáceis.</p>
+       <button class="btn btn-pill" data-go="ler" data-scan="1">Colocar meu primeiro remédio</button></div>`
+    : gs.map(cardGrupo).join('');
+  $('#view-hoje').innerHTML=`<div class="wrap-in" style="display:flex;flex-direction:column;gap:16px">
     ${S.aviso && S.aviso.dia===dayKey(new Date()) ? `<div class="wa-bar"><p><b>Avisar ${esc(nomeFam())}?</b><br><span class="small">${esc(S.aviso.txt)}</span></p>
       <div class="btn-row"><button class="btn btn-wa" id="bWaAviso">${WA_SVG}Avisar no WhatsApp</button><button class="btn btn-ghost" id="bWaNao">Agora não</button></div></div>` : ''}
     ${S.agenda.length && energiaFalta() && S.energiaAdiar!==dayKey(new Date()) ? `<div class="msg warn alerta" role="status"><b>O alarme pode não tocar neste celular.</b><span class="alerta-txt">Alguns celulares fecham o app para economizar bateria. Leva 1 minuto para arrumar.</span>
       <div class="btn-row"><button class="btn btn-main" type="button" data-energia="1">Arrumar agora</button><button class="btn btn-ghost" type="button" id="bEnerDepois">Depois</button></div></div>` : ''}
-    <p class="label">Próximo remédio</p>${foco}
+    <div><p class="hoje-data">${DIAS_LONGO[hoje.getDay()]}, ${hoje.getDate()} de ${MESES[hoje.getMonth()]}</p><h2>${esc(saudacao())}</h2></div>
+    ${todosOk?`<div class="msg ok">${CHECK.replace('<svg','<svg width="22" height="22" style="vertical-align:-4px"')} Todos os remédios de hoje foram tomados.</div>`:''}
+    ${cards}
     <button class="btn btn-pill" data-go="ler" data-scan="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Que remédio é este?</button>
-    <div><p class="label">Remédios de hoje</p><p class="hint" style="margin:2px 0 8px">Toque num remédio para ouvir para que serve.</p><div class="day">${lista||'<p style="padding:16px">Sem doses hoje.</p>'}</div></div>
-    <button class="btn btn-ghost" id="bTeste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>Tocar lembrete de teste</button>
+    ${S.agenda.length?`<button class="btn btn-ghost" id="bTeste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>Tocar lembrete de teste</button>`:''}
   </div>`;
   const bed=$('#bEnerDepois'); if(bed) bed.onclick=()=>{ S.energiaAdiar=dayKey(new Date()); save(); renderHoje(); };
   const bwa=$('#bWaAviso'); if(bwa){ bwa.onclick=()=>{ const t=S.aviso.txt; S.aviso=null; save(); renderHoje(); enviarWhats(t); }; $('#bWaNao').onclick=()=>{ S.aviso=null; save(); renderHoje(); }; }
-  if(f){
-    $('#bTomei').onclick=()=>tomar(f.a,f.h,'botao');
-    $('#bOuvirDose').onclick=()=>ouvir(`${vocativo()}${f.st==='late'?'está atrasado o':'é hora do'} ${med(f.a).apelido}. ${med(f.a).nome}, ${comoEm(f.a,f.h)}. Quando tomar, aperte o botão verde: tomei.`);
-    $('#bConferir').onclick=()=>{ alvo=f; go('ler'); if(SCAN) lerNativo(); };
-  }
-  $('#bTeste').onclick=()=>{ if(f) abrirAlarme(f); else toast('Cadastre um remédio na Agenda primeiro.'); };
+  const G = h => gs.find(x=>x.h===h);
+  document.querySelectorAll('[data-tomarg]').forEach(b=>b.onclick=()=>{ const x=G(b.dataset.tomarg); if(x) tomarVarios(x.pend,'botao'); });
+  document.querySelectorAll('[data-tomar1]').forEach(b=>b.onclick=()=>{ const [id,h]=b.dataset.tomar1.split('|'); const a=S.agenda.find(q=>q.id===id); if(a) tomar(a,h,'botao'); });
+  document.querySelectorAll('[data-ouvirg]').forEach(b=>b.onclick=()=>{ const x=G(b.dataset.ouvirg); if(x) ouvir(falaGrupo(x)); });
+  document.querySelectorAll('[data-alguns]').forEach(b=>b.onclick=()=>{ const h=b.dataset.alguns; algunsAbertos[h]=!algunsAbertos[h]; renderHoje(); });
+  document.querySelectorAll('[data-conferirg]').forEach(b=>b.onclick=()=>{ const x=G(b.dataset.conferirg); if(!x) return; alvo={a:x.pend[0].a,h:x.h,lista:x.pend.map(d=>d.a)}; go('ler'); if(SCAN) lerNativo(); });
+  const bt=$('#bTeste'); if(bt) bt.onclick=()=>{ const x=gs.find(y=>y.st==='late')||gs.find(y=>y.st==='next')||gs.find(y=>y.st==='later')||gs[0]; if(x) abrirAlarmeGrupo(x.h,true); else toast('Coloque um remédio na Agenda primeiro.'); };
 }
 
 /* ---------- tela LER ---------- */
@@ -728,7 +887,7 @@ let alvo=null, resultado=null, lendo=false, reader=null;
 function renderLer(){
   const exemplos=['7891317427542','7897595631770','7891721027437','7896004706474'];
   const amostras=exemplos.map(c=>{ const it=buscar(c); return it?`<button class="sample" data-code="${c}">${ean13svg(c)}<span><b>${esc(it.produto)}</b><br><span class="small muted">${esc(it.dose)} · ${c}</span></span></button>`:''; }).join('');
-  const conf = alvo? `<div class="msg info">Conferindo a dose das ${alvo.h}: ${esc(med(alvo.a).apelido)}. Mostre a caixa.</div>`:'';
+  const conf = alvo? `<div class="msg info">Conferindo os remédios das ${alvo.h}. Mostre a caixa.</div>`:'';
   $('#view-ler').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>Que remédio é este?</h2>${conf}
     <div id="resBox"></div>
@@ -877,7 +1036,7 @@ function unidade(apres){ const a=' '+apres.toUpperCase()+' ';
 /* ---------- quantidade por horário e total do dia: só faz a conta do que a pessoa copiou da receita ---------- */
 const comoEm = (a,h) => (a && a.qtd && a.qtd[h]) || (a && a.como) || '';
 const uniforme = a => !a.qtd || new Set(Object.values(a.qtd)).size<=1;
-const comoTxt = a => uniforme(a) ? `${a.como}, às ${a.horarios.join(' e ')}` : a.como;
+const comoTxt = a => uniforme(a) ? `${a.como}, às ${a.horarios.join(' e ')}` : a.horarios.map(h=>`${comoEm(a,h)} às ${h}`).join(', ');
 const comoFala = a => uniforme(a) ? `${a.como}, às ${listaFala(a.horarios.map(falaHora))}` : listaFala(a.horarios.map(h=>comoEm(a,h)+' às '+falaHora(h)));
 function rotuloQ(k,txt,u){ return k==='outra' ? String(txt||'').trim() : k==='meio' ? 'meio '+u[0] : k==='1' ? '1 '+u[0] : k+' '+u[1]; }
 function contaQ(k,txt){
@@ -919,79 +1078,97 @@ function faltaSel(it){ const f=[], hs=horasSel();
   return f; }
 const PERIODO = h => { const m=toMin(h); return m<720?'manhã':m<1080?'tarde':'noite'; };
 function formAgenda(it){
-  const u=unidade(it.apres), ja=agendaDe(chaveIt(it));
+  const ja=agendaDe(chaveIt(it));
   if(ja) return `<div class="msg ok">Este remédio já está na sua agenda: ${esc(comoTxt(ja))}.</div>`;
-  if(!addSel) return `<button class="btn btn-pill" id="bAddAg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Colocar na minha agenda</button>`;
+  return `<button class="btn btn-pill" id="bAddAg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Colocar na minha agenda</button>`;
+}
+function ligarFormAgenda(it){ const b=$('#bAddAg'); if(b) b.onclick=()=>abrirWizard(it); }
+/* assistente: 4 perguntas, uma por tela, com Voltar escrito (Grindrod et al. 2014; NIA: passo a passo) */
+let wizIt=null;
+const PERGUNTAS=['Em que momento a receita manda tomar?','Quanto tomar em cada momento, pela receita?','Confira com a receita','Quer tirar uma foto da caixa?'];
+function abrirWizard(it){ wizIt=it; addSel=novoSel(); addSel.mom=[]; addSel.passo=1; const w=$('#wiz'); w.hidden=false; renderWizard(); falar('Pegue a receita do médico. São 4 perguntas. '+PERGUNTAS[0]); }
+function fecharWizard(){ $('#wiz').hidden=true; addSel=null; calar(); }
+function horasDoMom(){ addSel.h=[...new Set(addSel.mom.map(rot))]; Object.keys(addSel.q).forEach(h=>{ if(!horasSel().includes(h)){ delete addSel.q[h]; delete addSel.outroQ[h]; } }); }
+const nomeHora = h => { const k=addSel&&addSel.mom.find(k=>rot(k)===h); return k? MOM[k].nome : 'Outro horário'; };
+function erroPasso(it){
+  const p=addSel.passo, hs=horasSel();
+  if(p===1 && !hs.length) return 'Marque pelo menos um momento.';
+  if(p===2 && hs.some(h=>!addSel.q[h] || (addSel.q[h]==='outra' && !String(addSel.outroQ[h]||'').trim()))) return 'Marque quanto tomar em cada momento.';
+  if(p===3 && totalSel(it).acima && !addSel.ciente) return 'Confirme a dose acima da bula, se é isso mesmo que está na receita.';
+  if(p===3 && !addSel.conferi) return 'Toque em "Conferi com a receita do médico".';
+  return '';
+}
+function renderWizard(erro){
+  const it=wizIt, i=it.info, u=unidade(it.apres), p=addSel.passo, t=totalSel(it), hs=horasSel();
   const qs=[['1','1',u[0]],['2','2',u[1]],['meio','Meio',u[0]],['outra','Outra','quantidade']];
-  const hs=[['08:00','Manhã','8h'],['12:00','Almoço','12h'],['20:00','Noite','20h']];
-  const falta=faltaSel(it), hsel=horasSel(), t=totalSel(it);
   const qtdTxt = n => n===0.5 ? 'meio '+u[0] : fmtNum(n)+' '+(n===1?u[0]:u[1]);
-  return `<div class="addag" id="addag">
-    <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
-      <div><b>Copie da receita do médico</b><br><span class="small">Pegue a receita e marque igual está escrito. O app não indica dose.</span></div></div>
-    <p class="passo">Passo 1 de 3</p><p class="label">Em que horários, pela receita? Pode marcar mais de um</p>
-    <div class="opts">${hs.map(([h,t,c])=>`<button type="button" class="opt" data-h="${h}" aria-pressed="${addSel.h.includes(h)}"><b>${c}</b><small>${t}</small></button>`).join('')}</div>
-    <div class="outro"><label for="hOutro">Outro horário</label><input type="time" id="hOutro" value="${addSel.outro||''}"></div>
-    <p class="passo">Passo 2 de 3</p><p class="label">Quanto tomar em cada horário, pela receita?</p>
-    ${hsel.length ? hsel.map(h=>`<div class="qh"><p class="qh-h"><b>${h}</b> · ${PERIODO(h)}</p>
+  let corpo='';
+  if(p===1) corpo=`<p class="small muted">Pode marcar mais de um.</p><div class="stack">
+    ${['cafe','almoco','jantar','dormir'].map(k=>{ const on=addSel.mom.includes(k); return `<button type="button" class="mom" data-mom="${k}" aria-pressed="${on}">${ICO[k]}<span><b>${MOM[k].nome}</b><small>${rot(k)}</small></span><span class="mom-ck" aria-hidden="true">${on?CHECK:''}</span></button>`; }).join('')}
+    <div class="outro"><label for="hOutro"><b>Outro horário</b></label><input type="time" id="hOutro" value="${addSel.outro||''}"></div></div>
+    <p class="hint">Os horários da sua rotina podem ser mudados na Agenda.</p>`;
+  if(p===2) corpo=hs.map(h=>`<div class="qh"><p class="qh-h"><span class="mom-ico">${ICO[momentoDe(h).k]}</span> <b>${esc(nomeHora(h))}</b> · ${h}</p>
       <div class="opts opts4">${qs.map(([k,tx,un])=>`<button type="button" class="opt" data-qh="${h}" data-q="${k}" aria-pressed="${addSel.q[h]===k}" aria-label="${esc(tx+' '+un+' às '+h)}"><b>${esc(tx)}</b><small>${esc(un)}</small></button>`).join('')}</div>
-      ${addSel.q[h]==='outra'?`<input class="bv-in" data-qo="${h}" aria-label="Quantidade às ${h}, como está na receita" placeholder="Como está na receita. Ex.: 3 comprimidos, 1/4, 10 gotas" value="${esc(addSel.outroQ[h]||'')}">`:''}</div>`).join('')
-      : `<p class="hint" style="margin:0">Marque primeiro os horários no passo 1.</p>`}
-    <p class="passo">Passo 3 de 3</p><p class="label">Conferir com a receita</p>
-    ${t.n!=null?`<div class="total" aria-live="polite"><p class="label" style="margin:0">Total do dia</p>
-      <p><b>${qtdTxt(t.n)}</b>${t.mg!=null?` de ${esc(it.dose)} = <b>${fmtMg(t.mg)} por dia</b>`:' por dia'}</p>
-      <p class="small">Está igual à receita?</p></div>`:''}
+      ${addSel.q[h]==='outra'?`<input class="bv-in" data-qo="${h}" aria-label="Quantidade às ${h}, como está na receita" placeholder="Como está na receita. Ex.: 3 comprimidos, 1/4, 10 gotas" value="${esc(addSel.outroQ[h]||'')}">`:''}</div>`).join('');
+  if(p===3) corpo=`<div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><div><b>Olhe a receita agora</b><br><span class="small">Está igual ao que você marcou? O app não indica dose.</span></div></div>
+    <div class="total">${hs.map(h=>`<div class="resumo-li"><span class="mom-ico">${ICO[momentoDe(h).k]}</span><span><b>${esc(nomeHora(h))}</b> · ${h}<br>${esc(rotuloQ(addSel.q[h],addSel.outroQ[h],u))}</span></div>`).join('')}
+      ${t.n!=null?`<p style="margin-top:6px"><b>Total do dia: ${qtdTxt(t.n)}</b>${t.mg!=null?` de ${esc(it.dose)} = <b>${fmtMg(t.mg)}</b>`:''}</p>`:''}</div>
     ${t.acima?`<div class="msg warn alerta" role="alert"><b>Atenção: ${fmtMg(t.mg)} por dia passa da maior dose citada na bula deste remédio (${fmtMg(t.max)} por dia).</b>
       <span class="alerta-txt">Pode estar certo, se o médico receitou assim. Confira a receita. Se tiver dúvida, pergunte ao farmacêutico ou ao médico antes de tomar.</span></div>
       <button type="button" class="conferi" id="bCiente" aria-pressed="${addSel.ciente}"><span class="caixa" aria-hidden="true">${addSel.ciente?'✓':''}</span>Conferi: é isso mesmo que está na receita</button>`:''}
-    <button type="button" class="conferi" id="bConferi" aria-pressed="${addSel.conferi}"><span class="caixa" aria-hidden="true">${addSel.conferi?'✓':''}</span>Conferi com a receita do médico</button>
-    <div class="field"><p class="label">Foto da caixa (se quiser)</p><p class="hint" style="margin:0">Ajuda a reconhecer o remédio pela imagem.</p>
-      <div class="medlinha">${addSel.foto?`<img class="foto" src="${addSel.foto}" alt="Foto da caixa">`:''}<button type="button" class="btn btn-ghost" id="bFotoAg" style="flex:1">${CAM_SVG}${addSel.foto?'Tirar outra foto':'Tirar foto da caixa'}</button></div></div>
-    <button class="btn btn-ok" id="bSalvarAg" aria-disabled="${falta.length>0}">Salvar na agenda</button>
-    ${falta.length?`<p class="hint" id="faltaTxt">Para salvar, falta: ${esc(listaFala(falta))}.</p>`:''}
-    <button class="btn btn-ghost" id="bCancelAg">Cancelar</button>
-  </div>`;
-}
-function ligarFormAgenda(it){
-  const redesenha=()=>{ const y=window.scrollY; mostrarResultado(it,resultado.code); window.scrollTo(0,y); };
-  const b=$('#bAddAg'); if(b) b.onclick=()=>{ addSel=novoSel(); redesenha(); falar('Pegue a receita do médico. Marque quanto tomar e os horários, igual está escrito na receita.'); const f=$('#addag'); rolar(f); };
-  if(!$('#addag')) return;
-  const avisar=()=>{ const t=totalSel(it); if(t.acima && !addSel.ciente) falar(`Atenção. ${fmtMg(t.mg).replace('mg','miligramas')} por dia passa da maior dose citada na bula. Confira a receita. Se tiver dúvida, pergunte ao farmacêutico.`); };
-  document.querySelectorAll('#addag [data-qh]').forEach(x=>x.onclick=()=>{ const h=x.dataset.qh; addSel.q[h]=x.dataset.q; addSel.ciente=false; redesenha();
-    if(addSel.q[h]==='outra'){ const q=document.querySelector(`#addag [data-qo="${h}"]`); if(q) q.focus(); } else avisar(); });
-  document.querySelectorAll('#addag [data-qo]').forEach(x=>{ x.oninput=e=>{ addSel.outroQ[x.dataset.qo]=e.target.value; }; x.onchange=()=>setTimeout(()=>{ if(!addSel) return; addSel.ciente=false; redesenha(); avisar(); },0); });
-  document.querySelectorAll('#addag [data-h]').forEach(x=>x.onclick=()=>{ const h=x.dataset.h; if(addSel.h.includes(h)){ addSel.h=addSel.h.filter(y=>y!==h); if(addSel.outro!==h){ delete addSel.q[h]; delete addSel.outroQ[h]; } } else addSel.h=addSel.h.concat(h); addSel.ciente=false; redesenha(); });
-  $('#hOutro').onchange=e=>{ const v=e.target.value, old=addSel.outro; if(old && old!==v && !addSel.h.includes(old)){ delete addSel.q[old]; delete addSel.outroQ[old]; } addSel.outro=v; addSel.ciente=false; redesenha(); };
-  $('#bConferi').onclick=()=>{ addSel.conferi=!addSel.conferi; redesenha(); };
+    <button type="button" class="conferi" id="bConferi" aria-pressed="${addSel.conferi}"><span class="caixa" aria-hidden="true">${addSel.conferi?'✓':''}</span>Conferi com a receita do médico</button>`;
+  if(p===4) corpo=`<p>Ajuda a reconhecer o remédio pela imagem. Não é obrigatório.</p>
+    ${addSel.foto?`<img class="foto-g" src="${addSel.foto}" alt="Foto da caixa">`:''}
+    <button type="button" class="btn btn-ghost" id="bFotoAg">${CAM_SVG}${addSel.foto?'Tirar outra foto':'Tirar foto da caixa'}</button>`;
+  $('#wizIn').innerHTML=`<div class="wz-top"><p class="small">Colocar remédio · pergunta ${p} de 4</p><div class="barra" aria-hidden="true"><i style="width:${p*25}%"></i></div>
+      <p class="wz-med">${bolinha(i.cor,i.nome)}<b>${esc(i.nome)}${it.dose?' '+esc(it.dose):''}</b></p></div>
+    <h2 id="wizT" tabindex="-1">${PERGUNTAS[p-1]}</h2>
+    ${corpo}
+    ${erro?`<div class="msg warn" role="alert">${esc(erro)}</div>`:''}
+    ${p<4?`<button class="btn btn-main" id="wzSeg" type="button">Continuar</button>`:`<button class="btn btn-ok" id="wzSalvar" type="button">${CHECK}Salvar na agenda</button>`}
+    <button class="linkbtn wz-voltar" id="wzVoltar" type="button">${p===1?'Cancelar':'Voltar'}</button>`;
+  const redesenha=()=>{ const w=$('#wiz'), y=w.scrollTop; renderWizard(); w.scrollTop=y; };
+  const avisar=()=>{ const t2=totalSel(it); if(t2.acima && !addSel.ciente) falar(`Atenção. ${fmtMg(t2.mg).replace('mg','miligramas')} por dia passa da maior dose citada na bula. Confira a receita.`); };
+  document.querySelectorAll('#wiz [data-mom]').forEach(b=>b.onclick=()=>{ const k=b.dataset.mom; addSel.mom=addSel.mom.includes(k)?addSel.mom.filter(x=>x!==k):addSel.mom.concat(k); horasDoMom(); addSel.ciente=false; redesenha(); });
+  const ho=$('#hOutro'); if(ho) ho.onchange=e=>{ const v=e.target.value, old=addSel.outro; if(old && old!==v && !addSel.h.includes(old)){ delete addSel.q[old]; delete addSel.outroQ[old]; } addSel.outro=v; addSel.ciente=false; redesenha(); };
+  document.querySelectorAll('#wiz [data-qh]').forEach(x=>x.onclick=()=>{ const h=x.dataset.qh; addSel.q[h]=x.dataset.q; addSel.ciente=false; redesenha();
+    if(addSel.q[h]==='outra'){ const q=document.querySelector(`#wiz [data-qo="${h}"]`); if(q) q.focus(); } });
+  document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ x.oninput=e=>{ addSel.outroQ[x.dataset.qo]=e.target.value; }; });
   const bc=$('#bCiente'); if(bc) bc.onclick=()=>{ addSel.ciente=!addSel.ciente; redesenha(); };
-  $('#bFotoAg').onclick=()=>tirarFoto(f=>{ addSel.foto=f; redesenha(); });
-  $('#bCancelAg').onclick=()=>{ addSel=null; redesenha(); };
-  $('#bSalvarAg').onclick=()=>{
-    const falta=faltaSel(it);
-    if(falta.length){ const t='Para salvar, falta '+listaFala(falta)+'.'; toast(t); falar(t); return; }
-    const hs=horasSel(), u=unidade(it.apres), tot=totalSel(it);
-    const qtd={}; hs.forEach(h=>qtd[h]=rotuloQ(addSel.q[h],addSel.outroQ[h],u));
-    const iguais=new Set(Object.values(qtd)).size===1;
-    const como = iguais ? qtd[hs[0]] : hs.map(h=>`${qtd[h]} às ${h}`).join(', ');
-    const i=it.info;
-    S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
-      cor: INFO[it.principio] ? INFO[it.principio].cor : novaCor(),
-      serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,qtd,horarios:hs,produto:it.produto,receita:true,foto:addSel.foto||'',
-      mgDia:tot.mg, acimaBula:tot.acima});
-    const novo=S.agenda[S.agenda.length-1];
-    save(); agendarAlarmes(true); addSel=null; resultado=null;
-    falar(`Pronto. Vou lembrar o ${i.apelido}, ${comoFala(novo)}, como está na receita.`);
-    toast(`Pronto. Salvo na agenda: ${comoTxt(novo)}.`); go('hoje');
-    if(S.agenda.length===1) setTimeout(()=>checarEnergia().then(()=>{ if(energiaFalta()) abrirEnergia(); }),1500);
-  };
+  const bf=$('#bConferi'); if(bf) bf.onclick=()=>{ addSel.conferi=!addSel.conferi; redesenha(); };
+  const bfo=$('#bFotoAg'); if(bfo) bfo.onclick=()=>tirarFoto(f=>{ addSel.foto=f; redesenha(); });
+  $('#wzVoltar').onclick=()=>{ if(addSel.passo===1){ fecharWizard(); return; } addSel.passo--; renderWizard(); $('#wiz').scrollTop=0; };
+  const seg=$('#wzSeg'); if(seg) seg.onclick=()=>{ document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ addSel.outroQ[x.dataset.qo]=x.value; });
+    const e=erroPasso(it); if(e){ renderWizard(e); falar(e); return; }
+    addSel.passo++; renderWizard(); $('#wiz').scrollTop=0; const tt=$('#wizT'); if(tt) tt.focus();
+    falar(PERGUNTAS[addSel.passo-1]+'.'); if(addSel.passo===3) avisar(); };
+  const sv=$('#wzSalvar'); if(sv) sv.onclick=()=>salvarWizard(it);
+}
+function salvarWizard(it){
+  const hs=horasSel(), u=unidade(it.apres), tot=totalSel(it);
+  const qtd={}; hs.forEach(h=>qtd[h]=rotuloQ(addSel.q[h],addSel.outroQ[h],u));
+  const iguais=new Set(Object.values(qtd)).size===1;
+  const como = iguais ? qtd[hs[0]] : hs.map(h=>`${qtd[h]} às ${h}`).join(', ');
+  const mom={}; addSel.mom.forEach(k=>{ mom[rot(k)]=k; });
+  const i=it.info;
+  S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
+    cor: INFO[it.principio] ? INFO[it.principio].cor : novaCor(),
+    serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto,receita:true,foto:addSel.foto||'',
+    mgDia:tot.mg, acimaBula:tot.acima});
+  const novo=S.agenda[S.agenda.length-1];
+  save(); agendarAlarmes(true); $('#wiz').hidden=true; addSel=null; resultado=null;
+  falar(`Pronto. Vou lembrar o ${i.apelido}, ${comoFala(novo)}, como está na receita.`);
+  toast(`Pronto. Salvo na agenda: ${comoTxt(novo)}.`); go('hoje');
+  if(S.agenda.length===1) setTimeout(()=>checarEnergia().then(()=>{ if(energiaFalta()) abrirEnergia(); }),1500);
 }
 function mostrarResultado(it,code,falarAgora){
   const i=it.info, ag=agendaDe(chaveIt(it));
   let conf='';
+  const lista=alvo?(alvo.lista||[alvo.a]):[], certo=alvo?lista.find(a=>chaveAg(a)===chaveIt(it)):null;
   if(alvo){
-    conf = chaveAg(alvo.a)===chaveIt(it)
-      ? `<div class="msg ok">É o mesmo remédio da sua agenda das ${alvo.h}. A dose é a da receita.</div><button class="btn btn-ok" id="bTomeiCx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>TOMEI</button>`
-      : `<div class="msg bad">Atenção: este NÃO é o remédio das ${alvo.h}. Agora é o ${esc(med(alvo.a).apelido)} (${esc(med(alvo.a).nome)}).</div>`;
+    conf = certo
+      ? `<div class="msg ok">É o mesmo remédio da sua agenda das ${alvo.h}: ${esc(med(certo).nome)}. A dose é a da receita: ${esc(comoEm(certo,alvo.h))}.</div><button class="btn btn-ok" id="bTomeiCx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>TOMEI</button>`
+      : `<div class="msg bad">Atenção: este NÃO é remédio das ${alvo.h}. ${lista.length>1?'Os das '+alvo.h+' são: '+esc(listaFala(lista.map(a=>med(a).nome))):'Agora é o '+esc(med(alvo.a).apelido)+' ('+esc(med(alvo.a).nome)+')'}.</div>`;
   }
   $('#resBox').innerHTML=`<article class="result" aria-live="polite">
     ${conf}
@@ -1012,29 +1189,43 @@ function mostrarResultado(it,code,falarAgora){
   </article>`;
   $('#bOuvir').onclick=()=>ouvir(textoFala(it));
   $('#bQR').onclick=lerQRBula;
-  const bt=$('#bTomeiCx'); if(bt){ const a=alvo; bt.onclick=()=>{ tomar(a.a,a.h,'caixa'); alvo=null; resultado=null; go('hoje'); }; }
+  const bt=$('#bTomeiCx'); if(bt){ const a=alvo, c=certo; bt.onclick=()=>{ tomar(c,a.h,'caixa'); alvo=null; resultado=null; go('hoje'); }; }
   if(!alvo) ligarFormAgenda(it);
   msgScan('');
   if(falarAgora){
     let pre='';
-    if(alvo) pre = chaveAg(alvo.a)===chaveIt(it) ? 'É o mesmo remédio da sua agenda. ' : 'Atenção, este não é o remédio da hora. ';
+    if(alvo) pre = certo ? 'É o mesmo remédio da sua agenda. ' : 'Atenção, este não é o remédio da hora. ';
     falar(pre+textoFala(it)+(!alvo&&!ag?' Se quiser, toque em colocar na minha agenda.':''));
     rolar($('#resBox'));
   }
 }
 
 /* ---------- tela AGENDA ---------- */
+/* muda os horários da rotina e leva junto os remédios marcados naquele momento */
+function mudarRotina(nova){
+  const antes=Object.assign({},ROTINA_PADRAO,S.rotina||{});
+  S.agenda.forEach(a=>{ if(!a.mom) return;
+    Object.entries(Object.assign({},a.mom)).forEach(([h,k])=>{ const nh=nova[k]; if(!nh||nh===h) return;
+      a.horarios=[...new Set(a.horarios.map(x=>x===h?nh:x))].sort();
+      if(a.qtd&&a.qtd[h]!==undefined){ a.qtd[nh]=a.qtd[h]; delete a.qtd[h]; }
+      delete a.mom[h]; a.mom[nh]=k; }); });
+  S.rotina=Object.assign(antes,nova); save(); agendarAlarmes(false); renderAgenda();
+  toast('Pronto. Horários da rotina salvos.'); falar('Pronto. Os lembretes foram mudados para os novos horários.');
+}
 function renderAgenda(){
   const itens=S.agenda.map(a=>`<div class="agenda-item">
-    <div class="now-head"><h3><button class="fala" data-fala="ag:${a.id}">${dotA(a)}${esc(med(a).nome)} ${esc(a.dose)}</button></h3><button class="linkbtn" data-del="${a.id}">Remover</button></div>
-    <div class="medlinha">${fotoDe(a)}<div><p class="muted small">${esc(med(a).apelido)}${uniforme(a)?' · '+esc(a.como):''}</p>
-    <div class="chips">${a.horarios.map(h=>`<span class="chip">${h}${uniforme(a)?'':' · '+esc(comoEm(a,h))}</span>`).join('')}</div></div></div>
-    <button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button></div>`).join('');
+    <div class="medlinha">${a.foto?fotoDe(a):dotA(a)}<div style="min-width:0"><h3><button class="fala" data-fala="ag:${a.id}">${esc(med(a).nome)} ${esc(a.dose)}</button></h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
+    <ul class="ag-mom">${a.horarios.map(h=>{ const m=momentoDe(h); return `<li>${ICO[m.k]}${esc((a.mom&&a.mom[h])?MOM[a.mom[h]].nome:m.nome)} · ${h}<span>— ${esc(comoEm(a,h))}</span></li>`; }).join('')}</ul>
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button><button class="linkbtn" data-del="${a.id}">Remover</button></div></div>`).join('');
   const opts=Object.entries(INFO).map(([k,v])=>`<option value="${k}">${v.nome} (${v.apelido})</option>`).join('');
   $('#view-agenda').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
-    <h2>${S.pessoa?'Agenda de '+esc(S.pessoa):'Minha agenda'}</h2>
-    <button class="btn btn-pill" data-go="ler" data-scan="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Adicionar lendo a caixa</button>
+    <h2>${S.pessoa?'Remédios de '+esc(S.pessoa):'Meus remédios'}</h2>
+    <button class="btn btn-pill" data-go="ler" data-scan="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Colocar remédio (ler a caixa)</button>
     ${itens || '<p class="msg info">Nenhum remédio na agenda.</p>'}
+    <form class="form" id="fRot"><h3>Horários da minha rotina</h3>
+      <p class="small muted">O lembrete toca nestas horas. Mude se você come ou dorme em outro horário.</p>
+      ${['cafe','almoco','jantar','dormir'].map(k=>`<div class="field" style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center"><span class="mom-ico">${ICO[k]}</span><label for="rot-${k}"><b>${MOM[k].nome}</b></label><input type="time" id="rot-${k}" value="${rot(k)}" style="width:auto"></div>`).join('')}
+      <button class="btn btn-main" type="submit">Salvar horários</button></form>
     <details class="demo"><summary>Adicionar sem a caixa</summary>
     <form class="form" id="fAg" style="margin-top:12px;border:0;padding:0">
       <div class="field"><label class="label" for="agP">Remédio</label><select id="agP">${opts}</select></div>
@@ -1072,6 +1263,7 @@ function renderAgenda(){
       <button class="btn btn-ghost" type="button" data-termos="1">Privacidade e termos de uso</button>
       <p class="hint" id="zerarMsg"></p></div>
   </div>`;
+  $('#fRot').onsubmit=e=>{ e.preventDefault(); const nova={}; ['cafe','almoco','jantar','dormir'].forEach(k=>nova[k]=$('#rot-'+k).value||rot(k)); mudarRotina(nova); };
   document.querySelectorAll('[data-foto]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.foto); if(a) tirarFoto(f=>{ a.foto=f; save(); renderAgenda(); toast('Pronto. Foto salva.'); }); });
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ S.agenda=S.agenda.filter(a=>a.id!==b.dataset.del); save(); agendarAlarmes(false); render(); toast('Removido da agenda.'); });
   let fAgOk='';
@@ -1100,6 +1292,29 @@ function renderAgenda(){
 }
 
 /* ---------- tela FAMÍLIA ---------- */
+const DIAS_CURTO=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], DIAS_DE=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+function semana(){
+  const hoje=new Date(), agora=toMin(nowHM());
+  const cols=MOMENTOS.filter(m=>S.agenda.some(a=>a.horarios.some(h=>momentoDe(h).k===m.k)));
+  const linhas=[], faltas=[]; let tot=0, ok=0;
+  for(let i=6;i>=0;i--){
+    const d=new Date(hoje); d.setDate(d.getDate()-i); const k=dayKey(d);
+    const cel=cols.map(m=>{
+      const doses=[]; S.agenda.forEach(a=>a.horarios.forEach(h=>{ if(momentoDe(h).k===m.k) doses.push({a,h}); }));
+      const vencidas=doses.filter(x=>i>0||toMin(x.h)<=agora);
+      if(!doses.length) return {c:'',t:''};
+      if(!vencidas.length) return {c:'futuro',t:doses.map(x=>x.h).sort()[0]};
+      const feitas=vencidas.filter(x=>S.log.some(l=>l.dia===k&&l.ag===x.a.id&&l.h===x.h)).length;
+      tot+=vencidas.length; ok+=feitas;
+      if(feitas===vencidas.length) return {c:'ok'};
+      faltas.push(`${m.nome.toLowerCase()} ${i===0?'de hoje':'de '+DIAS_DE[d.getDay()]}`);
+      return {c: feitas? 'parte':'falta'};
+    });
+    linhas.push({nome: i===0?'Hoje':DIAS_CURTO[d.getDay()], cel});
+  }
+  return {cols,linhas,faltas,tot,ok,pct: tot?Math.round(ok/tot*100):0};
+}
+function textoSemana(w){ return `Resumo da semana de ${nomeP()}: ${w.ok} de ${w.tot} doses tomadas (${w.pct}%). ${w.faltas.length?'Faltou: '+listaFala(w.faltas)+'.':'Não faltou nenhuma.'}`; }
 function renderFamilia(){
   const hoje=new Date(), dias=[]; let tot=0, ok=0;
   for(let i=6;i>=0;i--){
@@ -1119,14 +1334,23 @@ function renderFamilia(){
     return `<div class="bubble alert"><b>Alerta:</b> ${esc(t)}<time>${addMin(d.h,30)}</time><button class="wa-mini" data-wa="${msgs.length-1}">Enviar no WhatsApp</button></div>`; }).join('');
   const feed=S.feed.slice(-12).map(f=>{ msgs.push((f.t==='alert'?'Alerta: ':'')+f.txt);
     return `<div class="bubble ${f.t==='alert'?'alert':''}">${f.t==='alert'?'<b>Alerta:</b> ':''}${esc(f.txt)}<time>${f.em}</time><button class="wa-mini" data-wa="${msgs.length-1}">Enviar no WhatsApp</button></div>`; }).join('');
+  const w=semana();
+  const grade = w.cols.length ? `<div class="form"><h3>Semana de ${esc(nomeP())}</h3>
+      <div class="semana" style="grid-template-columns:52px repeat(${w.cols.length},minmax(0,1fr))" role="table" aria-label="Doses dos últimos 7 dias">
+        <span></span>${w.cols.map(m=>`<span class="hd" title="${esc(m.nome)}">${ICO[m.k]}<span class="small" style="display:block;color:var(--fg)">${esc(m.nome.split(' ')[0])}</span></span>`).join('')}
+        ${w.linhas.map(l=>`<span class="d">${l.nome}</span>${l.cel.map(c=>`<span class="c ${c.c}" aria-label="${c.c==='ok'?'tomado':c.c==='falta'?'não tomado':c.c==='parte'?'tomado em parte':c.c==='futuro'?'mais tarde':'sem remédio'}">${c.c==='ok'?CHECK:c.c==='falta'?XIS:c.c==='parte'?'½':c.c==='futuro'?c.t:''}</span>`).join('')}`).join('')}
+      </div>
+      <p><b>${w.ok} de ${w.tot}</b> doses tomadas na semana.${w.faltas.length?' Faltou: '+esc(listaFala(w.faltas))+'.':' Não faltou nenhuma.'}</p>
+      <button class="btn btn-wa" id="bWaResumo">${WA_SVG}Mandar resumo no WhatsApp</button></div>` : '';
   $('#view-familia').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
-    <h2>O que a família recebe</h2>
+    <h2>Para a família</h2>
+    ${grade}
     <form class="form" id="fWa"><label class="label" for="waNum">WhatsApp de ${esc(S.familiar||'quem recebe os avisos')}</label>
  ${botaoContato('famCont')}<div id="famFones" class="stack" hidden></div>
       <div class="manual"><input id="waNum" inputmode="tel" autocomplete="tel" placeholder="DDD + número, ex.: 81 99999-0000" value="${esc(S.whats||'')}"><button class="btn btn-main" type="submit">Salvar</button></div>
       <p class="hint">Cada mensagem abre o WhatsApp já escrita. É só tocar em enviar. Sem número, o WhatsApp pergunta para quem mandar.</p></form>
     <div class="phone">
-      <div class="phone-head"><span class="avatar">RF</span><div><b>Remédio Falado</b><div class="small">para ${esc(S.familiar||'a família')}</div></div></div>
+      <div class="phone-head"><span class="avatar" style="background:var(--accent);color:var(--accent-ink)">RF</span><div><b>Remédio Falado</b><div class="small">para ${esc(S.familiar||'a família')}</div></div></div>
       <div class="feed" id="feed">
         <div class="bubble sum"><span class="label">Resumo dos últimos 7 dias</span>
           <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="stat">${ok} de ${tot}</span><span class="muted small">doses confirmadas (${pct}%)</span></div>
@@ -1135,7 +1359,6 @@ function renderFamilia(){
         ${!feed&&!alertas?'<div class="bubble">Quando a pessoa apertar TOMEI, a confirmação aparece aqui.</div>':''}
       </div>
     </div>
-    <button class="btn btn-wa" id="bWaResumo">${WA_SVG}Enviar resumo da semana</button>
     <button class="btn btn-ghost" id="bEsq">Simular dose esquecida</button>
     <p class="hint">Nesta versão, o envio pelo WhatsApp precisa de um toque. O aviso automático, sem toque, fica para a versão com servidor.</p>
   </div>`;
@@ -1143,7 +1366,7 @@ function renderFamilia(){
   if($('#famCont')) $('#famCont').onclick=()=>escolherContato('#famFones',(n,f)=>{ if(n) S.familiar=n; if(f) S.whats=f; save(); renderFamilia(); toast('Contato salvo.'); falar(n?n+' vai receber os avisos.':'Contato salvo.'); });
   $('#fWa').onsubmit=e=>{ e.preventDefault(); S.whats=$('#waNum').value.trim(); save(); toast(S.whats?'Número salvo.':'Número apagado.'); };
   document.querySelectorAll('[data-wa]').forEach(b=>b.onclick=()=>enviarWhats(msgs[+b.dataset.wa]));
-  $('#bWaResumo').onclick=()=>{ const r=resumoSemana(); enviarWhats(`resumo dos últimos 7 dias de ${nomeP()}: ${r.ok} de ${r.tot} doses confirmadas (${r.pct}%).`); };
+  const bwr=$('#bWaResumo'); if(bwr) bwr.onclick=()=>enviarWhats(textoSemana(w));
   $('#bEsq').onclick=()=>{ const a=S.agenda[0]; if(!a) return; S.feed.push({t:'alert',em:nowHM(),txt:`${nomeP()} não confirmou ${med(a).nome} ${a.dose} das ${a.horarios[a.horarios.length-1]}. Passaram 30 minutos.`}); save(); renderFamilia(); };
 }
 
@@ -1295,25 +1518,33 @@ function renderPostos(){
 }
 
 /* ---------- alarme ---------- */
-function abrirAlarme(d){
-  const i=med(d.a), el=$('#alarm');
+function abrirAlarmeGrupo(h,teste){
+  let pend=dosesHoje().filter(d=>d.h===h && !d.reg);
+  if(!pend.length && teste) pend=dosesHoje().filter(d=>d.h===h);
+  if(!pend.length) return;
+  const m=momentoDe(h), el=$('#alarm'), um=pend.length===1, i=med(pend[0].a);
+  const titulo = um ? 'Hora do '+i.apelido : 'Hora dos remédios '+m.de;
   el.innerHTML=`<div class="in">
     <svg class="bell" viewBox="0 0 24 24" width="72" height="72" style="margin:0 auto" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
-    <span class="hour">${d.h}</span><h2 id="alarmTitle">Hora do ${esc(i.apelido)}</h2>${fotoDe(d.a,'foto-g')}
-    <p>${esc(i.nome)} ${esc(d.a.dose)} · ${esc(comoEm(d.a,d.h))}</p>
-    <button class="btn btn-ok" id="alTomei">TOMEI</button>
+    <span class="hour">${h}</span><h2 id="alarmTitle">${esc(titulo)}</h2>
+    ${um && pend[0].a.foto ? fotoDe(pend[0].a,'foto-g') : ''}
+    <div class="cx" style="text-align:left"><div class="cx-meds">${pend.map(d=>medLinha(d,false)).join('')}</div></div>
+    <button class="btn btn-ok" id="alTomei">${CHECK}${um?'TOMEI':'Tomei todos'}</button>
     <div class="btn-row"><button class="btn btn-ghost" id="alOuvir">Ouvir de novo</button><button class="btn btn-ghost" id="alDepois">Daqui a 10 min</button></div></div>`;
   el.hidden=false;
-  const frase=`${vocativo()}hora do ${i.apelido}. ${i.nome}, ${comoEm(d.a,d.h)}. Quando tomar, aperte o botão verde.`;
+  const frase = um
+    ? `${vocativo()}hora do ${i.apelido}. ${i.nome}, ${comoEm(pend[0].a,h)}. Quando tomar, aperte o botão verde.`
+    : `${vocativo()}hora dos remédios ${m.de}: ${listaFala(pend.map(d=>med(d.a).nome+', '+comoEm(d.a,d.h)))}. Quando tomar, aperte o botão verde.`;
   falar(frase);
-  $('#alTomei').onclick=()=>{ el.hidden=true; tomar(d.a,d.h,'alarme'); };
+  $('#alTomei').onclick=()=>{ el.hidden=true; tomarVarios(pend,'alarme'); };
   $('#alOuvir').onclick=()=>ouvir(frase);
-  $('#alDepois').onclick=()=>{ el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.'); setTimeout(()=>abrirAlarme(d),600000); };
+  $('#alDepois').onclick=()=>{ el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.'); setTimeout(()=>abrirAlarmeGrupo(h),600000); };
   $('#alTomei').focus();
 }
+function abrirAlarme(d){ abrirAlarmeGrupo(d.h,true); }
 setInterval(()=>{
   const k=dayKey(new Date()), hm=nowHM();
-  dosesHoje().forEach(d=>{ const id=k+d.a.id+d.h; if(d.h===hm && !d.reg && !S.tocados[id]){ S.tocados[id]=1; save(); abrirAlarme(d); } });
+  const id=k+'g'+hm; if(dosesHoje().some(d=>d.h===hm && !d.reg) && !S.tocados[id] && $('#alarm').hidden){ S.tocados[id]=1; save(); abrirAlarmeGrupo(hm); }
   if(!$('#view-hoje').hidden) renderHoje();
 },30000);
 
@@ -1343,7 +1574,7 @@ function renderBV(){
   const el=$('#bv'), dots=`<p class="passo" style="text-align:center;margin:0">Passo ${passo} de 3</p><div class="bv-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=passo?'on':''}"></i>`).join('')}</div>`;
   const ouvir=`<button class="btn btn-ghost" id="bvOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>`;
   let h='';
-  if(passo===0) h=`<div class="bv-logo"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8M30.5 13.5c3.5 3.5 3.5 9.5 0 13" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+  if(passo===0) h=`<div class="bv-logo"><svg class="bv-logo-svg" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <h2 id="bvT">Olá! Eu sou o Remédio Falado</h2>
     <p>Eu leio a caixa do remédio, <b>falo para que serve</b> e <b>lembro a hora de tomar</b>.</p>
     <p class="small muted">Sou um lembrete: não indico nem mudo dose. Siga sempre a receita do médico.</p>
@@ -1353,7 +1584,7 @@ function renderBV(){
     <div class="field"><p class="label">Modo calmo</p>${segCalmo()}<p class="hint" style="margin:0">Sem animações e a voz só fala quando você pedir.</p></div>
     <button class="btn btn-ghost" id="bvDemo" type="button">Ver demonstração</button>
     <div class="credito" role="contentinfo">
-      <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Squad 4</b></p><p class="credito-esc">CESAR School · 2026</p></div>
     </div>`;
   if(passo===1) h=`${dots}<h2 id="bvT">Qual é o seu nome?</h2>

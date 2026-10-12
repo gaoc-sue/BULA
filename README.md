@@ -2,11 +2,25 @@
 
 App Android para idosos com baixa visão ou pouca leitura. A pessoa aponta o celular para a caixa do remédio e o app fala o que é, para que serve e como tomar. Também lembra o horário com alarme, confirma pela câmera se a caixa é a certa e mostra o que a família recebe.
 
+## Design baseado em estudos
+
+O app funciona como uma **caixinha de remédios** digital: a tela Hoje mostra os momentos do dia (café da manhã, almoço, tarde, jantar, antes de dormir), cada um com seus remédios e um único botão "Tomei os do almoço".
+
+| Decisão | Por quê |
+|---|---|
+| Doses amarradas a momentos da rotina, não só a horários | Pistas de rotina dão horários mais regulares e ajudam a formar o hábito (Valenzuela-Beltrán et al., 2022, *Healthcare*; van de Vijver et al., 2023, *Frontiers in Psychology*) |
+| Cadastro com uma pergunta por tela, barra de progresso e "Voltar" escrito | Idosos se perderam em apps de remédio com menus e submenus e não entenderam "+" e "cancelar" (Grindrod et al., 2014, *JMIR mHealth*) |
+| Botões principais de 88 px e demais de 72 px (~14 mm e ~11 mm) | Alvos de ~14 mm tiveram o melhor desempenho com idosos (Leitão e Silva, 2012) |
+| Fundo papel, tinta preta, destaque terracota, verde só para "tomado" | O NIA/NLM recomenda evitar azul, amarelo e verde lado a lado e usar texto escuro em fundo claro; contraste de texto ≥ 4,5:1 e de bordas ≥ 3:1 (WCAG 2.2) |
+| Ícone + texto + voz em tudo, estado escrito (não só pela cor) | 51% dos brasileiros de 50 a 64 anos são analfabetos funcionais (Inaf 2024) |
+| "Semana de…" para a família, com resumo pronto para o WhatsApp | Medir e devolver o padrão de doses é uma das recomendações de Valenzuela-Beltrán et al. (2022) |
+
 ## O que o app faz
 
 - **Que remédio é este?** Lê o código de barras da caixa (foto ou câmera ao vivo) e consulta a lista oficial de preços da CMED/Anvisa, com mais de 27 mil códigos, sem precisar de internet.
 - **Explicação em voz alta**, em português simples. Todo remédio da lista ganha uma frase geral de "para que serve", a partir da classe terapêutica da Anvisa (`scripts/grupos.py`, revisável). Os 10 de pressão e diabetes têm texto completo: losartana, captopril, enalapril, hidroclorotiazida, atenolol, propranolol, anlodipino, espironolactona, metformina e glibenclamida.
-- **Ler e colocar na agenda:** depois de ler a caixa, o botão "Colocar na minha agenda" mostra 3 passos numerados: horários, quanto tomar em cada horário (ex.: 1 comprimido de manhã e 2 no jantar) e "Conferi com a receita". A pessoa copia da receita do médico; o app não sugere dose.
+- **Ler e colocar na agenda:** depois de ler a caixa, 4 perguntas, uma por tela: em que momento a receita manda tomar (café, almoço, jantar, dormir ou outro horário), quanto em cada momento, conferir com a receita (com total do dia) e foto da caixa (opcional). A pessoa copia da receita do médico; o app não sugere dose.
+- **Horários da rotina:** em Agenda, a pessoa muda a hora do café, almoço, jantar e de dormir, e os lembretes mudam juntos.
 - **Total do dia e aviso de dose:** o app soma o que foi marcado ("4 comprimidos de 500 mg = 2.000 mg por dia. Está igual à receita?"). Nos 10 remédios com texto próprio, se o total passar da maior dose por dia citada na bula, aparece um aviso pedindo para conferir a receita e, na dúvida, perguntar ao farmacêutico. O aviso não bloqueia (o médico pode receitar diferente) e só pede uma confirmação a mais. Os limites estão em `MAXDIA` no `www/index.html`, com as bulas usadas como fonte.
 - **Bula completa:** botão para ler o QR code da caixa, que abre a bula digital oficial (Lei 14.338/2022), mostrando antes qual site vai abrir; e link para a bula no Bulário Eletrônico da Anvisa.
 - **Foto da caixa (opcional):** dá para tirar uma foto da caixa no cadastro ou depois, na Agenda. A foto aparece na tela Hoje, no alarme e na agenda, e fica guardada só no celular.
