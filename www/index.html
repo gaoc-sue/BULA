@@ -70,7 +70,7 @@ button,input,select{font:inherit;color:inherit}
 .st-ok{background:var(--ok-soft);color:var(--ok)} .st-late{background:var(--warn-soft);color:var(--warn)}
 .st-next{background:var(--sunk);color:var(--fg)} .st-miss{background:var(--bad-soft);color:var(--bad)}
 .medname{font-size:1.45rem;font-weight:700}
-.dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle;margin-right:8px;border:2px solid var(--fg)}
+.dot{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;vertical-align:middle;margin-right:10px;border:2px solid var(--surface);box-shadow:0 0 0 2px var(--fg);color:#FFFFFF;font-weight:700;font-size:16px;line-height:1;flex:none}
 
 /* lista do dia */
 .day{display:flex;flex-direction:column;gap:0;background:var(--surface);border-radius:var(--r);border:1px solid var(--line)}
@@ -236,6 +236,44 @@ nav.tabs button{font-size:14px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .dist{font-weight:700;color:var(--accent)}
 .fala.medname{font-size:1.6rem;font-weight:700;line-height:1.2;display:block}
+
+/* ===== Paleta: cada cor tem um significado fixo =====
+   amarelo = ação principal (ler o remédio) · azul-marinho = navegar e confirmar
+   verde = tomei / está certo · laranja = atrasado · vermelho = remédio errado, alerta
+   fundo quase branco e neutro, cartões brancos, bordas visíveis */
+:root{ --bg:#F6F5F1; --surface:#FFFFFF; --sunk:#ECEBE6; --fg:#14181D; --muted:#3B424A; --line:#BDBBB3;
+  --accent:#1F3A6B; --accent-ink:#FFFFFF; --pill:#FFD23F; --pill-ink:#1B1A10;
+  --ok:#1E7A3C; --ok-soft:#DFF2E4; --warn:#A85400; --warn-soft:#FCEBD6; --bad:#B42318; --bad-soft:#FBE1DE; --chat:#E4ECF7 }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#111418; --surface:#1A1E24; --sunk:#232830; --fg:#F1F3F5; --muted:#C5CBD3; --line:#3A414B;
+  --accent:#A9C4FF; --accent-ink:#0B1A33; --ok:#63D28C; --ok-soft:#173826; --warn:#F2B654; --warn-soft:#3A2C12; --bad:#FF8A7E; --bad-soft:#3D1A17; --chat:#1E2A3D; color-scheme:dark }}
+:root[data-theme="dark"]{ --bg:#111418; --surface:#1A1E24; --sunk:#232830; --fg:#F1F3F5; --muted:#C5CBD3; --line:#3A414B;
+  --accent:#A9C4FF; --accent-ink:#0B1A33; --ok:#63D28C; --ok-soft:#173826; --warn:#F2B654; --warn-soft:#3A2C12; --bad:#FF8A7E; --bad-soft:#3D1A17; --chat:#1E2A3D; color-scheme:dark }
+:root[data-contraste="1"]{ --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F1F1F1; --fg:#000000; --muted:#111111;
+  --accent:#0B2550; --accent-ink:#FFFFFF; --ok:#0A5A25; --ok-soft:#E3F3E7; --warn:#6A3C00; --warn-soft:#FFF1D6;
+  --bad:#9E1B10; --bad-soft:#FFE5E1; --line:#000000; --chat:#EAF0FA; color-scheme:light }
+.btn-ok{background:var(--ok);color:#FFFFFF}
+:root:not([data-theme="light"]) .btn-ok{color:var(--bg)}
+@media (prefers-color-scheme: light){ :root .btn-ok{color:#FFFFFF} }
+:root[data-theme="light"] .btn-ok{color:#FFFFFF}
+.state.st-late{border:2px solid var(--warn)}
+.msg.bad{border:2px solid var(--bad)}
+.foto{width:64px;height:64px;border-radius:12px;object-fit:cover;border:2px solid var(--line);flex:none;background:var(--sunk)}
+.foto-g{width:100%;max-width:240px;aspect-ratio:1;border-radius:16px;object-fit:cover;border:2px solid var(--line);align-self:center}
+.medlinha{display:flex;align-items:center;gap:12px}
+.passo{font-weight:700;color:var(--accent);font-size:.95rem}
+#termosT:focus{outline:none}
+.linkbtn[data-termos],.linkbtn[data-foto]{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.dose{grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px}
+.dose .dot{margin-right:0}
+
+/* ===== Modo calmo: sem animação, uma cor de destaque, voz só ao tocar em Ouvir ===== */
+:root[data-calmo="1"] *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+:root[data-calmo="1"] .btn-pill{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+:root[data-calmo="1"] .btn-wa{background:var(--accent)}
+:root[data-calmo="1"] .wa-bar,:root[data-calmo="1"] .free,:root[data-calmo="1"] .receita,:root[data-calmo="1"] .warnbox{background:var(--sunk)}
+:root[data-calmo="1"] .state{background:var(--sunk);color:var(--fg)}
+:root[data-calmo="1"] .alarm{background:var(--surface);color:var(--fg)}
+:root[data-calmo="1"] .alarm .btn-ghost{border-color:var(--line);color:var(--fg)}
 </style>
 </head>
 <body>
@@ -260,9 +298,10 @@ nav.tabs button{font-size:14px}
     <p><b>O Remédio Falado é um lembrete.</b> Não indica nem muda dose e não substitui o médico ou o farmacêutico. Siga sempre a receita. Textos de demonstração, ainda sem revisão de farmacêutico.</p>
     <div class="credito" role="contentinfo">
       <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-      <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Gaoc</b> · Squad 4</p><p class="credito-esc">CESAR School · 2026</p></div>
+      <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Squad 4</b></p><p class="credito-esc">CESAR School · 2026</p></div>
     </div>
-    <p class="direitos">© 2026 Gaoc · Squad 4 · CESAR School. Todos os direitos reservados.</p>
+    <p><button class="linkbtn" type="button" data-termos="1">Privacidade e termos de uso</button></p>
+    <p class="direitos">© 2026 Squad 4 · CESAR School. Todos os direitos reservados.</p>
   </footer>
 </div>
 
@@ -277,6 +316,23 @@ nav.tabs button{font-size:14px}
 </nav>
 
 <div class="bv" id="bv" hidden role="dialog" aria-modal="true" aria-label="Boas-vindas"></div>
+<div class="bv" id="termos" hidden role="dialog" aria-modal="true" aria-labelledby="termosT" style="z-index:12"><div class="bv-in-wrap" style="justify-content:flex-start">
+    <h2 id="termosT">Privacidade e termos de uso</h2>
+    <p class="small muted">Remédio Falado · versão de outubro de 2026</p>
+    <div class="block"><p class="label">1. É um lembrete</p><p>O Remédio Falado lembra a hora do remédio e lê a caixa. <b>Não indica, não muda dose e não substitui o médico ou o farmacêutico.</b> Siga sempre a receita do médico.</p></div>
+    <div class="block"><p class="label">2. Seus dados ficam no seu celular</p><p>Nome, remédios, horários, fotos da caixa e o contato da família ficam guardados <b>só neste aparelho</b>. Não tem cadastro, não tem servidor e não tem propaganda. O Squad 4 não recebe nenhum dado seu.</p></div>
+    <div class="block"><p class="label">3. Para que o app pede cada permissão</p>
+      <p><b>Câmera:</b> ler o código de barras e tirar a foto da caixa, só quando você toca no botão.<br>
+      <b>Notificações e alarmes:</b> avisar a hora do remédio, mesmo com o app fechado.<br>
+      <b>Contatos:</b> só quando você toca em "escolher da agenda". O app guarda apenas o nome e o número que você escolher.<br>
+      <b>Localização:</b> só quando você toca em "Farmácias perto de mim". Ela é usada no celular para calcular a distância e não é enviada.<br>
+      <b>Internet:</b> abrir o mapa, a bula oficial e o WhatsApp. A voz mais natural do Google também usa a internet para falar o texto.</p></div>
+    <div class="block"><p class="label">4. Aviso pelo WhatsApp</p><p>O app só prepara a mensagem. <b>Quem decide e envia é você.</b> Depois de enviada, ela segue as regras do WhatsApp.</p></div>
+    <div class="block"><p class="label">5. Informações sobre remédios</p><p>Vêm da lista oficial de preços CMED/Anvisa e das bulas. Podem ter erros ou estar desatualizadas. Confira sempre com a receita e a bula. Em caso de dúvida, pergunte ao farmacêutico.</p></div>
+    <div class="block"><p class="label">6. Como apagar seus dados</p><p>Em Agenda, toque em "Apagar tudo e recomeçar". Desinstalar o app também apaga tudo.</p></div>
+    <div class="block"><p class="label">7. Quem fez</p><p>Protótipo acadêmico do Squad 4 · CESAR School (Recife/PE), 2026. Os dados são tratados conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).</p></div>
+    <button class="btn btn-ghost" id="termosOuvir" type="button">Ouvir o resumo</button>
+    <button class="btn btn-main" id="termosFechar" type="button">Entendi</button></div></div>
 <div class="alarm" id="alarm" hidden role="alertdialog" aria-labelledby="alarmTitle"></div>
 <div class="toast" id="toast" hidden role="status"></div>
 <input type="file" id="photo" accept="image/*" capture="environment" hidden>
@@ -308,34 +364,34 @@ const TTS = plug('TextToSpeech'), NOTIF = plug('LocalNotifications'), SCAN = plu
 
 /* ---------- textos simples por princípio ativo (demonstração) ---------- */
 const INFO = {
-  losartana:{nome:'Losartana',apelido:'remédio da pressão',cor:'#2F6FDB',
+  losartana:{nome:'Losartana',apelido:'remédio da pressão',cor:'#1F5FBF',
     serve:'Controla a pressão alta. Ajuda a proteger o coração e os rins.',
     cuidado:'Não pare de tomar mesmo se se sentir bem. A pressão alta quase nunca avisa. Se sentir tontura, levante devagar e avise o médico.'},
-  captopril:{nome:'Captopril',apelido:'remédio da pressão',cor:'#7A4FD0',
+  captopril:{nome:'Captopril',apelido:'remédio da pressão',cor:'#B8327A',
     serve:'Controla a pressão alta.',
     cuidado:'Pode dar uma tosse seca. Se acontecer, avise o médico. Não pare sozinho.'},
-  enalapril:{nome:'Enalapril',apelido:'remédio da pressão',cor:'#C2410C',
+  enalapril:{nome:'Enalapril',apelido:'remédio da pressão',cor:'#7A4A1E',
     serve:'Controla a pressão alta e ajuda o coração.',
     cuidado:'Pode dar uma tosse seca. Se acontecer, avise o médico. Não pare sozinho.'},
-  hidroclorotiazida:{nome:'Hidroclorotiazida',apelido:'remédio da pressão que faz urinar',cor:'#0E9F9F',
+  hidroclorotiazida:{nome:'Hidroclorotiazida',apelido:'remédio da pressão que faz urinar',cor:'#2E7D32',
     serve:'Tira o excesso de água do corpo e baixa a pressão.',
     cuidado:'Faz ir mais vezes ao banheiro. Por isso costuma ser tomado de manhã. Não pare sem falar com o médico.'},
-  atenolol:{nome:'Atenolol',apelido:'remédio da pressão e do coração',cor:'#B83280',
+  atenolol:{nome:'Atenolol',apelido:'remédio da pressão e do coração',cor:'#222222',
     serve:'Baixa a pressão e deixa o coração bater mais calmo.',
     cuidado:'Nunca pare de uma vez. Parar de repente pode fazer mal ao coração. Fale antes com o médico.'},
-  propranolol:{nome:'Propranolol',apelido:'remédio da pressão e do coração',cor:'#9D4EDD',
+  propranolol:{nome:'Propranolol',apelido:'remédio da pressão e do coração',cor:'#D9730D',
     serve:'Baixa a pressão e deixa o coração bater mais calmo.',
     cuidado:'Nunca pare de uma vez. Parar de repente pode fazer mal ao coração. Fale antes com o médico.'},
-  anlodipino:{nome:'Anlodipino',apelido:'remédio da pressão',cor:'#D97706',
+  anlodipino:{nome:'Anlodipino',apelido:'remédio da pressão',cor:'#D9730D',
     serve:'Relaxa os vasos do sangue e baixa a pressão.',
     cuidado:'Pode inchar um pouco os tornozelos. Se acontecer, avise o médico. Não pare sozinho.'},
-  espironolactona:{nome:'Espironolactona',apelido:'remédio que faz urinar',cor:'#0891B2',
+  espironolactona:{nome:'Espironolactona',apelido:'remédio que faz urinar',cor:'#1F5FBF',
     serve:'Tira o excesso de água do corpo. É usado para a pressão e para o coração.',
     cuidado:'Não pare sem falar com o médico. Pergunte ao médico antes de usar sal light ou vitamina com potássio.'},
-  metformina:{nome:'Metformina',apelido:'remédio do açúcar no sangue',cor:'#15803D',
+  metformina:{nome:'Metformina',apelido:'remédio do açúcar no sangue',cor:'#2E7D32',
     serve:'Ajuda a controlar o açúcar no sangue, no diabetes.',
     cuidado:'Tome junto com a comida ou logo depois, para não incomodar o estômago. Não pare mesmo se se sentir bem.'},
-  glibenclamida:{nome:'Glibenclamida',apelido:'remédio do açúcar no sangue',cor:'#65A30D',
+  glibenclamida:{nome:'Glibenclamida',apelido:'remédio do açúcar no sangue',cor:'#B8327A',
     serve:'Faz o corpo baixar o açúcar no sangue, no diabetes.',
     cuidado:'Não pule refeição depois de tomar. Se sentir tremor, suor frio ou fraqueza, coma algo doce e chame alguém.'}
 };
@@ -352,8 +408,12 @@ function falaHora(hm){ const [h,m]=hm.split(':').map(Number); return m? `${h} e 
 function listaFala(arr){ return arr.length<2? arr.join('') : arr.slice(0,-1).join(', ')+' e '+arr[arr.length-1]; }
 function titulo(s){ return s.toLowerCase().replace(/(^|\s)\S/g, c=>c.toUpperCase()); }
 
-const GENERICO_COR='#8A8F8C';
-const PALETA=['#2F6FDB','#D97706','#15803D','#B83280','#0891B2','#7A4FD0','#C2410C','#65A30D'];
+const GENERICO_COR='#5C6670';
+const PALETA=['#1F5FBF','#D9730D','#B8327A','#2E7D32','#7A4A1E','#222222'];
+const COR_ANTIGA={'#2F6FDB':'#1F5FBF','#D97706':'#D9730D','#15803D':'#2E7D32','#B83280':'#B8327A','#0891B2':'#1F5FBF','#7A4FD0':'#B8327A','#C2410C':'#7A4A1E','#65A30D':'#2E7D32'};
+function corDe(a){ if(a && INFO[a.principio]) return INFO[a.principio].cor; const c=(a&&a.cor)||GENERICO_COR; return COR_ANTIGA[c]||c; }
+function bolinha(cor,nome){ return `<span class="dot" style="background:${cor}" aria-hidden="true">${esc(String(nome||'?').trim()[0]||'?').toUpperCase()}</span>`; }
+function novaCor(){ const usadas=S.agenda.map(corDe); return PALETA.find(c=>!usadas.includes(c)) || PALETA[S.agenda.length%PALETA.length]; }
 const cap = s => s ? s[0].toUpperCase()+s.slice(1) : '';
 function nomeSub(s){ const small={de:1,da:1,do:1,das:1,dos:1,e:1}; return String(s).toLowerCase().split(';').map(p=>p.trim().split(/\s+/).map((w,i)=>i&&small[w]?w:cap(w)).join(' ')).join(' + '); }
 /* remédio de um item da agenda: os 10 com texto próprio ou qualquer um lido da caixa */
@@ -363,7 +423,7 @@ function med(a){
 }
 const chaveAg = a => a.chave || a.principio;
 const chaveIt = it => it.principio || ('sub:'+it.substancia);
-function dotA(a){ return `<span class="dot" style="background:${med(a).cor}" aria-hidden="true"></span>`; }
+function dotA(a){ return bolinha(corDe(a), med(a).nome); }
 const nomeP = () => S.pessoa || 'Seu familiar';
 const vocativo = () => S.pessoa ? S.pessoa+', ' : '';
 const nomeFam = () => S.familiar || 'a família';
@@ -409,7 +469,7 @@ try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){ S=null; }
 const primeiroUso = !S;
 if(!S) S=novo();
 if(S.demo===undefined) S.demo = S.pessoa==='Dona Lúcia';
-function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){ if(typeof toast==='function') toast('A memória do app está cheia. Remova fotos ou remédios antigos.'); } }
 /* alarmes de verdade no Android: uma notificação diária por horário da agenda */
 async function agendarAlarmes(pedir){
   if(!NOTIF) return;
@@ -436,31 +496,77 @@ topo();
 
 /* ---------- aparência: tamanho da letra e contraste (fica salvo neste aparelho) ---------- */
 const AP_KEY='remedio-falado-aparencia';
-let AP={escala:1,contraste:false};
+let AP={escala:1,contraste:false,calmo:false};
 try{ AP=Object.assign(AP, JSON.parse(localStorage.getItem(AP_KEY))||{}); }catch(e){}
 const ESCALAS=[[1,'Normal'],[1.15,'Grande'],[1.3,'Muito grande']];
+const rolar = el => el && el.scrollIntoView({behavior:AP.calmo?'auto':'smooth',block:'start'});
+const segCalmo = () => `<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-mcalmo="0" aria-pressed="${!AP.calmo}">Desligado</button><button type="button" data-mcalmo="1" aria-pressed="${!!AP.calmo}">Ligado</button></div>`;
 function aplicarAparencia(){ const r=document.documentElement; r.style.setProperty('--escala',AP.escala); if(AP.contraste) r.setAttribute('data-contraste','1'); else r.removeAttribute('data-contraste');
+  if(AP.calmo) r.setAttribute('data-calmo','1'); else r.removeAttribute('data-calmo');
   try{ localStorage.setItem(AP_KEY,JSON.stringify(AP)); }catch(e){} }
 aplicarAparencia();
 $('#bLetra').onclick=()=>{ const i=ESCALAS.findIndex(e=>e[0]===AP.escala); const n=ESCALAS[(i+1)%ESCALAS.length]; AP.escala=n[0]; aplicarAparencia(); toast('Letra: '+n[1]); render(); };
 
 /* ---------- voz ---------- */
-let voz=null;
-function pickVoice(){ const vs=speechSynthesis.getVoices(); voz = vs.find(v=>/pt[-_]BR/i.test(v.lang)) || vs.find(v=>/^pt/i.test(v.lang)) || null; }
-if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
-function falar(t){
-  if(TTS){ TTS.stop().catch(()=>{}).finally(()=>TTS.speak({text:t,lang:'pt-BR',rate:.9,pitch:1,volume:1,category:'playback'}).catch(()=>{
-    toast('Sem voz em português. Instale a voz do Google nas configurações.'); TTS.openInstall&&TTS.openInstall().catch(()=>{}); })); return; }
+/* vozes em português do Brasil disponíveis no celular; escolhe a mais natural */
+let VOZES=[];
+const natural = n => /network|neural|natural|online|wavenet|enhanced|premium/i.test(n);
+async function carregarVozes(){
+  let lista=[];
+  if(TTS){ try{ const r=await TTS.getSupportedVoices(); lista=(r.voices||[]).map((v,i)=>({i,name:v.name||v.voiceURI||('voz '+i),lang:String(v.lang||'').replace('_','-'),local:v.localService!==false})); }catch(e){} }
+  else if('speechSynthesis' in window){ lista=speechSynthesis.getVoices().map((v,i)=>({i,name:v.name,lang:v.lang,local:v.localService,ref:v})); }
+  VOZES=lista.filter(v=>/^pt-?BR/i.test(v.lang)||/pt-br|portugu[eê]s.*brasil/i.test(v.name));
+  if(!VOZES.length) VOZES=lista.filter(v=>/^pt/i.test(v.lang));
+  VOZES.sort((a,b)=>(natural(b.name)-natural(a.name)));
+  if(!AP.voz || !VOZES.some(v=>v.name===AP.voz)){ const melhor=VOZES.find(v=>natural(v.name)&&navigator.onLine)||VOZES.find(v=>v.local)||VOZES[0]; if(melhor){ AP.voz=melhor.name; aplicarAparencia(); } }
+  if(atual==='agenda') renderAgenda();
+}
+if('speechSynthesis' in window && !TTS) speechSynthesis.onvoiceschanged=carregarVozes;
+setTimeout(carregarVozes,0);
+$('#termosOuvir').onclick=()=>ouvir(FALA_TERMOS);
+$('#termosFechar').onclick=fecharTermos;
+const vozAtual = () => VOZES.find(v=>v.name===AP.voz) || null;
+/* fala automática: no modo calmo fica em silêncio (a pessoa toca em Ouvir quando quiser) */
+function falar(t){ if(AP.calmo) return; ouvir(t); }
+/* fala pedida pela pessoa: sempre fala */
+function ouvir(t){
+  const v=vozAtual(), rate=AP.vel||0.92;
+  if(TTS){
+    const opc={text:t,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'};
+    if(v) opc.voice=v.i;
+    TTS.stop().catch(()=>{}).finally(()=>TTS.speak(opc).catch(()=>{
+      // voz de internet sem conexão: tenta de novo com a voz padrão do celular
+      if(opc.voice!==undefined){ delete opc.voice; return TTS.speak(opc).catch(semVoz); } semVoz(); }));
+    return;
+  }
   if(!('speechSynthesis' in window)){ toast('Este aparelho não tem voz. Leia o texto na tela.'); return; }
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(t); u.lang='pt-BR'; u.rate=.88; if(voz) u.voice=voz;
+  const u=new SpeechSynthesisUtterance(t); u.lang='pt-BR'; u.rate=rate; if(v&&v.ref) u.voice=v.ref;
   speechSynthesis.speak(u);
 }
+/* ---------- foto da caixa (opcional): fica só neste celular, pequena ---------- */
+const CAM_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+function reduzir(src,cb){ const img=new Image(); img.onload=()=>{ const t=320, k=Math.min(1,t/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',0.6)); }; img.onerror=()=>toast('Não consegui usar esta foto.'); img.src=src; }
+async function tirarFoto(cb){
+  const Cam=plug('Camera');
+  if(Cam){ try{ const r=await Cam.getPhoto({source:'CAMERA',resultType:'dataUrl',quality:60,width:400,correctOrientation:true,saveToGallery:false}); if(r&&r.dataUrl) reduzir(r.dataUrl,cb); }catch(e){ if(!/cancel/i.test(String(e&&e.message||e))) toast('Não consegui abrir a câmera.'); } return; }
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.capture='environment';
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>reduzir(rd.result,cb); rd.readAsDataURL(f); };
+  inp.click();
+}
+const fotoDe = (a,cls) => a&&a.foto ? `<img class="${cls||'foto'}" src="${a.foto}" alt="Foto da caixa do ${esc(med(a).nome)}">` : '';
+/* ---------- privacidade e termos ---------- */
+const FALA_TERMOS='Privacidade e termos. Um: o Remédio Falado é um lembrete. Não indica nem muda dose e não substitui o médico. Siga sempre a receita. Dois: seus dados ficam só neste celular. O Squad 4 não recebe nada. Três: a câmera, os contatos e a localização só são usados quando você toca no botão. Quatro: no WhatsApp, quem envia a mensagem é você. Cinco: as informações vêm da Anvisa e das bulas, e podem ter erros. Em dúvida, pergunte ao farmacêutico. Seis: para apagar tudo, use apagar tudo e recomeçar, na Agenda, ou desinstale o app.';
+let termosVolta=null;
+function abrirTermos(){ termosVolta=document.activeElement; const t=$('#termos'); t.hidden=false; t.scrollTop=0; $('#termosT').setAttribute('tabindex','-1'); $('#termosT').focus(); }
+function fecharTermos(){ $('#termos').hidden=true; calar(); if(termosVolta&&termosVolta.focus) termosVolta.focus(); }
+document.addEventListener('click',e=>{ if(e.target.closest('[data-termos]')){ e.preventDefault(); abrirTermos(); } });
+function semVoz(){ toast('Sem voz em português. Instale a voz do Google nas configurações.'); TTS&&TTS.openInstall&&TTS.openInstall().catch(()=>{}); }
 function explicar(v){
   let i=null;
   if(String(v).startsWith('ag:')){ const a=S.agenda.find(q=>q.id===v.slice(3)); if(a) i=med(a); } else i=INFO[v];
   if(!i) return;
-  falar(`${i.nome}. É o ${i.apelido}.${i.serve?' Para que serve: '+i.serve:''}${i.cuidado?' Cuidado: '+i.cuidado:''}`); }
+  ouvir(`${i.nome}. É o ${i.apelido}.${i.serve?' Para que serve: '+i.serve:''}${i.cuidado?' Cuidado: '+i.cuidado:''}`); }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-fala]'); if(b) explicar(b.dataset.fala); });
 function calar(){ if(TTS) TTS.stop().catch(()=>{}); else if('speechSynthesis' in window) speechSynthesis.cancel(); }
 let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,3200); }
@@ -478,7 +584,7 @@ function dosesHoje(){
 }
 function doseFoco(ds){ return ds.find(d=>d.st==='late') || ds.find(d=>d.st==='next') || ds.find(d=>d.st==='later') || null; }
 const STL={ok:['Tomou','st-ok'],late:['Atrasada','st-late'],next:['Agora','st-next'],later:['Mais tarde','st-next']};
-function dot(p){ return `<span class="dot" style="background:${(INFO[p]||{cor:GENERICO_COR}).cor}" aria-hidden="true"></span>`; }
+function dot(p){ return bolinha((INFO[p]||{cor:GENERICO_COR}).cor, INFO[p]?INFO[p].nome:'?'); }
 
 function tomar(a,h,via){
   const k=dayKey(new Date());
@@ -486,9 +592,10 @@ function tomar(a,h,via){
   const em=nowHM();
   S.log.push({dia:k,ag:a.id,h,em,ok:true});
   S.feed.push({t:'ok',em,txt:`${nomeP()} tomou ${med(a).nome} ${a.dose} (dose das ${h})${via==='caixa'?', conferido pela caixa':''}.`});
-  save(); falar('Muito bem. Anotei que você tomou o '+med(a).apelido+'.');
+  const pronto='Pronto. Anotei que você tomou o '+med(a).apelido+'.';
+  save(); falar('Muito bem. '+pronto.slice(7));
   S.aviso={dia:k,txt:S.feed[S.feed.length-1].txt};
-  save(); toast('Anotado.'); render();
+  save(); toast(pronto); render();
 }
 
 /* ---------- tela HOJE ---------- */
@@ -499,8 +606,8 @@ function renderHoje(){
     const i=med(f.a);
     foco=`<div class="now ${f.st==='late'?'late':''}">
       <div class="now-head"><span class="hour">${f.h}</span><span class="state ${STL[f.st][1]}">${STL[f.st][0]}</span></div>
-      <div><button class="fala medname" data-fala="ag:${f.a.id}">${dotA(f.a)}${esc(cap(i.apelido))}</button>
-      <p class="muted">${esc(i.nome)} ${esc(f.a.dose)} · ${esc(f.a.como)}</p></div>
+      <div class="medlinha">${fotoDe(f.a)}<div><button class="fala medname" data-fala="ag:${f.a.id}">${dotA(f.a)}${esc(cap(i.apelido))}</button>
+      <p class="muted">${esc(i.nome)} ${esc(f.a.dose)} · ${esc(f.a.como)}</p></div></div>
       <button class="btn btn-ok" id="bTomei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>TOMEI</button>
       <div class="btn-row">
         <button class="btn btn-ghost" id="bOuvirDose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>
@@ -509,7 +616,7 @@ function renderHoje(){
   } else if(!S.agenda.length) foco=`<div class="now"><h2>Nenhum remédio na agenda ainda</h2><p class="muted">Leia a caixa do remédio e escolha os horários. Não precisa digitar nada.</p>
       <button class="btn btn-main" data-go="ler" data-scan="1">Colocar meu primeiro remédio</button></div>`;
   else foco=`<div class="now"><h2>Tudo certo por hoje</h2><p class="muted">Todos os remédios de hoje foram tomados.</p></div>`;
-  const lista=ds.map(d=>`<button class="dose" data-fala="ag:${d.a.id}" aria-label="Ouvir para que serve ${esc(med(d.a).nome)}"><span class="t">${d.h}</span><span class="n">${dotA(d.a)}<b style="display:inline">${esc(med(d.a).nome)} ${esc(d.a.dose)}</b><br><span class="small muted">${esc(med(d.a).apelido)}</span></span><span class="state ${STL[d.st][1]}">${STL[d.st][0]}</span></button>`).join('');
+  const lista=ds.map(d=>`<button class="dose" data-fala="ag:${d.a.id}" aria-label="Ouvir para que serve ${esc(med(d.a).nome)}"><span class="t">${d.h}</span>${dotA(d.a)}<span class="n"><b>${esc(med(d.a).nome)} ${esc(d.a.dose)}</b><span class="small muted" style="display:block;line-height:1.3">${esc(med(d.a).apelido)}</span></span><span class="state ${STL[d.st][1]}">${STL[d.st][0]}</span></button>`).join('');
   $('#view-hoje').innerHTML=`<div class="wrap-in" style="display:flex;flex-direction:column;gap:18px">
     ${S.aviso && S.aviso.dia===dayKey(new Date()) ? `<div class="wa-bar"><p><b>Avisar ${esc(nomeFam())}?</b><br><span class="small">${esc(S.aviso.txt)}</span></p>
       <div class="btn-row"><button class="btn btn-wa" id="bWaAviso">${WA_SVG}Avisar no WhatsApp</button><button class="btn btn-ghost" id="bWaNao">Agora não</button></div></div>` : ''}
@@ -521,7 +628,7 @@ function renderHoje(){
   const bwa=$('#bWaAviso'); if(bwa){ bwa.onclick=()=>{ const t=S.aviso.txt; S.aviso=null; save(); renderHoje(); enviarWhats(t); }; $('#bWaNao').onclick=()=>{ S.aviso=null; save(); renderHoje(); }; }
   if(f){
     $('#bTomei').onclick=()=>tomar(f.a,f.h,'botao');
-    $('#bOuvirDose').onclick=()=>falar(`${vocativo()}${f.st==='late'?'está atrasado o':'é hora do'} ${med(f.a).apelido}. ${med(f.a).nome}, ${f.a.como}. Quando tomar, aperte o botão verde: tomei.`);
+    $('#bOuvirDose').onclick=()=>ouvir(`${vocativo()}${f.st==='late'?'está atrasado o':'é hora do'} ${med(f.a).apelido}. ${med(f.a).nome}, ${f.a.como}. Quando tomar, aperte o botão verde: tomei.`);
     $('#bConferir').onclick=()=>{ alvo=f; go('ler'); if(SCAN) lerNativo(); };
   }
   $('#bTeste').onclick=()=>{ if(f) abrirAlarme(f); else toast('Cadastre um remédio na Agenda primeiro.'); };
@@ -644,7 +751,7 @@ function unidade(apres){ const a=' '+apres.toUpperCase()+' ';
   return ['dose','doses']; }
 let addSel=null;
 /* cadastro na agenda: a pessoa COPIA o que está na receita. O app não sugere quantidade nem horário. */
-const novoSel = () => ({q:null,outroQ:'',h:[],outro:'',conferi:false});
+const novoSel = () => ({q:null,outroQ:'',h:[],outro:'',conferi:false,foto:''});
 function faltaSel(){ const f=[];
   if(!addSel.q || (addSel.q==='outra' && !addSel.outroQ.trim())) f.push('quanto tomar');
   if(!addSel.h.length && !addSel.outro) f.push('o horário');
@@ -660,13 +767,16 @@ function formAgenda(it){
   return `<div class="addag" id="addag">
     <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
       <div><b>Copie da receita do médico</b><br><span class="small">Pegue a receita e marque igual está escrito. O app não indica dose.</span></div></div>
-    <p class="label">Quanto tomar de cada vez, pela receita?</p>
+    <p class="passo">Passo 1 de 3</p><p class="label">Quanto tomar de cada vez, pela receita?</p>
     <div class="opts opts4">${qs.map(([k,t,un])=>`<button type="button" class="opt" data-q="${k}" aria-pressed="${addSel.q===k}" aria-label="${esc(t+' '+un)}"><b>${esc(t)}</b><small>${esc(un)}</small></button>`).join('')}</div>
     ${addSel.q==='outra'?`<input class="bv-in" id="qOutra" placeholder="Como está na receita. Ex.: 1/4 de comprimido, 10 gotas" value="${esc(addSel.outroQ)}">`:''}
-    <p class="label">Em que horários, pela receita? Pode marcar mais de um</p>
+    <p class="passo">Passo 2 de 3</p><p class="label">Em que horários, pela receita? Pode marcar mais de um</p>
     <div class="opts">${hs.map(([h,t,c])=>`<button type="button" class="opt" data-h="${h}" aria-pressed="${addSel.h.includes(h)}"><b>${c}</b><small>${t}</small></button>`).join('')}</div>
     <div class="outro"><label for="hOutro">Outro horário</label><input type="time" id="hOutro" value="${addSel.outro||''}"></div>
+    <p class="passo">Passo 3 de 3</p><p class="label">Conferir com a receita</p>
     <button type="button" class="conferi" id="bConferi" aria-pressed="${addSel.conferi}"><span class="caixa" aria-hidden="true">${addSel.conferi?'✓':''}</span>Conferi com a receita do médico</button>
+    <div class="field"><p class="label">Foto da caixa (se quiser)</p><p class="hint" style="margin:0">Ajuda a reconhecer o remédio pela imagem.</p>
+      <div class="medlinha">${addSel.foto?`<img class="foto" src="${addSel.foto}" alt="Foto da caixa">`:''}<button type="button" class="btn btn-ghost" id="bFotoAg" style="flex:1">${CAM_SVG}${addSel.foto?'Tirar outra foto':'Tirar foto da caixa'}</button></div></div>
     <button class="btn btn-ok" id="bSalvarAg" aria-disabled="${falta.length>0}">Salvar na agenda</button>
     ${falta.length?`<p class="hint" id="faltaTxt">Para salvar, falta: ${esc(listaFala(falta))}.</p>`:''}
     <button class="btn btn-ghost" id="bCancelAg">Cancelar</button>
@@ -674,13 +784,14 @@ function formAgenda(it){
 }
 function ligarFormAgenda(it){
   const redesenha=()=>{ const y=window.scrollY; mostrarResultado(it,resultado.code); window.scrollTo(0,y); };
-  const b=$('#bAddAg'); if(b) b.onclick=()=>{ addSel=novoSel(); redesenha(); falar('Pegue a receita do médico. Marque quanto tomar e os horários, igual está escrito na receita.'); const f=$('#addag'); if(f) f.scrollIntoView({behavior:'smooth',block:'start'}); };
+  const b=$('#bAddAg'); if(b) b.onclick=()=>{ addSel=novoSel(); redesenha(); falar('Pegue a receita do médico. Marque quanto tomar e os horários, igual está escrito na receita.'); const f=$('#addag'); rolar(f); };
   if(!$('#addag')) return;
   document.querySelectorAll('#addag [data-q]').forEach(x=>x.onclick=()=>{ addSel.q=x.dataset.q; redesenha(); if(addSel.q==='outra'){ const q=$('#qOutra'); if(q) q.focus(); } });
   const qo=$('#qOutra'); if(qo) qo.oninput=e=>{ addSel.outroQ=e.target.value; };
   document.querySelectorAll('#addag [data-h]').forEach(x=>x.onclick=()=>{ const h=x.dataset.h; addSel.h=addSel.h.includes(h)?addSel.h.filter(y=>y!==h):addSel.h.concat(h); redesenha(); });
   $('#hOutro').onchange=e=>{ addSel.outro=e.target.value; redesenha(); };
   $('#bConferi').onclick=()=>{ addSel.conferi=!addSel.conferi; redesenha(); };
+  $('#bFotoAg').onclick=()=>tirarFoto(f=>{ addSel.foto=f; redesenha(); });
   $('#bCancelAg').onclick=()=>{ addSel=null; redesenha(); };
   $('#bSalvarAg').onclick=()=>{
     const falta=faltaSel();
@@ -689,11 +800,11 @@ function ligarFormAgenda(it){
     const u=unidade(it.apres), como = addSel.q==='outra' ? addSel.outroQ.trim() : addSel.q==='meio' ? 'meio '+u[0] : addSel.q==='2' ? '2 '+u[1] : '1 '+u[0];
     const i=it.info;
     S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
-      cor: INFO[it.principio] ? INFO[it.principio].cor : PALETA[S.agenda.length%PALETA.length],
-      serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,horarios:hs,produto:it.produto,receita:true});
+      cor: INFO[it.principio] ? INFO[it.principio].cor : novaCor(),
+      serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,horarios:hs,produto:it.produto,receita:true,foto:addSel.foto||''});
     save(); agendarAlarmes(true); addSel=null; resultado=null;
     falar(`Pronto. Vou lembrar o ${i.apelido}, ${como}, às ${listaFala(hs.map(falaHora))}, como está na receita.`);
-    toast('Salvo na agenda.'); go('hoje');
+    toast(`Pronto. Salvo na agenda: ${como}, às ${hs.join(' e ')}.`); go('hoje');
   };
 }
 function mostrarResultado(it,code,falarAgora){
@@ -701,12 +812,12 @@ function mostrarResultado(it,code,falarAgora){
   let conf='';
   if(alvo){
     conf = chaveAg(alvo.a)===chaveIt(it)
-      ? `<div class="msg ok">É este mesmo. Pode tomar o remédio das ${alvo.h}.</div><button class="btn btn-ok" id="bTomeiCx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>TOMEI</button>`
+      ? `<div class="msg ok">É o mesmo remédio da sua agenda das ${alvo.h}. A dose é a da receita.</div><button class="btn btn-ok" id="bTomeiCx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>TOMEI</button>`
       : `<div class="msg bad">Atenção: este NÃO é o remédio das ${alvo.h}. Agora é o ${esc(med(alvo.a).apelido)} (${esc(med(alvo.a).nome)}).</div>`;
   }
   $('#resBox').innerHTML=`<article class="result" aria-live="polite">
     ${conf}
-    <div><p class="label"><span class="dot" style="background:${i.cor}" aria-hidden="true"></span>Este é o</p><div class="big-name">${esc(cap(i.apelido))}</div>
+    <div><p class="label">${bolinha(i.cor,i.nome)}Este é o</p><div class="big-name">${esc(cap(i.apelido))}</div>
     <p class="prod">${esc(it.produto)} · ${esc(i.nome)}${it.dose?' '+esc(it.dose):''}${it.qtd?' · '+it.qtd+' '+unidade(it.apres)[1]:''}</p></div>
     <button class="btn btn-main" id="bOuvir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>Ouvir de novo</button>
     ${alvo?'':formAgenda(it)}
@@ -717,15 +828,15 @@ function mostrarResultado(it,code,falarAgora){
     <a class="btn btn-ghost" href="${bulaUrl(it)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>Ver a bula oficial (Anvisa)</a>
     <p class="fine">${i.geral?'O tipo de remédio vem da classificação registrada na Anvisa. ':i.bula?'Texto simplificado da bula do paciente ('+esc(i.bula)+'). ':'Texto provisório: será substituído pelo texto da bula oficial. '}${it.hosp?'Uso hospitalar. ':''}Código ${esc(code)} · Registro Anvisa ${esc(it.registro)}</p>
   </article>`;
-  $('#bOuvir').onclick=()=>falar(textoFala(it));
+  $('#bOuvir').onclick=()=>ouvir(textoFala(it));
   const bt=$('#bTomeiCx'); if(bt){ const a=alvo; bt.onclick=()=>{ tomar(a.a,a.h,'caixa'); alvo=null; resultado=null; go('hoje'); }; }
   if(!alvo) ligarFormAgenda(it);
   msgScan('');
   if(falarAgora){
     let pre='';
-    if(alvo) pre = chaveAg(alvo.a)===chaveIt(it) ? 'É este mesmo. Pode tomar. ' : 'Atenção, este não é o remédio da hora. ';
+    if(alvo) pre = chaveAg(alvo.a)===chaveIt(it) ? 'É o mesmo remédio da sua agenda. ' : 'Atenção, este não é o remédio da hora. ';
     falar(pre+textoFala(it)+(!alvo&&!ag?' Se quiser, toque em colocar na minha agenda.':''));
-    $('#resBox').scrollIntoView({behavior:'smooth',block:'start'});
+    rolar($('#resBox'));
   }
 }
 
@@ -733,8 +844,9 @@ function mostrarResultado(it,code,falarAgora){
 function renderAgenda(){
   const itens=S.agenda.map(a=>`<div class="agenda-item">
     <div class="now-head"><h3><button class="fala" data-fala="ag:${a.id}">${dotA(a)}${esc(med(a).nome)} ${esc(a.dose)}</button></h3><button class="linkbtn" data-del="${a.id}">Remover</button></div>
-    <p class="muted small">${esc(med(a).apelido)} · ${esc(a.como)}</p>
-    <div class="chips">${a.horarios.map(h=>`<span class="chip">${h}</span>`).join('')}</div></div>`).join('');
+    <div class="medlinha">${fotoDe(a)}<div><p class="muted small">${esc(med(a).apelido)} · ${esc(a.como)}</p>
+    <div class="chips">${a.horarios.map(h=>`<span class="chip">${h}</span>`).join('')}</div></div></div>
+    <button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button></div>`).join('');
   const opts=Object.entries(INFO).map(([k,v])=>`<option value="${k}">${v.nome} (${v.apelido})</option>`).join('');
   $('#view-agenda').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>${S.pessoa?'Agenda de '+esc(S.pessoa):'Minha agenda'}</h2>
@@ -755,6 +867,16 @@ function renderAgenda(){
       <div class="seg">${ESCALAS.map(([v,t])=>`<button type="button" data-esc="${v}" aria-pressed="${AP.escala===v}">${t}</button>`).join('')}</div>
       <p class="label">Contraste</p>
       <div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-ctr="0" aria-pressed="${!AP.contraste}">Normal</button><button type="button" data-ctr="1" aria-pressed="${AP.contraste}">Alto</button></div>
+      <p class="label">Modo calmo</p>
+      ${segCalmo()}
+      <p class="hint">Sem animações, cores mais suaves e alarme sem som de voz. A voz só fala quando você toca em Ouvir. Bom para quem se incomoda com estímulos fortes.</p>
+      <p class="label">Voz</p>
+      ${VOZES.length? `<div class="stack">${VOZES.slice(0,6).map((v,n)=>`<button type="button" class="conferi" data-voz="${esc(v.name)}" aria-pressed="${AP.voz===v.name}"><span class="caixa" aria-hidden="true">${AP.voz===v.name?'✓':''}</span><span>Voz ${n+1}<br><span class="small" style="font-weight:400">${natural(v.name)?'Mais natural · precisa de internet':'Funciona sem internet'}</span></span></button>`).join('')}</div>
+        <p class="hint">Toque numa voz para ouvir e escolher.</p>`
+      : `<p class="hint">Nenhuma voz em português encontrada neste celular.</p>`}
+      <p class="label">Velocidade da fala</p>
+      <div class="seg">${[[0.8,'Devagar'],[0.92,'Normal'],[1.05,'Rápida']].map(([v,t])=>`<button type="button" data-vel="${v}" aria-pressed="${(AP.vel||0.92)===v}">${t}</button>`).join('')}</div>
+      <p class="hint">Se todas soarem robóticas, instale a voz do Google: Configurações do celular → Acessibilidade → Conversão de texto em voz → Mecanismo preferido: Google → Português (Brasil).</p>
     </div>
     <div class="form"><h3>Configurações</h3>
       <div class="field"><label class="label" for="cfgNome">Nome de quem toma os remédios</label><input id="cfgNome" value="${esc(S.demo?'':S.pessoa)}" placeholder="Ex.: Maria" autocomplete="given-name"></div>
@@ -762,8 +884,10 @@ function renderAgenda(){
       <button class="btn btn-main" id="bCfg" type="button">Salvar</button>
       <button class="btn btn-ghost" id="bDemo" type="button">${S.demo?'Sair da demonstração e começar do zero':'Ver demonstração'}</button>
       <button class="btn btn-ghost" id="bZerar" type="button">Apagar tudo e recomeçar</button>
+      <button class="btn btn-ghost" type="button" data-termos="1">Privacidade e termos de uso</button>
       <p class="hint" id="zerarMsg"></p></div>
   </div>`;
+  document.querySelectorAll('[data-foto]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.foto); if(a) tirarFoto(f=>{ a.foto=f; save(); renderAgenda(); toast('Pronto. Foto salva.'); }); });
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ S.agenda=S.agenda.filter(a=>a.id!==b.dataset.del); save(); agendarAlarmes(false); render(); toast('Removido da agenda.'); });
   $('#fAg').onsubmit=e=>{ e.preventDefault();
     const hs=['agH1','agH2','agH3'].map(id=>$('#'+id).value).filter(Boolean).sort();
@@ -773,6 +897,10 @@ function renderAgenda(){
     save(); agendarAlarmes(true); render(); toast('Salvo na agenda.'); };
   document.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{ AP.escala=+b.dataset.esc; aplicarAparencia(); renderAgenda(); });
   document.querySelectorAll('[data-ctr]').forEach(b=>b.onclick=()=>{ AP.contraste=b.dataset.ctr==='1'; aplicarAparencia(); renderAgenda(); });
+  document.querySelectorAll("[data-mcalmo]").forEach(b=>b.onclick=()=>{ AP.calmo=b.dataset.mcalmo==='1'; aplicarAparencia(); renderAgenda(); toast(AP.calmo?'Modo calmo ligado.':'Modo calmo desligado.'); });
+  const amostra='Olá! Eu sou o Remédio Falado. Está na hora do remédio da pressão.';
+  document.querySelectorAll('[data-voz]').forEach(b=>b.onclick=()=>{ AP.voz=b.dataset.voz; aplicarAparencia(); renderAgenda(); ouvir(amostra); });
+  document.querySelectorAll('[data-vel]').forEach(b=>b.onclick=()=>{ AP.vel=+b.dataset.vel; aplicarAparencia(); renderAgenda(); ouvir(amostra); });
   $('#bCfg').onclick=()=>{ if(S.demo){ toast('Saia da demonstração para usar seu nome.'); return; } S.pessoa=$('#cfgNome').value.trim(); S.familiar=$('#cfgFam').value.trim(); save(); topo(); toast('Salvo.'); };
   let confirma='';
   const pedir=(id,txt,acao)=>{ if(confirma===id){ acao(); return; } confirma=id; $('#zerarMsg').textContent=txt+' Toque de novo para confirmar.'; };
@@ -912,9 +1040,9 @@ function renderGratis(){
       const perto=FARMACIAS.filter(x=>x.lat).map(x=>({x,km:distanciaKm(posicao.latitude,posicao.longitude,x.lat,x.lon)})).sort((a,b)=>a.km-b.km)[0];
       if(perto) falar(`A farmácia mais perto é ${perto.x.nome}, a ${fmtKm(perto.km).replace('km','quilômetros').replace(' m',' metros')}, na ${perto.x.rua}.`);
     }catch(e){ toast('Não consegui sua localização. Escolha o bairro.'); renderGratis(); } };
-  $('#bFrase').onclick=()=>falar(frase);
-  $('#bOuvirGratis').onclick=()=>falar(`Os remédios da pressão e do diabetes são de graça na Farmácia Popular. ${meus.length?'Os seus são: '+listaFala(meus.map(p=>INFO[p].nome))+'.':''} Leve um documento com foto e CPF e a receita do médico.`);
-  document.querySelectorAll('[data-farm]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.farm]; falar(`${f.nome}. Fica na ${f.rua}, no bairro ${f.bairro}.${f.km!==undefined&&f.km<999?' Fica a '+fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')+' de você.':''}`); });
+  $('#bFrase').onclick=()=>ouvir(frase);
+  $('#bOuvirGratis').onclick=()=>ouvir(`Os remédios da pressão e do diabetes são de graça na Farmácia Popular. ${meus.length?'Os seus são: '+listaFala(meus.map(p=>INFO[p].nome))+'.':''} Leve um documento com foto e CPF e a receita do médico.`);
+  document.querySelectorAll('[data-farm]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.farm]; ouvir(`${f.nome}. Fica na ${f.rua}, no bairro ${f.bairro}.${f.km!==undefined&&f.km<999?' Fica a '+fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')+' de você.':''}`); });
 }
 
 /* ---------- alarme ---------- */
@@ -922,7 +1050,7 @@ function abrirAlarme(d){
   const i=med(d.a), el=$('#alarm');
   el.innerHTML=`<div class="in">
     <svg class="bell" viewBox="0 0 24 24" width="72" height="72" style="margin:0 auto" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
-    <span class="hour">${d.h}</span><h2 id="alarmTitle">Hora do ${esc(i.apelido)}</h2>
+    <span class="hour">${d.h}</span><h2 id="alarmTitle">Hora do ${esc(i.apelido)}</h2>${fotoDe(d.a,'foto-g')}
     <p>${esc(i.nome)} ${esc(d.a.dose)} · ${esc(d.a.como)}</p>
     <button class="btn btn-ok" id="alTomei">TOMEI</button>
     <div class="btn-row"><button class="btn btn-ghost" id="alOuvir">Ouvir de novo</button><button class="btn btn-ghost" id="alDepois">Daqui a 10 min</button></div></div>`;
@@ -930,7 +1058,7 @@ function abrirAlarme(d){
   const frase=`${vocativo()}hora do ${i.apelido}. ${i.nome}, ${d.a.como}. Quando tomar, aperte o botão verde.`;
   falar(frase);
   $('#alTomei').onclick=()=>{ el.hidden=true; tomar(d.a,d.h,'alarme'); };
-  $('#alOuvir').onclick=()=>falar(frase);
+  $('#alOuvir').onclick=()=>ouvir(frase);
   $('#alDepois').onclick=()=>{ el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.'); setTimeout(()=>abrirAlarme(d),600000); };
   $('#alTomei').focus();
 }
@@ -963,7 +1091,7 @@ const FALA_BV=['Olá! Eu sou o Remédio Falado. Eu leio a caixa do remédio, fal
   'Quem da família vai receber os avisos? Se preferir, toque em pular.',
   'Vamos colocar o primeiro remédio? Pegue a caixa e a receita do médico, e toque em ler a caixa do remédio.'];
 function renderBV(){
-  const el=$('#bv'), dots=`<div class="bv-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=passo?'on':''}"></i>`).join('')}</div>`;
+  const el=$('#bv'), dots=`<p class="passo" style="text-align:center;margin:0">Passo ${passo} de 3</p><div class="bv-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=passo?'on':''}"></i>`).join('')}</div>`;
   const ouvir=`<button class="btn btn-ghost" id="bvOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>`;
   let h='';
   if(passo===0) h=`<div class="bv-logo"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8M30.5 13.5c3.5 3.5 3.5 9.5 0 13" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
@@ -971,11 +1099,13 @@ function renderBV(){
     <p>Eu leio a caixa do remédio, <b>falo para que serve</b> e <b>lembro a hora de tomar</b>.</p>
     <p class="small muted">Sou um lembrete: não indico nem mudo dose. Siga sempre a receita do médico.</p>
     <button class="btn btn-pill" id="bvComecar" type="button">Começar</button>${ouvir}
+    <p class="small" style="margin:0;text-align:center">Ao tocar em Começar, você concorda com a <button class="linkbtn" type="button" data-termos="1" style="display:inline;min-height:0;padding:0">Privacidade e termos de uso</button>.</p>
     <div class="field"><p class="label">Tamanho da letra</p><div class="seg">${ESCALAS.map(([v,t])=>`<button type="button" data-esc="${v}" aria-pressed="${AP.escala===v}">${t}</button>`).join('')}</div></div>
+    <div class="field"><p class="label">Modo calmo</p>${segCalmo()}<p class="hint" style="margin:0">Sem animações e a voz só fala quando você pedir.</p></div>
     <button class="btn btn-ghost" id="bvDemo" type="button">Ver demonstração</button>
     <div class="credito" role="contentinfo">
       <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="11" width="34" height="18" rx="9" fill="var(--pill)" stroke="var(--fg)" stroke-width="2"/><path d="M20 11v18" stroke="var(--fg)" stroke-width="2"/><path d="M27 16c2 2 2 6 0 8" stroke="var(--fg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-      <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Gaoc</b> · Squad 4</p><p class="credito-esc">CESAR School · 2026</p></div>
+      <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Squad 4</b></p><p class="credito-esc">CESAR School · 2026</p></div>
     </div>`;
   if(passo===1) h=`${dots}<h2 id="bvT">Qual é o seu nome?</h2>
     <input class="bv-in" id="bvNome" placeholder="Seu nome" autocomplete="given-name" value="${esc(S.pessoa)}">
@@ -990,9 +1120,10 @@ function renderBV(){
     <button class="btn btn-pill" id="bvLer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler a caixa do remédio</button>${ouvir}
     <button class="linkbtn bv-pular" id="bvDepois" type="button">Fazer isso depois</button>`;
   el.innerHTML=`<div class="bv-in-wrap">${h}</div>`;
-  $('#bvOuvir').onclick=()=>falar(FALA_BV[passo]);
+  $('#bvOuvir').onclick=()=>ouvir(FALA_BV[passo]);
   const seg=()=>{ passo++; renderBV(); falar(FALA_BV[passo]); const f=el.querySelector('input'); if(f) setTimeout(()=>f.focus(),300); };
   if(passo===0) el.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{ AP.escala=+b.dataset.esc; aplicarAparencia(); renderBV(); });
+  if(passo===0) el.querySelectorAll("[data-mcalmo]").forEach(b=>b.onclick=()=>{ AP.calmo=b.dataset.mcalmo==='1'; aplicarAparencia(); renderBV(); });
   if(passo===0){ $('#bvComecar').onclick=()=>{ S=novo(); save(); seg(); }; $('#bvDemo').onclick=()=>{ S=seed(); save(); agendarAlarmes(false); fecharBV(()=>falar('Esta é a demonstração, com a Dona Lúcia.')); }; }
   if(passo===1){ $('#bvOk').onclick=()=>{ S.pessoa=$('#bvNome').value.trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
   if(passo===2 && $('#bvCont')) $('#bvCont').onclick=()=>escolherContato('#bvFones',(n,f)=>{ if(n) $('#bvFam').value=n; if(f) $('#bvWa').value=f; falar(n?'Pronto. '+n+' vai receber os avisos.':'Pronto.'); });

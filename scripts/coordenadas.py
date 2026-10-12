@@ -37,7 +37,9 @@ def pontos_csv(texto):
         wkt = l.get('WKT', '')
         m = re.search(r'POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)', wkt)
         if m: l['lon'], l['lat'] = float(m.group(1)), float(m.group(2))
-        elif l.get('LATITUDE') and l.get('LONGITUDE'): l['lat'], l['lon'] = float(l['LATITUDE']), float(l['LONGITUDE'])
+        elif l.get('LATITUDE') and l.get('LONGITUDE'):
+            try: l['lat'], l['lon'] = float(l['LATITUDE'].replace(',', '.')), float(l['LONGITUDE'].replace(',', '.'))
+            except ValueError: continue
         else: continue
         l['nome'] = l.get('FARMÁCIA') or l.get('FARMACIA') or l.get('NAME') or ''
         yield l
