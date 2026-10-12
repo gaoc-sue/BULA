@@ -70,6 +70,15 @@ O Remédio Falado é um **lembrete**: não indica nem muda dose. Ao colocar um r
 
 Protótipo acadêmico. Os textos simplificados ainda precisam de revisão de farmacêutico. O app não muda dose e não substitui o médico. Os códigos de barras vêm da lista de preços CMED/Anvisa, que pode conter erros e é atualizada todo mês.
 
+## Conformidade (LGPD e Ato Médico)
+
+- **Dados só no celular (local-first):** agenda, horários, fotos e contatos ficam no aparelho; não há servidor nem cadastro.
+- **Consentimento específico e destacado** para dados de saúde (LGPD, art. 11, I): tela própria com "Concordo", antes de guardar qualquer remédio; pode ser retirado em Agenda → Configurações, o que apaga os dados.
+- **Reproduzir, não recomendar (Lei 12.842/2013):** "Para que serve" e "Se esquecer uma dose" são trechos literais da bula oficial, com a fonte e a versão. Sem bula, o app manda para a bula oficial em vez de resumir.
+- **Quem define dose e horário é a pessoa ou o cuidador**, copiando da receita; o app só lembra e registra.
+- **Linguagem descritiva:** "é o horário do remédio da pressão: Losartana, 1 comprimido, conforme a receita", em vez de ordens como "tome".
+- Pendente para uma versão com parceiros: validação do cadastro por farmacêutico e criptografia local.
+
 ## Créditos de dados
 
 - Lista de preços CMED/Anvisa (códigos de barras) e Bulário Eletrônico da Anvisa.
