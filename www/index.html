@@ -1041,7 +1041,7 @@ function medLinha(d,botao){
   const i=med(d.a);
   return `<div class="cx-med-wrap" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center">
     <button class="cx-med" data-fala="ag:${d.a.id}" aria-label="${esc(i.nome)}, ${esc(comoEm(d.a,d.h))}. Toque para ouvir para que serve.">
-      ${d.a.foto?fotoDe(d.a):dotA(d.a)}<span><b>${esc(i.nome)} ${esc(d.a.dose)}</b><small>${esc(comoEm(d.a,d.h))}</small></span>${d.reg?`<span class="cx-ck">${CHECK.replace('<svg','<svg width="26" height="26"')}</span>`:''}</button>
+      ${d.a.foto?fotoDe(d.a):dotA(d.a)}<span><b>${esc(i.nome)} ${esc(d.a.dose)}</b><small>${esc(comoEm(d.a,d.h))} · ${esc(i.apelido)}</small></span>${d.reg?`<span class="cx-ck">${CHECK.replace('<svg','<svg width="26" height="26"')}</span>`:''}</button>
     ${botao && !d.reg?`<button class="btn btn-ok btn-s" data-tomar1="${d.a.id}|${d.h}">Tomei</button>`:''}</div>`;
 }
 function cardGrupo(x){
@@ -1071,6 +1071,7 @@ function renderHoje(){
       <div class="btn-row"><button class="btn btn-main" type="button" data-energia="1">Arrumar agora</button><button class="btn btn-ghost" type="button" id="bEnerDepois">Depois</button></div></div>` : ''}
     <div class="aq-topo"><div class="placa"><p class="hoje-data">${DIAS_LONGO[hoje.getDay()]}, ${hoje.getDate()} de ${MESES[hoje.getMonth()]}</p><h2>${esc(saudacao())}</h2></div></div>
     ${todosOk?`<div class="msg ok">${CHECK.replace('<svg','<svg width="22" height="22" style="vertical-align:-4px"')} Todos os remédios de hoje foram tomados.</div>`:''}
+    ${S.agenda.length?`<p class="hint" style="margin:-6px 0 0">Toque no nome de um remédio para ouvir para que serve e os cuidados.</p>`:''}
     ${cards}
     <button class="btn btn-pill" data-go="ler" data-scan="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Que remédio é este?</button>
     ${S.agenda.length?`<button class="btn btn-ghost" id="bTeste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>Tocar lembrete de teste</button>`:''}
@@ -1780,13 +1781,13 @@ const FALA_BV=['Olá! Eu sou o Remédio Falado. Eu leio a caixa do remédio, fal
   'Vamos colocar o primeiro remédio? Pegue a caixa e a receita do médico, e toque em ler a caixa do remédio.'];
 function renderBV(){
   const el=$('#bv'), dots=`<p class="passo" style="text-align:center;margin:0">Passo ${passo} de 3</p><div class="bv-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=passo?'on':''}"></i>`).join('')}</div>`;
-  const ouvir=`<button class="btn btn-ghost" id="bvOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>`;
+  const btnOuvir=`<button class="btn btn-ghost" id="bvOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>`;
   let h='';
   if(passo===0) h=`<div class="bv-logo"><svg class="bv-logo-svg" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <h2 id="bvT">Olá! Eu sou o Remédio Falado</h2>
     <p>Eu leio a caixa do remédio, <b>falo para que serve</b> e <b>lembro a hora de tomar</b>.</p>
     <p class="small muted">Sou um lembrete: não indico nem mudo dose. Siga sempre a receita do médico.</p>
-    <button class="btn btn-pill" id="bvComecar" type="button">Começar</button>${ouvir}
+    <button class="btn btn-pill" id="bvComecar" type="button">Começar</button>${btnOuvir}
     <p class="small" style="margin:0;text-align:center">Ao tocar em Começar, você concorda com a <button class="linkbtn" type="button" data-termos="1" style="display:inline;min-height:0;padding:0">Privacidade e termos de uso</button>.</p>
     <div class="field"><p class="label">Tamanho da letra</p><div class="seg">${ESCALAS.map(([v,t])=>`<button type="button" data-esc="${v}" aria-pressed="${AP.escala===v}">${t}</button>`).join('')}</div></div>
     <div class="field"><p class="label">Modo calmo</p>${segCalmo()}<p class="hint" style="margin:0">Sem animações e a voz só fala quando você pedir.</p></div>
@@ -1797,15 +1798,15 @@ function renderBV(){
     </div>`;
   if(passo===1) h=`${dots}<h2 id="bvT">Qual é o seu nome?</h2>
     <input class="bv-in" id="bvNome" placeholder="Seu nome" autocomplete="given-name" value="${esc(S.pessoa)}">
-    <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${ouvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
+    <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${btnOuvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
   if(passo===2) h=`${dots}<h2 id="bvT">Quem da família recebe os avisos?</h2>
     <input class="bv-in" id="bvFam" placeholder="Nome. Ex.: Ana (filha)" value="${esc(S.familiar)}">
     ${botaoContato('bvCont')}<div id="bvFones" class="stack" hidden></div>
     <input class="bv-in" id="bvWa" inputmode="tel" placeholder="WhatsApp com DDD (opcional)" value="${esc(S.whats||'')}">
-    <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${ouvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
+    <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${btnOuvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
   if(passo===3) h=`${dots}<h2 id="bvT">Vamos colocar o primeiro remédio?</h2>
     <p>Pegue a <b>caixa</b> e a <b>receita</b>. Eu leio o código de barras e você marca o que está na receita.</p>
-    <button class="btn btn-pill" id="bvLer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler a caixa do remédio</button>${ouvir}
+    <button class="btn btn-pill" id="bvLer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler a caixa do remédio</button>${btnOuvir}
     <button class="linkbtn bv-pular" id="bvDepois" type="button">Fazer isso depois</button>`;
   el.classList.toggle('aq0',passo===0);
   el.innerHTML=`<div class="bv-in-wrap">${h}</div>`;
