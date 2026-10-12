@@ -11,8 +11,17 @@ App Android para idosos com baixa visão ou pouca leitura. A pessoa aponta o cel
 - **Agenda e alarme:** o familiar cadastra os horários e o Android avisa na hora, mesmo com o app fechado. A pessoa aperta TOMEI.
 - **Conferir caixa:** na hora da dose, a câmera confirma se é o remédio certo.
 - **Onde pegar de graça:** botão "Farmácias perto de mim", que abre o mapa com as farmácias da Farmácia Popular mais próximas. Também mostra quais remédios da pessoa são gratuitos na Farmácia Popular, o que levar, as 52 farmácias credenciadas do Recife por bairro (com mapa) e uma frase pronta para ligar antes de ir.
+- **Farmácias mais perto:** com as coordenadas das farmácias (veja `scripts/coordenadas.py`), o app ordena a lista pela distância usando o GPS do celular. A localização não sai do aparelho.
 - **Toque para ouvir:** tocar num remédio da lista ou da agenda fala de novo para que serve.
 - **Família e WhatsApp:** depois do TOMEI, o app oferece avisar o familiar no WhatsApp com a mensagem pronta. A tela Família mostra confirmações, alertas e resumo semanal, cada um com botão para enviar no WhatsApp.
+
+## Acessibilidade e leitura
+
+- Letra Atkinson Hyperlegible, feita para pessoas com baixa visão, com base de 19 px.
+- Botão "AA" no topo e opção em Agenda → Aparência: letra Normal, Grande ou Muito grande (até 130%).
+- Modo de contraste alto (preto no branco, bordas grossas).
+- Rótulos sem caixa-alta, texto secundário escuro e botões de pelo menos 64 px.
+- Tudo o que aparece na tela também pode ser ouvido.
 
 ## Tecnologias
 

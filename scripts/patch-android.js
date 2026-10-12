@@ -11,7 +11,9 @@ const perms = [
   'android.permission.RECEIVE_BOOT_COMPLETED',
   'android.permission.WAKE_LOCK',
   'android.permission.READ_CONTACTS',
-  'android.permission.WRITE_CONTACTS'
+  'android.permission.WRITE_CONTACTS',
+  'android.permission.ACCESS_COARSE_LOCATION',
+  'android.permission.ACCESS_FINE_LOCATION'
 ];
 for (const p of perms) {
   if (!m.includes(`"${p}"`)) m = m.replace('</manifest>', `    <uses-permission android:name="${p}" />\n</manifest>`);
