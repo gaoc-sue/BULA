@@ -1,89 +1,102 @@
 # Remédio Falado
 
-App Android para idosos com baixa visão ou pouca leitura. A pessoa aponta o celular para a caixa do remédio e o app fala o que é, para que serve e como tomar. Também lembra o horário com alarme, confirma pela câmera se a caixa é a certa e mostra o que a família recebe.
+App Android para idosos com baixa visão ou pouca leitura. A pessoa aponta o celular para a caixa do remédio e o app fala o que é e para que serve, segundo a bula. Ele lembra o horário com alarme, confere pela câmera se a caixa é a certa e, se a pessoa quiser, conecta o celular de alguém da família, com criptografia de ponta a ponta.
 
 ## Design baseado em estudos
 
-O app funciona como uma **caixinha de remédios** digital: a tela Hoje mostra os momentos do dia (café da manhã, almoço, tarde, jantar, antes de dormir), cada um com seus remédios e um único botão "Tomei os do almoço".
+A tela inicial mostra **só o momento de agora** (café da manhã, almoço, tarde, jantar ou antes de dormir), com os remédios e um botão grande **TOMEI**. O resto do dia fica num card "Depois", e embaixo há 4 atalhos grandes: Ler a caixa, Meus remédios, Remédio de graça e Família. As outras telas têm "Voltar" escrito e o botão "Ouvir".
 
 | Decisão | Por quê |
 |---|---|
-| Doses amarradas a momentos da rotina, não só a horários | Pistas de rotina dão horários mais regulares e ajudam a formar o hábito (Valenzuela-Beltrán et al., 2022, *Healthcare*; van de Vijver et al., 2023, *Frontiers in Psychology*) |
-| Cadastro com uma pergunta por tela, barra de progresso e "Voltar" escrito | Idosos se perderam em apps de remédio com menus e submenus e não entenderam "+" e "cancelar" (Grindrod et al., 2014, *JMIR mHealth*) |
-| Botões principais de 88 px e demais de 72 px (~14 mm e ~11 mm) | Alvos de ~14 mm tiveram o melhor desempenho com idosos (Leitão e Silva, 2012) |
-| Fundo claro liso, texto preto, destaque roxo escuro (#4B2A7B, contraste 11:1), verde só para "tomado"; aquarela só na abertura, no topo da tela Hoje e no "Pronto!", nunca atrás de texto | O NIA/NLM recomenda evitar azul, amarelo e verde lado a lado e usar texto escuro em fundo claro; contraste de texto ≥ 4,5:1 e de bordas ≥ 3:1 (WCAG 2.2) |
-| Ícone + texto + voz em tudo, estado escrito (não só pela cor) | 51% dos brasileiros de 50 a 64 anos são analfabetos funcionais (Inaf 2024) |
-| Tela "Pronto!" depois do Tomei (desligada no modo calmo) | Reforço positivo logo após a ação ajuda a formar o hábito (Valenzuela-Beltrán et al., 2022) |
-| "Semana de…" para a família, com resumo pronto para o WhatsApp | Medir e devolver o padrão de doses é uma das recomendações de Valenzuela-Beltrán et al. (2022) |
+| Só a próxima ação em destaque; o secundário fica em "Mais informações" e em Ajustes | Simplificar e destacar o próximo botão esperado (Gomez-Hernandez et al., 2023, *JMIR mHealth*, revisão de 40 estudos com pessoas de 60+) |
+| "Voltar" escrito e "Ouvir" no topo de toda tela; sem barra de abas para quem toma o remédio | Saída segura em toda tela e navegação em linha (Gomez-Hernandez et al., 2023; Grindrod et al., 2014, *JMIR mHealth*) |
+| Ícone + nome em todo botão | O acerto de idosos subiu de 45% (só ícone) para 78% (ícone + nome) (Leung, McGrenere e Graf, 2011, *Behaviour & IT*) |
+| Desenhos concretos: xícara, prato, tigela, lua; foto da caixa; quantidade em desenho (1 comprimido = 1 desenho) | Imagens concretas e familiares (Gomez-Hernandez et al., 2023); pictograma de refeição entendido por 95,5% (Alves et al., 2025, *RBPS*); quantidade por pictogramas repetidos (Dick, 2025) |
+| Remédio lido: nome + 3 opções numeradas (1 Ouvir, 2 Colocar nos meus remédios, 3 Ler a bula) | Poucas opções por tela (Apple, *Assistive Access*, WWDC 2025); números ajudam quem dá ajuda por telefone (CPqD Alcance) |
+| Tela "Pronto!" que só fecha com um toque | Sem tempo-limite e retorno claro depois de cada ação (Apple, WWDC 2025; Gomez-Hernandez et al., 2023) |
+| Doses amarradas a momentos da rotina | Pistas de rotina dão horários mais regulares (Valenzuela-Beltrán et al., 2022; van de Vijver et al., 2023) |
+| Cadastro com uma pergunta por tela | Idosos se perderam em menus e submenus (Grindrod et al., 2014) |
+| Botões de 64 a 104 px (TOMEI) | Alvos de ~14 mm tiveram o melhor desempenho com idosos (Leitão e Silva, 2012) |
+| Paleta petróleo (#0F4C5C) + mel (#F2A33A) em fundo creme liso, texto escuro; verde só para "tomado" | NIA/NLM (texto escuro em fundo claro, sem textura atrás do texto) e WCAG 2.2 (contraste ≥ 4,5:1) |
+| Ajustes ficam "para o familiar" | No modo simplificado da Apple, quem configura é a pessoa de apoio |
+| Frases curtas, ordem direta, palavras comuns | Lei 15.263/2025 (Política Nacional de Linguagem Simples), art. 5º |
+
+Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em cada botão, com meta de 85% de acerto (critério ISO 3864-1 usado por Alves et al., 2025).
 
 ## O que o app faz
 
-- **Que remédio é este?** Lê o código de barras da caixa (foto ou câmera ao vivo) e consulta a lista oficial de preços da CMED/Anvisa, com mais de 27 mil códigos, sem precisar de internet.
-- **Explicação em voz alta**, em português simples. Todo remédio da lista ganha uma frase geral de "para que serve", a partir da classe terapêutica da Anvisa (`scripts/grupos.py`, revisável). Os 10 de pressão e diabetes têm texto completo: losartana, captopril, enalapril, hidroclorotiazida, atenolol, propranolol, anlodipino, espironolactona, metformina e glibenclamida.
-- **Ler e colocar na agenda:** depois de ler a caixa, 4 perguntas, uma por tela: em que momento a receita manda tomar (café, almoço, jantar, dormir ou outro horário), quanto em cada momento, conferir com a receita (com total do dia) e foto da caixa (opcional). A pessoa copia da receita do médico; o app não sugere dose.
-- **Horários da rotina:** em Agenda, a pessoa muda a hora do café, almoço, jantar e de dormir, e os lembretes mudam juntos.
-- **Total do dia e aviso de dose:** o app soma o que foi marcado ("4 comprimidos de 500 mg = 2.000 mg por dia. Está igual à receita?"). Nos 10 remédios com texto próprio, se o total passar da maior dose por dia citada na bula, aparece um aviso pedindo para conferir a receita e, na dúvida, perguntar ao farmacêutico. O aviso não bloqueia (o médico pode receitar diferente) e só pede uma confirmação a mais. Os limites estão em `MAXDIA` no `www/index.html`, com as bulas usadas como fonte.
-- **Bula completa:** a bula do paciente oficial inteira, dividida nas 9 perguntas da bula, com letra grande e o botão "Ouvir esta parte". Funciona sem internet. 69 bulas já vêm no app (`www/bulas.json`, entre elas losartana, metformina e anlodipino). Para as outras, o app instalado baixa a bula oficial do Bulário Eletrônico da Anvisa pelo número de registro, extrai o texto do PDF (pdf.js), tira os dados do fabricante e guarda no celular; a cada 30 dias confere se saiu versão nova. Se não der, abre pelo QR code da caixa (Lei 14.338/2022) ou pelo site da Anvisa.
-- **Foto da caixa (opcional):** dá para tirar uma foto da caixa no cadastro ou depois, na Agenda. A foto aparece na tela Hoje, no alarme e na agenda, e fica guardada só no celular.
-- **Boas-vindas:** no primeiro uso, o app pergunta o nome e quem da família recebe os avisos. A opção "Ver demonstração" abre com dados de exemplo.
-- **Agenda e alarme:** o familiar cadastra os horários e o Android avisa na hora, mesmo com o app fechado. A pessoa aperta TOMEI.
-- **Conferir caixa:** na hora da dose, a câmera confirma se é o remédio certo.
-- **Onde pegar de graça:** botão "Farmácias perto de mim", que abre o mapa com as farmácias da Farmácia Popular mais próximas. Também mostra quais remédios da pessoa são gratuitos na Farmácia Popular, o que levar, as 52 farmácias credenciadas do Recife por bairro (com mapa) e uma frase pronta para ligar antes de ir.
-- **Posto de saúde (SUS):** na aba Grátis, a opção "Posto de saúde (SUS)" lista 143 unidades da Prefeitura do Recife com endereço, horário, telefone, distância e se o posto tinha os remédios da pessoa na última lista de estoque publicada. Dados abertos da Secretaria de Saúde do Recife ("Medicamentos por unidade de saúde" e "Rede de atenção à saúde no Recife"), convertidos por `scripts/postos.py` em `www/postos.json`.
-- **Para o alarme tocar sempre:** celulares como Xiaomi, Redmi, Huawei, Oppo, Vivo e Samsung fecham apps em segundo plano. O app detecta o que falta (notificações, alarme exato, economia de bateria, início automático), mostra um aviso na tela Hoje e uma tela com passos e botões que abrem a configuração certa de cada marca, mais um teste com o app fechado. Usa um plugin Android próprio (`android-src/EnergiaPlugin.java`), copiado para o projeto por `scripts/patch-android.js`.
-- **Farmácias mais perto:** com as coordenadas das farmácias (veja `scripts/coordenadas.py`), o app ordena a lista pela distância usando o GPS do celular. A localização não sai do aparelho.
-- **Toque para ouvir:** tocar num remédio da lista ou da agenda fala de novo para que serve.
-- **Família e WhatsApp:** depois do TOMEI, o app oferece avisar o familiar no WhatsApp com a mensagem pronta. A tela Família mostra confirmações, alertas e resumo semanal, cada um com botão para enviar no WhatsApp.
+- **Que remédio é este?** Lê o código de barras da caixa e consulta a lista oficial de preços da CMED/Anvisa, com mais de 27 mil códigos, sem internet. Fala o tipo de remédio e, quando há bula, o trecho literal de "para que serve".
+- **Colocar nos meus remédios:** 4 perguntas, uma por tela: em que momento a receita manda tomar, quanto em cada momento, conferir com a receita (com o total do dia) e foto da caixa (opcional). A pessoa copia da receita do médico; o app não sugere dose.
+- **Total do dia e aviso de dose:** soma o que foi marcado. Nos 10 remédios com texto próprio, se o total passar da maior dose por dia citada na bula, aparece um aviso pedindo para conferir a receita. Não bloqueia.
+- **Bula completa:** a bula do paciente oficial, nas 9 perguntas, com letra grande e "Ouvir esta parte". 69 bulas já vêm no app (`www/bulas.json`); as outras são baixadas do Bulário Eletrônico da Anvisa e ficam guardadas.
+- **Alarme:** o Android avisa na hora, mesmo com o app fechado. A pessoa aperta TOMEI. "Conferir a caixa" confirma pela câmera se é o remédio certo.
+- **Para o alarme tocar sempre:** detecta o que falta em cada marca (Xiaomi, Samsung, Motorola...) e abre a configuração certa (`android-src/EnergiaPlugin.java`).
+- **Remédio de graça:** Farmácia Popular (52 farmácias do Recife) e 143 postos de saúde do SUS com endereço, horário, telefone e estoque (dados abertos da Prefeitura).
+- **Família, com o celular conectado:** em Família → "Conectar o celular da família", o app mostra um código de 6 números e um QR code. No celular da família, a pessoa toca em "Sou da família" e lê o código. Quem toma o remédio vê o nome e toca em Aceitar. A partir daí, a família vê:
+  - o dia de hoje, com "Ligar para ela" e "Lembrar no celular dela";
+  - a semana em grade;
+  - os remédios;
+  - um bloco "Vale olhar", com caixa errada e alarme que pode falhar.
 
-## Acessibilidade e leitura
+  Se uma dose passar 30 minutos sem ser marcada, a família recebe uma notificação sozinha, mesmo com os dois apps fechados. Isso roda numa tarefa do Android (JobScheduler) a cada 15 minutos; com o celular parado, o Android pode atrasar o aviso.
+- **WhatsApp:** continua como opção, para quem não quer conectar. O app prepara a mensagem e a pessoa envia.
+- **"Ver como a família vê":** mostra o painel da família com os dados do próprio celular, para apresentar sem um segundo aparelho.
 
-- Letra Atkinson Hyperlegible, feita para pessoas com baixa visão, com base de 19 px.
-- Botão "AA" no topo e opção em Agenda → Aparência: letra Normal, Grande ou Muito grande (até 130%).
-- Modo de contraste alto (preto no branco, bordas grossas).
-- Rótulos sem caixa-alta, texto secundário escuro e botões de pelo menos 64 px.
-- Tudo o que aparece na tela também pode ser ouvido.
-- **Cores com significado fixo:** amarelo = ação principal (ler o remédio), azul-marinho = navegar e confirmar, verde = tomei / está certo, laranja = atrasado, vermelho = remédio errado. Cada remédio tem uma cor e a inicial dentro da bolinha, para não depender só da cor (daltonismo).
-- **Modo calmo** (Agenda → Aparência ou na tela de boas-vindas): para pessoas autistas ou sensíveis a estímulos. Sem animações, uma cor de destaque só, alarme sem voz automática (a voz fala apenas ao tocar em "Ouvir") e mensagem de "Pronto" escrita na tela ao final de cada ação.
-- O app escolhe sozinho a voz em português mais natural do celular. Em Agenda → Aparência dá para ouvir e trocar a voz e a velocidade da fala (Devagar, Normal, Rápida).
+## Acessibilidade
+
+- Letra Atkinson Hyperlegible, feita para baixa visão, de Normal a Muito grande (130%).
+- Contraste alto, modo escuro e **Modo calmo** (sem animações e voz só quando a pessoa pede).
+- Tudo o que aparece na tela pode ser ouvido pelo botão "Ouvir".
+- Botão Voltar do Android funciona: fecha a janela aberta ou volta uma tela.
+- Cada remédio tem cor e inicial (ou a foto da caixa), para não depender só da cor.
+
+## Segurança e criptografia
+
+- **No celular:** os dados ficam guardados com AES-256-GCM (`www/cofre.js`). No app instalado, a chave é guardada pelo **Android Keystore** (`android-src/Cofre.java`, `CofrePlugin.java`) e não pode ser copiada. Os dados antigos, sem criptografia, são criptografados na primeira abertura. O backup automático do Google fica desligado (`allowBackup="false"`).
+- **Na conexão com a família (ponta a ponta):**
+  - Os dois celulares combinam uma chave com ECDH P-256; a chave nunca passa pela internet.
+  - As mensagens vão em AES-256-GCM por um servidor de passagem (ntfy, código aberto), que só vê texto embaralhado e apaga em poucas horas.
+  - O código de 6 números serve só para os dois celulares se encontrarem. Ninguém é conectado sem o "Aceitar" de quem toma o remédio.
+- **A família vê:** nome, remédios, horários, o que foi marcado e os avisos. **Não vê:** fotos, contatos, localização.
+- Testado com dois celulares simulados e um servidor de passagem local: o servidor recebeu 7 mensagens, e nenhuma continha nome, remédio ou horário legível.
+
+## Conformidade (LGPD e Ato Médico)
+
+- **Consentimento específico e destacado** para dados de saúde (LGPD, art. 11, I), com versão nova quando os termos mudam. Há um consentimento próprio para quem acompanha.
+- **Medidas de segurança** (LGPD, art. 46): criptografia no aparelho e de ponta a ponta.
+- **Compartilhamento só com aceite** de quem toma o remédio, e qualquer um dos dois pode desligar a conexão.
+- **Reproduzir, não recomendar** (Lei 12.842/2013): os textos sobre remédios são trechos literais da bula oficial; quem define dose e horário é a receita.
+- **Pendente para uma versão com parceiros:**
+  - validação do cadastro por farmacêutico;
+  - servidor de passagem próprio no Brasil, em vez do ntfy.sh público. O ntfy pode ser instalado em servidor próprio; o endereço fica em `RELAY`, no `www/index.html`.
 
 ## Tecnologias
 
-HTML, CSS e JavaScript, empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura de código de barras com ML Kit (no celular) e ZXing (na web), foto da caixa com a câmera do Capacitor, voz com o motor de texto em fala do Android e alarmes com notificações locais. O APK é gerado pelo GitHub Actions a cada envio para a branch `main`.
+HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre e Elo (com EloJob). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`.
 
 ## Estrutura
 
 ```
-www/index.html        app (telas, leitura, voz, agenda)
+www/index.html        app (telas, leitura, voz, agenda, conexão com a família)
+www/cofre.js          criptografia dos dados guardados no celular
 www/base.json         lista CMED/Anvisa compactada (23/09/2026)
-www/farmacias.json    farmácias credenciadas da Farmácia Popular no Recife
+www/bulas.json        69 bulas do paciente oficiais (Bulário Eletrônico da Anvisa)
+www/farmacias.json    farmácias da Farmácia Popular no Recife
 www/postos.json       postos de saúde do Recife e remédios em estoque (dados abertos)
-android-src/          plugin Android próprio (bateria e início automático)
+www/privacidade.html  privacidade e termos (link para a Google Play)
+android-src/          plugins Android próprios: Energia, Cofre (Keystore), Elo e EloJob (família com o app fechado)
 scripts/              cópia de bibliotecas, ajustes do Android e conversão dos dados
 .github/workflows/    geração automática do APK
 ```
 
 ## Avisos
 
-O Remédio Falado é um **lembrete**: não indica nem muda dose. Ao colocar um remédio na agenda, a pessoa copia a quantidade e os horários da receita do médico e confirma que conferiu. Nada vem marcado por padrão.
-
-**Privacidade e termos:** tela dentro do app (rodapé, boas-vindas e Agenda → Configurações) e a mesma página em `www/privacidade.html`, pronta para virar o link de política de privacidade exigido pela Google Play. Os dados ficam só no celular; não há servidor, cadastro ou propaganda (LGPD, Lei 13.709/2018).
-
-Protótipo acadêmico. Os textos simplificados ainda precisam de revisão de farmacêutico. O app não muda dose e não substitui o médico. Os códigos de barras vêm da lista de preços CMED/Anvisa, que pode conter erros e é atualizada todo mês.
-
-## Conformidade (LGPD e Ato Médico)
-
-- **Dados só no celular (local-first):** agenda, horários, fotos e contatos ficam no aparelho; não há servidor nem cadastro.
-- **Consentimento específico e destacado** para dados de saúde (LGPD, art. 11, I): tela própria com "Concordo", antes de guardar qualquer remédio; pode ser retirado em Agenda → Configurações, o que apaga os dados.
-- **Reproduzir, não recomendar (Lei 12.842/2013):** "Para que serve" e "Se esquecer uma dose" são trechos literais da bula oficial, com a fonte e a versão. Sem bula, o app manda para a bula oficial em vez de resumir.
-- **Quem define dose e horário é a pessoa ou o cuidador**, copiando da receita; o app só lembra e registra.
-- **Linguagem descritiva:** "é o horário do remédio da pressão: Losartana, 1 comprimido, conforme a receita", em vez de ordens como "tome".
-- Pendente para uma versão com parceiros: validação do cadastro por farmacêutico e criptografia local.
+O Remédio Falado é um **lembrete**: não indica nem muda dose e não substitui o médico. Protótipo acadêmico; os textos ainda precisam de revisão de farmacêutico. Os códigos de barras vêm da lista de preços CMED/Anvisa, que pode conter erros.
 
 ## Créditos de dados
 
-- Lista de preços CMED/Anvisa (códigos de barras) e Bulário Eletrônico da Anvisa.
-- Textos das bulas incluídas: extraídos pelo projeto [buladiff](https://github.com/vasfvitor/buladiff) (licença MIT) a partir do Bulário Eletrônico da Anvisa; o script `scripts/bulas_seed.py` monta o `www/bulas.json`.
-- A busca de bulas usa a API interna do Bulário (a mesma do site), que não é documentada e pode mudar.
+- Lista de preços CMED/Anvisa e Bulário Eletrônico da Anvisa. A busca de bulas usa a API interna do Bulário, que não é documentada e pode mudar.
+- Textos das bulas incluídas: extraídos pelo projeto [buladiff](https://github.com/vasfvitor/buladiff) (licença MIT).
 - Postos de saúde: dados abertos da Prefeitura do Recife.
 
 ## Licença
