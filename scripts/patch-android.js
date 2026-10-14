@@ -1,5 +1,6 @@
 // Ajusta o projeto Android gerado pelo Capacitor:
-// permissão de câmera, leitor de código de barras, ícone da notificação e motor de voz.
+// permissões, leitor de código de barras, ícone da notificação, motor de voz,
+// cofre (Android Keystore) e a conexão com a família que roda com o app fechado (JobScheduler).
 const fs = require('fs'), path = require('path');
 const res = path.join(__dirname, '..', 'android', 'app', 'src', 'main');
 const manifestPath = path.join(res, 'AndroidManifest.xml');
@@ -14,7 +15,10 @@ const perms = [
   'android.permission.WRITE_CONTACTS',
   'android.permission.ACCESS_COARSE_LOCATION',
   'android.permission.ACCESS_FINE_LOCATION',
-  'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'
+  'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+  'android.permission.INTERNET',
+  'android.permission.ACCESS_NETWORK_STATE',
+  'android.permission.RECORD_AUDIO'
 ];
 for (const p of perms) {
   if (!m.includes(`"${p}"`)) m = m.replace('</manifest>', `    <uses-permission android:name="${p}" />\n</manifest>`);
@@ -27,6 +31,13 @@ if (!m.includes('android.intent.action.TTS_SERVICE')) {
 if (!m.includes('com.google.mlkit.vision.DEPENDENCIES')) {
   m = m.replace('</application>', '        <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />\n    </application>');
 }
+// conexão com a família com o app fechado: tarefa do Android (JobScheduler), sem biblioteca extra
+if (!m.includes('br.com.remediofalado.app.EloJob')) {
+  m = m.replace('</application>', '        <service android:name="br.com.remediofalado.app.EloJob" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />\n    </application>');
+}
+// dados de saúde não vão para o backup automático do Google (ficam criptografados só neste aparelho)
+m = m.replace(/android:allowBackup="true"/, 'android:allowBackup="false"');
+if (!m.includes('android:allowBackup')) m = m.replace('<application', '<application android:allowBackup="false"');
 fs.writeFileSync(manifestPath, m);
 // ícone simples (pílula) para a barra de notificação
 const draw = path.join(res, 'res', 'drawable');
@@ -50,14 +61,14 @@ if (!g.includes('remedio-falado-teste.jks')) {
         }
     }`);
 }
-// plugin próprio "Energia": abre as telas de bateria e início automático (Xiaomi, Huawei, Oppo, Vivo, Samsung...)
+// plugins próprios: "Energia" (bateria e início automático), "Cofre" (chave no Android Keystore) e "Elo" (família)
 const javaDir = path.join(res, 'java', 'br', 'com', 'remediofalado', 'app');
 fs.mkdirSync(javaDir, { recursive: true });
-for (const f of ['EnergiaPlugin.java', 'MainActivity.java']) {
+for (const f of fs.readdirSync(path.join(__dirname, '..', 'android-src')).filter(n => n.endsWith('.java'))) {
   fs.copyFileSync(path.join(__dirname, '..', 'android-src', f), path.join(javaDir, f));
 }
 // número da versão sobe a cada compilação no GitHub
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 g = g.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
 fs.writeFileSync(gradlePath, g);
-console.log('Android ajustado: permissões, ícone de notificação, voz e plugin de bateria.');
+console.log('Android ajustado: permissões, ícone de notificação, voz, bateria, cofre e conexão com a família.');

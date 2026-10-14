@@ -20,6 +20,7 @@ A tela inicial mostra **só o momento de agora** (café da manhã, almoço, tard
 | Paleta petróleo (#0F4C5C) + mel (#F2A33A) em fundo creme liso, texto escuro; verde só para "tomado" | NIA/NLM (texto escuro em fundo claro, sem textura atrás do texto) e WCAG 2.2 (contraste ≥ 4,5:1) |
 | Ajustes ficam "para o familiar" | No modo simplificado da Apple, quem configura é a pessoa de apoio |
 | Frases curtas, ordem direta, palavras comuns | Lei 15.263/2025 (Política Nacional de Linguagem Simples), art. 5º |
+| Usar o app inteiro falando e ouvindo, sem precisar ler nem escrever | 51% dos brasileiros de 50 a 64 anos são analfabetos funcionais (Inaf 2024) |
 
 Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em cada botão, com meta de 85% de acerto (critério ISO 3864-1 usado por Alves et al., 2025).
 
@@ -39,6 +40,18 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   - um bloco "Vale olhar", com caixa errada e alarme que pode falhar.
 
   Se uma dose passar 30 minutos sem ser marcada, a família recebe uma notificação sozinha, mesmo com os dois apps fechados. Isso roda numa tarefa do Android (JobScheduler) a cada 15 minutos; com o celular parado, o Android pode atrasar o aviso.
+- **Falar com o app (para quem não lê):** o botão **Falar** fica em toda tela. A pessoa diz:
+  - "já tomei";
+  - "qual remédio agora?";
+  - "que remédio é esse?";
+  - "liga pra minha filha";
+  - "meus remédios";
+  - "remédio de graça";
+  - "socorro".
+
+  O app responde em voz e **confirma antes de agir** ("Vou marcar os remédios do almoço. Diga sim ou não"). Se não entender, mostra 6 botões grandes com desenho.
+- **Cadastro respondendo falando:** no "Colocar nos meus remédios", o botão "Responder falando" pergunta e ouve: em que momento ("de manhã e à noite"), quanto ("dois comprimidos", "meio"), se está igual à receita ("sim") e se quer foto. O nome e o telefone também podem ser ditos.
+- **Socorro:** com "socorro" (ou o botão vermelho), o app confirma, avisa a família conectada no celular dela e mostra botões grandes para ligar para a família e para o SAMU (192). Usa o reconhecimento de voz do Android (plugin `@capacitor-community/speech-recognition`): sem IA externa, sem custo e sem gravar o áudio. Só entende os pedidos do próprio app e não conversa sobre saúde.
 - **WhatsApp:** continua como opção, para quem não quer conectar. O app prepara a mensagem e a pessoa envia.
 - **"Ver como a família vê":** mostra o painel da família com os dados do próprio celular, para apresentar sem um segundo aparelho.
 
@@ -72,7 +85,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 ## Tecnologias
 
-HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre e Elo (com EloJob). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`.
+HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala e o reconhecimento de voz do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre e Elo (com EloJob). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`.
 
 ## Estrutura
 

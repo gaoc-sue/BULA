@@ -8,3 +8,4 @@
   (https://github.com/vasfvitor/buladiff). Os dados do fabricante foram retirados.
 - **Lista de preços CMED/Anvisa** e **dados abertos da Prefeitura do Recife**: dados públicos.
 - **ntfy** (servidor de passagem da conexão com a família): serviço público ntfy.sh, software de código aberto (Apache 2.0 / GPLv2). O app não inclui código do ntfy; só envia mensagens já criptografadas de ponta a ponta. Pode ser trocado por um servidor próprio.
+- **@capacitor-community/speech-recognition** 7.0.1, licença MIT: reconhecimento de voz do Android para o botão Falar.
