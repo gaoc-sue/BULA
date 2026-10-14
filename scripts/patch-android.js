@@ -35,6 +35,11 @@ if (!m.includes('com.google.mlkit.vision.DEPENDENCIES')) {
 if (!m.includes('br.com.remediofalado.app.EloJob')) {
   m = m.replace('</application>', '        <service android:name="br.com.remediofalado.app.EloJob" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />\n    </application>');
 }
+// receita pelo "Compartilhar" do Android: PDF, foto ou texto (ex.: receita digital que chegou no WhatsApp)
+if (!m.includes('android.intent.action.SEND')) {
+  const filtro = mime => `\n            <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="${mime}" />\n            </intent-filter>`;
+  m = m.replace('</intent-filter>', '</intent-filter>' + ['application/pdf', 'image/*', 'text/plain'].map(filtro).join(''));
+}
 // dados de saúde não vão para o backup automático do Google (ficam criptografados só neste aparelho)
 m = m.replace(/android:allowBackup="true"/, 'android:allowBackup="false"');
 if (!m.includes('android:allowBackup')) m = m.replace('<application', '<application android:allowBackup="false"');
@@ -75,4 +80,4 @@ if (!g.includes('com.google.mlkit:text-recognition')) {
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 g = g.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
 fs.writeFileSync(gradlePath, g);
-console.log('Android ajustado: permissões, ícone de notificação, voz, bateria, cofre e conexão com a família.');
+console.log('Android ajustado: permissões, ícone de notificação, voz, bateria, cofre, conexão com a família, leitura e compartilhar da receita.');

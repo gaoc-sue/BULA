@@ -235,7 +235,11 @@
       if(rem || (numerada && !verbo && /[A-Z]{3,}/.test(semNum))){
         fechar();
         at={n:itens.length+1,rows:[r],nomeTxt:semNum,rem:rem,instr:rem? semNum.slice(rem.fimNome):'',parou:false};
-        if(rem){ var dz=semNum.slice(rem.fimNome).match(DOSE); if(dz) at.instr=semNum.slice(rem.fimNome+dz.index+dz[0].length); }
+        if(rem){ var dz=semNum.slice(rem.fimNome).match(DOSE); if(dz) at.instr=semNum.slice(rem.fimNome+dz.index+dz[0].length);
+          /* na linha do nome, "60 comprimidos" costuma ser quanto comprar, não quanto tomar */
+          var vb=at.instr.search(/\b(TOMAR|USAR|INGERIR|APLICAR|ADMINISTRAR|MASTIGAR)\b/);
+          if(vb>=0) at.instr=at.instr.slice(vb);
+          else at.instr=at.instr.replace(QTD,function(m0,n0){ var n=numero(n0); return n!=null && n>=10 ? ' ' : m0; }); }
         return;
       }
       if(!at || at.parou) return;

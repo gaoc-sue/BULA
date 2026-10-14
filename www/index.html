@@ -676,7 +676,7 @@ body.com-falar .wrap{padding-bottom:120px}
     <div class="block"><p class="label">2. Seus dados ficam no seu celular, criptografados</p><p>Nome, remédios, horários, fotos da caixa, histórico e o contato da família ficam guardados <b>só neste aparelho</b>, embaralhados com criptografia AES de 256 bits. No app instalado, a chave fica no cofre do Android (Android Keystore) e não sai do celular. Não tem cadastro e não tem propaganda. O Squad 4 não recebe nenhum dado seu. Os dados não vão para o backup automático do Google. O app só guarda esses dados depois que você concorda, numa tela própria, e você pode retirar a permissão quando quiser. Base legal: consentimento (LGPD, art. 11, I); segurança dos dados (LGPD, art. 46).</p></div>
     <div class="block"><p class="label">3. Conexão com a família (só se você quiser)</p><p>Se você conectar o celular de alguém da família, essa pessoa vê seu nome, seus remédios, os horários, o que você marcou como tomado e os avisos (dose atrasada, caixa errada, alarme que pode falhar). <b>Não vê</b> fotos, contatos nem onde você está. Você vê o nome de quem pediu e decide se aceita. As mensagens saem embaralhadas do seu celular e só se desembaralham no celular da família (<b>criptografia de ponta a ponta</b>: AES-256-GCM, com a chave combinada entre os dois celulares por ECDH P-256). No caminho, elas passam por um servidor de passagem (ntfy, de código aberto), que só vê texto embaralhado, não consegue ler e apaga em poucas horas. Qualquer um dos dois pode desligar a conexão a qualquer hora, em Família ou em Ajustes. Se a pessoa da família pedir para <b>cuidar dos seus remédios</b> (modo gestor), o pedido diz isso com clareza e você escolhe: aceitar, aceitar só para acompanhar ou não aceitar. Aceitando, essa pessoa pode colocar, mudar e tirar remédios, sempre copiando da receita; cada mudança chega criptografada, o app fala o que mudou e anota com o nome de quem mudou. Você desliga quando quiser, em Ajustes → Quem cuida dos meus remédios. O app continua sem indicar nem mudar dose sozinho.</p></div>
     <div class="block"><p class="label">4. Para que o app pede cada permissão</p>
-      <p><b>Câmera:</b> ler o código de barras, o QR code e tirar a foto da caixa, só quando você toca no botão. No teste “Ler receita”, a foto da receita é lida no próprio celular e apagada depois da conferência; não vai para a internet.<br>
+      <p><b>Câmera:</b> ler o código de barras, o QR code e tirar a foto da caixa, só quando você toca no botão. No teste “Ler receita”, a foto ou o PDF da receita (tirados no app ou mandados pelo Compartilhar do celular) são lidos no próprio celular e apagados depois da conferência; não vão para a internet.<br>
       <b>Notificações e alarmes:</b> avisar a hora do remédio e os avisos da família, mesmo com o app fechado.<br>
       <b>Contatos:</b> só quando você toca em "Escolher dos contatos". O app guarda apenas o nome e o número que você escolher.<br>
       <b>Localização:</b> só quando você toca em "Mostrar as mais perto de mim". Ela é usada no celular para calcular a distância e não é enviada.<br>
@@ -1452,7 +1452,8 @@ function renderLer(){
     </div>
     ${rxLigado()&&!alvo&&!gestorAtivo()?`<section class="rx-ent" aria-labelledby="rxEntT"><div class="rx-ent-cab">${RX_SVG}<div><h3 id="rxEntT">Tem a receita do médico?</h3><p class="small muted" style="margin:2px 0 0">Eu leio os remédios da receita e você confere um por um.</p></div><span class="selo-t">Teste</span></div>
       ${RECEITA?`<button class="btn btn-pill" id="bRx" type="button">${CAM_SVG}Fotografar a receita</button>`:`<button class="btn btn-pill" id="bRxEx" type="button">${RX_SVG}Ver com uma receita de exemplo</button><p class="fine" style="margin:0">Aqui no navegador a foto não é lida. No app instalado, a foto é lida no próprio celular, sem internet.</p>`}
-      <button class="btn btn-ghost" id="bRxDig" type="button">${QR_SVG}Receita digital: QR code ou PDF</button></section>`:''}
+      <button class="btn btn-ghost" id="bRxDig" type="button">${QR_SVG}Receita digital: QR code ou PDF</button>
+      ${RECEITA?`<p class="fine" style="margin:0">A receita chegou no WhatsApp? Toque em Compartilhar e escolha Remédio Falado.</p>`:''}</section>`:''}
     ${S.demo?`<details class="demo"><summary>Testar sem caixa (demonstração)</summary>
       <p class="small muted" style="margin-top:8px">Códigos reais da lista da Anvisa. Toque num deles, ou abra esta página em outro celular e fotografe o código desta tela.</p>
       <div class="samples">${amostras}</div></details>`:''}
@@ -1799,9 +1800,9 @@ let RX=null;
 const RX_NO={cafe:'no café da manhã',almoco:'no almoço',jantar:'no jantar',dormir:'antes de dormir'};
 function rxEl(){ return $('#rx'); }
 function rxFechar(){ RX=null; rxEl().hidden=true; wizDestino=null; addSel=null; calar(); }
-async function rxComecar(fonte){
+async function rxComecar(fonte,dado){
   if(!rxLigado()) return;
-  if(!temConsentimento()){ abrirConsentimento(()=>rxComecar(fonte)); return; }
+  if(!temConsentimento()){ abrirConsentimento(()=>rxComecar(fonte,dado)); return; }
   await baseOk;
   const destino=gestorAlvo||null;
   RX={tela:'lendo',itens:[],i:0,destino,fonte,canvas:null};
@@ -1812,6 +1813,15 @@ async function rxComecar(fonte){
     catch(e){ console.warn('receita',e); rxTela('nada','Não consegui ler esta foto.'); }
     return;
   }
+  if(fonte==='compartilhado'){ rxTela('lendo');
+    try{
+      if(dado.tipo==='pdf'){ const bin=atob(dado.dados), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); rxMontar(await linhasDoPdf(u)); }
+      else if(dado.tipo==='imagem'){ if(!RECEITA) throw new Error('sem-leitor'); const r=await rxOCR('data:'+(dado.mime||'image/jpeg')+';base64,'+dado.dados); RX.canvas=r.canvas; rxMontar(r.linhas); }
+      else if(dado.tipo==='texto'){ const t=String(dado.texto||'').trim(), m=t.match(/https?:\/\/\S+/);
+        if(m && t.split(/\s+/).length<8){ RX.tela='digital'; rxTela('digital'); await rxAbrirLink(m[0]); } else rxMontar(t.split(/\r?\n/)); }
+      else rxTela('nada','Este arquivo não é uma receita que eu consiga ler. Mande o PDF ou a foto da receita.');
+    }catch(e){ console.warn('compartilhado',e); rxTela('nada','Não consegui abrir o que foi compartilhado.'); }
+    return; }
   if(fonte==='exemplo'){ const r=receitaExemplo(); RX.canvas=r.canvas; rxTela('lendo'); setTimeout(()=>rxMontar(r.linhas),400); return; }
   rxTela('digital');
 }
@@ -1823,6 +1833,17 @@ async function rxFoto(){
     return r&&r.dataUrl||null; }
   catch(e){ if(!/cancel/i.test(String(e&&e.message||e))) toast('Não consegui abrir a câmera.'); return null; }
 }
+/* receita que chegou pelo "Compartilhar" do Android (WhatsApp, e-mail, galeria) */
+async function rxCompartilhado(){
+  if(!RECEITA || !RECEITA.compartilhado) return;
+  let r=null; try{ r=await RECEITA.compartilhado(); }catch(e){ if(String(e&&e.message||e).indexOf('grande')>=0) toast('Este arquivo é grande demais para ler.'); return; }
+  if(!r || !r.tipo) return;
+  if(!window.RFReceita){ return; }
+  if(AP.rxTeste===false){ toast('Para ler a receita, ligue em Ajustes → Ler receita (teste).'); return; }
+  if(RX) rxFechar(); if(!$('#wiz').hidden) fecharWizard();
+  rxComecar('compartilhado',r);
+}
+if(RECEITA){ try{ RECEITA.addListener('compartilhado',()=>rxCompartilhado()); }catch(e){} setTimeout(rxCompartilhado,1500); }
 function rxImg(src){ return new Promise((ok,erro)=>{ const im=new Image(); im.onload=()=>ok(im); im.onerror=()=>erro(new Error('img')); im.src=src; }); }
 function rxGirar(im,giro){ const k=Math.min(1,2200/Math.max(im.width,im.height)), w=Math.round(im.width*k), h=Math.round(im.height*k);
   const c=document.createElement('canvas'), deitado=giro===90||giro===270; c.width=deitado?h:w; c.height=deitado?w:h;
@@ -1914,6 +1935,7 @@ function rxTela(t,msg){
     <p>A receita digital chega por mensagem, com um QR code ou um arquivo PDF.</p>
     <button class="btn btn-pill" id="rxQR" type="button">${QR_SVG}Ler o QR code da receita</button>
     <button class="btn btn-ghost" id="rxPdf" type="button">${RX_SVG}Abrir o PDF da receita</button>
+    ${RECEITA?`<div class="msg info">Mais fácil: no WhatsApp, toque e segure a receita, toque em <b>Compartilhar</b> e escolha <b>Remédio Falado</b>.</div>`:''}
     <div id="rxDigMsg"></div><button class="linkbtn wz-voltar" id="rxFechar" type="button">Cancelar</button>`;
   else if(t==='nada') h=`<h2 id="rxT" tabindex="-1">Não achei remédios</h2><p>${esc(msg||'Não consegui separar os remédios desta receita.')}</p>
     <div class="msg info">Para a foto dar certo: receita inteira na foto, sobre a mesa, com luz e sem dobras. Letra de mão o leitor quase não entende.</div>
@@ -2053,6 +2075,10 @@ async function rxQR(){
   const txt=await lerQRTexto(); if(!txt||!RX) return;
   let url=null; try{ const u=new URL(String(txt).trim()); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
   if(!url){ rxTela('lendo'); rxMontar(String(txt).split(/\r?\n/)); return; }
+  await rxAbrirLink(url.href);
+}
+async function rxAbrirLink(href){
+  const msg=t=>{ const m=$('#rxDigMsg'); if(m) m.innerHTML=t; }; let url; try{ url=new URL(href); }catch(e){ return; }
   msg(`<div class="msg info">Abrindo a receita em <b>${esc(url.hostname)}</b>…</div>`);
   try{ const lin=await rxBaixar(url.href); if(!RX) return; rxTela('lendo'); rxMontar(lin); }
   catch(e){ msg(`<div class="msg warn">Este QR code abre o site <b>${esc(url.hostname)}</b>, que pede um código ou não deixa ler direto.
