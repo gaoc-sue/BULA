@@ -227,6 +227,7 @@ final class Elo {
         if (desde == 0) desde = System.currentTimeMillis() / 1000 - 15 * 60;
         Set<String> vistos = new HashSet<>(st.getStringSet("ids:" + topic, new HashSet<String>()));
         Set<String> uids = new HashSet<>(st.getStringSet("uids:" + topic, new HashSet<String>()));
+        Set<String> acks = new HashSet<>(st.getStringSet("acks:" + topic, new HashSet<String>()));
         HttpURLConnection c = (HttpURLConnection) new URL(relay + "/" + topic + "/json?poll=1&since=" + desde).openConnection();
         c.setConnectTimeout(15000); c.setReadTimeout(20000);
         long maior = desde;
@@ -246,6 +247,16 @@ final class Elo {
                 JSONObject msg = new JSONObject(txt);
                 if (papel.equals(msg.optString("de"))) continue;
                 if ("familia".equals(papel) && "estado".equals(msg.optString("t"))) { confirmar(st, topic, msg, pend); continue; }
+                // pedido de ajuda: responde "recebi" para o celular de quem pediu saber que o aviso chegou
+                if ("familia".equals(papel) && "socorro".equals(msg.optString("t")) && !msg.optString("sid").isEmpty()
+                        && !acks.contains(msg.optString("sid")) && System.currentTimeMillis() - t * 1000 < 30L * 60 * 1000) {
+                    try {
+                        JSONObject resp = new JSONObject();
+                        resp.put("de", "familia"); resp.put("t", "recebi"); resp.put("sid", msg.optString("sid")); resp.put("ts", System.currentTimeMillis());
+                        publicar(relay, topic, cifrar(key, resp.toString()));
+                        acks.add(msg.optString("sid"));
+                    } catch (Exception e) { /* tenta na próxima rodada */ }
+                }
                 String uid = msg.optString("uid", "");
                 if (!uid.isEmpty()) { if (uids.contains(uid)) continue; uids.add(uid); } // mudança reenviada: avisa uma vez só
                 JSONObject av = msg.optJSONObject("aviso");
@@ -254,7 +265,9 @@ final class Elo {
         } finally { c.disconnect(); }
         if (vistos.size() > 60) vistos.clear();
         if (uids.size() > 80) uids.clear();
-        st.edit().putLong("desde:" + topic, maior).putStringSet("ids:" + topic, vistos).putStringSet("uids:" + topic, uids).apply();
+        if (acks.size() > 40) acks.clear();
+        st.edit().putLong("desde:" + topic, maior).putStringSet("ids:" + topic, vistos).putStringSet("uids:" + topic, uids)
+                .putStringSet("acks:" + topic, acks).apply();
     }
 
     /* ---------------- servidor de passagem (ntfy) ---------------- */

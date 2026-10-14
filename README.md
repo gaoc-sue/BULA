@@ -29,11 +29,19 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 - **Que remédio é este?** Lê o código de barras da caixa e consulta a lista oficial de preços da CMED/Anvisa, com mais de 27 mil códigos, sem internet. Fala o tipo de remédio e, quando há bula, o trecho literal de "para que serve".
 - **Colocar nos meus remédios:** 4 perguntas, uma por tela: em que momento a receita manda tomar, quanto em cada momento, conferir com a receita (com o total do dia) e foto da caixa (opcional). A pessoa copia da receita do médico; o app não sugere dose. Quantidade diferente de 1, 2 ou meio se escolhe com os botões − e + (sem digitar); "Escrever" fica para receita fora do padrão.
-- **Total do dia e aviso de dose:** soma o que foi marcado. Nos 10 remédios com texto próprio, se o total passar da maior dose por dia citada na bula, aparece um aviso pedindo para conferir a receita. Não bloqueia.
+- **Avisos de dose (só avisam, nunca bloqueiam):** o app soma o total do dia e avisa quando:
+  - passa da maior dose por dia citada na bula (`www/doses.json`: valor + frase literal da bula + registro; e os 10 remédios da pressão e diabetes);
+  - passa do que a bula diz por dose de uma vez (paracetamol e dipirona: 1.000 mg);
+  - o mesmo princípio ativo já está em outra caixa (soma os dois) ou num remédio combinado (ex.: dipirona e um relaxante com dipirona);
+  - são mais de 4 comprimidos de uma vez.
+
+  O aviso cita a frase da bula, é falado e pede "Conferi: é isso mesmo que está na receita". As doses precisam ser conferidas por farmacêutico (`"conferido_por"` em `doses.json`).
+- **Ler a receita (teste, desliga em Ajustes → Ler receita):** em "Ler a caixa", a pessoa fotografa a receita impressa (ou abre o PDF ou o QR code da receita digital). O texto é lido no próprio celular, sem internet (ML Kit Text Recognition, `android-src/ReceitaPlugin.java`); se a foto estiver deitada, o app gira e lê de novo. `www/receita.js` separa os remédios e acha cada um na lista da Anvisa (pelo princípio ativo ou pelo nome da caixa), com dose, quanto tomar e o momento: "pela manhã" = café da manhã, "após o jantar" = jantar, "ao deitar" = antes de dormir, "2 x ao dia" = café e jantar, "de 12/12 horas" = a partir do café da manhã, de 12 em 12 horas (sempre pelos horários da rotina da pessoa). Depois mostra **um remédio por vez**, com o recorte da receita ao lado, e a pessoa toca em "Está certo", "Corrigir" (abre as 4 perguntas já preenchidas) ou "Não colocar". Não existe "salvar todos". O que não ficou claro vira pergunta: "à noite" (jantar ou antes de dormir?), "Selozok ou Metoprolol" (qual caixa você tem?), dose que não deu para ler, "1 vez ao dia" sem hora. "Se dor"/"se febre" não ganha alarme; remédio de um dia da semana avisa que o app ainda não faz. Os avisos de dose valem aqui também. A foto não é guardada. Letra de mão o leitor quase não entende. Para tirar de vez: apagar `www/receita.js`, `android-src/ReceitaPlugin.java`, a linha `registerPlugin(ReceitaPlugin.class)` em `MainActivity.java` e o bloco do `text-recognition` em `scripts/patch-android.js` (sem o `receita.js`, a opção some sozinha do app).
 - **Bula completa:** a bula do paciente oficial, nas 9 perguntas, com letra grande e "Ouvir esta parte". 69 bulas já vêm no app (`www/bulas.json`); as outras são baixadas do Bulário Eletrônico da Anvisa e ficam guardadas.
 - **Alarme:** o Android avisa na hora, mesmo com o app fechado. A pessoa aperta TOMEI. "Conferir a caixa" confirma pela câmera se é o remédio certo.
 - **Para o alarme tocar sempre:** detecta o que falta em cada marca (Xiaomi, Samsung, Motorola...) e abre a configuração certa (`android-src/EnergiaPlugin.java`).
 - **Remédio de graça:** Farmácia Popular (52 farmácias do Recife) e 143 postos de saúde do SUS com endereço, horário, telefone e estoque (dados abertos da Prefeitura).
+  - **Estoque dos postos atualizado todo dia:** o repositório público `remedio-falado-dados` tem uma tarefa do GitHub Actions que, todo dia às 05h17, baixa o estoque das farmácias da Rede Municipal de Saúde (8 distritos sanitários, Portal de Dados Abertos do Recife), junta com o endereço, telefone e horário das unidades e publica `estoque.json`. O app baixa esse arquivo com internet, uma vez por dia, e guarda para usar sem internet. O build do APK também copia o do dia para `www/postos.json`. Tira da lista SAMU, laboratório, depósitos dos distritos, CAPS e hospitais.
 - **Família, com o celular conectado:** em Família → "Conectar o celular da família", o app mostra um código de 6 números e um QR code. No celular da família, a pessoa toca em "Sou da família" e lê o código. Quem toma o remédio vê o nome e toca em Aceitar. A partir daí, a família vê:
   - o dia de hoje, com "Ligar para ela" e "Lembrar no celular dela";
   - a semana em grade;
@@ -61,7 +69,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
   O app responde em voz e **confirma antes de agir** ("Vou marcar os remédios do almoço. Diga sim ou não"). Se não entender, mostra 6 botões grandes com desenho.
 - **Cadastro respondendo falando:** no "Colocar nos meus remédios", o botão "Responder falando" pergunta e ouve: em que momento ("de manhã e à noite"), quanto ("dois comprimidos", "meio"), se está igual à receita ("sim") e se quer foto. O nome e o telefone também podem ser ditos.
-- **Socorro:** com "socorro" (ou o botão vermelho), o app confirma, avisa a família conectada no celular dela e mostra botões grandes para ligar para a família e para o SAMU (192). Usa o reconhecimento de voz do Android (plugin `@capacitor-community/speech-recognition`): sem IA externa, sem custo e sem gravar o áudio. Só entende os pedidos do próprio app e não conversa sobre saúde.
+- **Socorro:** com "socorro" (ou o botão vermelho), o app confirma e mostra primeiro, maior, o botão do SAMU (192), que liga pela linha do celular, sem internet. Depois vem o botão da família. O aviso no celular da família vai pela internet e só aparece como entregue quando o celular dela responde "recebi" (o app aberto ou o Android em segundo plano, `Elo.java`). Sem resposta em 2 minutos, ou sem internet, o app fala que não conseguiu avisar e manda ligar. Usa o reconhecimento de voz do Android (plugin `@capacitor-community/speech-recognition`): sem IA externa, sem custo e sem gravar o áudio.
 - **WhatsApp:** continua como opção, para quem não quer conectar. O app prepara a mensagem e a pessoa envia.
 - **"Ver como a família vê":** mostra o painel da família com os dados do próprio celular, para apresentar sem um segundo aparelho.
 
@@ -99,22 +107,33 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 ## Tecnologias
 
-HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala e o reconhecimento de voz do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre e Elo (com EloJob). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`.
+HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala e o reconhecimento de voz do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre, Elo (com EloJob) e Receita (leitura do texto da receita com ML Kit Text Recognition 16.0.1, modelo dentro do app). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`.
 
 ## Estrutura
 
 ```
 www/index.html        app (telas, leitura, voz, agenda, conexão com a família)
 www/cofre.js          criptografia dos dados guardados no celular
+www/receita.js        leitura da receita (teste): separa remédio, dose, quantidade e momento
 www/base.json         lista CMED/Anvisa compactada (23/09/2026)
 www/bulas.json        69 bulas do paciente oficiais (Bulário Eletrônico da Anvisa)
 www/farmacias.json    farmácias da Farmácia Popular no Recife
 www/postos.json       postos de saúde do Recife e remédios em estoque (dados abertos)
 www/privacidade.html  privacidade e termos (link para a Google Play)
-android-src/          plugins Android próprios: Energia, Cofre (Keystore), Elo e EloJob (família com o app fechado)
+android-src/          plugins Android próprios: Energia, Cofre (Keystore), Elo e EloJob (família com o app fechado), Receita (texto da foto)
 scripts/              cópia de bibliotecas, ajustes do Android e conversão dos dados
 .github/workflows/    geração automática do APK
 ```
+
+## Bulas que vêm dentro do app
+
+`scripts/bulas/lista.txt` tem os registros dos remédios da Farmácia Popular (41 itens) e de alguns muito usados por idosos. Para baixar e montar `www/bulas.json`:
+
+```sh
+bash scripts/bulas/baixar-bulas.sh   # no seu computador (Linux, Mac ou WSL)
+```
+
+Precisa rodar no seu computador porque a API do Bulário da Anvisa bloqueia os servidores do GitHub. O script usa o [buladiff](https://github.com/vasfvitor/buladiff) (MIT) e tira o nome do fabricante, o endereço e o SAC. As bulas que não vêm dentro do app continuam sendo baixadas no celular, na primeira vez, e ficam guardadas.
 
 ## Avisos
 

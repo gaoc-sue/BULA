@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(EnergiaPlugin.class);
         registerPlugin(CofrePlugin.class);
         registerPlugin(EloPlugin.class);
+        registerPlugin(ReceitaPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

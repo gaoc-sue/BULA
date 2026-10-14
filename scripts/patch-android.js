@@ -61,11 +61,15 @@ if (!g.includes('remedio-falado-teste.jks')) {
         }
     }`);
 }
-// plugins próprios: "Energia" (bateria e início automático), "Cofre" (chave no Android Keystore) e "Elo" (família)
+// plugins próprios: "Energia" (bateria e início automático), "Cofre" (chave no Android Keystore), "Elo" (família) e "Receita" (ler a receita)
 const javaDir = path.join(res, 'java', 'br', 'com', 'remediofalado', 'app');
 fs.mkdirSync(javaDir, { recursive: true });
 for (const f of fs.readdirSync(path.join(__dirname, '..', 'android-src')).filter(n => n.endsWith('.java'))) {
   fs.copyFileSync(path.join(__dirname, '..', 'android-src', f), path.join(javaDir, f));
+}
+// leitura da receita pela foto (teste): reconhecimento de texto do Google (ML Kit), modelo dentro do app, sem internet
+if (!g.includes('com.google.mlkit:text-recognition')) {
+  g = g.replace(/dependencies \{/, "dependencies {\n    implementation 'com.google.mlkit:text-recognition:16.0.1'");
 }
 // número da versão sobe a cada compilação no GitHub
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
