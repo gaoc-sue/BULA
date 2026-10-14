@@ -146,7 +146,7 @@ nav.tabs button[aria-current="page"]{background:var(--sunk);color:var(--fg)}
 .alarm .in{max-width:520px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:16px;text-align:center}
 .alarm .hour{font-size:3.6rem}
 .alarm .btn-ghost{background:transparent;border-color:var(--accent-ink);color:var(--accent-ink)}
-.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:20;max-width:90vw}
+.toast{position:fixed;left:16px;right:16px;margin:0 auto;width:fit-content;top:calc(12px + env(safe-area-inset-top,0px));line-height:1.35;background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:20;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:no-preference){.alarm .bell{animation:ring 1s ease-in-out infinite}}
 @keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
 .open-out{background:var(--warn-soft);border:2px solid var(--warn);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
@@ -164,6 +164,7 @@ button.dose:first-child{border-top:0}
 .wa-mini{background:none;border:0;color:var(--ok);font-weight:700;font-size:.85rem;padding:6px 0 0;cursor:pointer;display:block}
 .wa-bar{background:var(--ok-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .bv{position:fixed;inset:0;z-index:9;background:var(--bg);overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.bv-cab{display:flex;justify-content:flex-end;margin-bottom:-8px}
 .bv-in-wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-height:100%;justify-content:center}
 .bv h2{font-size:1.9rem}
 .bv p{font-size:1.2rem}
@@ -193,6 +194,9 @@ button.dose:first-child{border-top:0}
 .direitos{text-align:center;font-size:.72rem;color:var(--muted)}
 .bv .credito{margin-top:20px}
 .opts4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.passador{display:grid;grid-template-columns:64px minmax(0,1fr) 64px;gap:10px;align-items:center}
+.passador .btn{font-size:2rem;min-height:64px;padding:0}
+.passador output{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;text-align:center;font-size:1.15rem;min-height:64px;border:2px solid var(--line);border-radius:14px;padding:6px;background:var(--bg)}
 .receita{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);border-radius:12px;padding:12px}
 .receita svg{width:30px;height:30px;flex:none;color:var(--warn)}
 .conferi{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--surface);font-weight:700;text-align:left;cursor:pointer;width:100%}
@@ -492,7 +496,7 @@ body.com-nav .wrap{padding-bottom:120px}
 .atalhos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .atalho{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;min-height:120px;padding:14px;border-radius:24px;border:0;color:#FFFFFF;font:inherit;font-weight:700;font-size:1.15rem;line-height:1.2;text-align:left;cursor:pointer}
 .atalho svg{width:44px;height:44px}
-.at-ler{background:#0F4C5C}.at-meus{background:#4B2A7B}.at-gratis{background:#00775A}.at-fam{background:#B8327A}
+.at-ler{background:#7A4A1E}.at-meus{background:#4B2A7B}.at-gratis{background:#00775A}.at-fam{background:#B8327A}
 :root[data-contraste="1"] .atalho{background:#000000}
 .aj-link{display:flex;align-items:center;justify-content:center;gap:10px;min-height:60px;border-radius:16px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-weight:700;font-size:1.05rem;cursor:pointer;width:100%}
 .aj-link svg{width:26px;height:26px}
@@ -545,6 +549,7 @@ details.mais > .in{padding:0 16px 16px;display:flex;flex-direction:column;gap:14
 .pessoa h2{font-size:1.6rem}
 .st-dot{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--ok);margin-right:6px;vertical-align:-1px}
 .st-dot.velho{background:var(--line)}
+.al-card.info{background:var(--accent-soft);border-color:var(--accent)}
 .al-card{background:var(--warn-soft);border:3px solid var(--warn-line);border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .al-card h3{font-size:1.25rem}
 .al-card .q{color:var(--warn);font-weight:700}
@@ -560,11 +565,38 @@ nav.tabs .in.c4{grid-template-columns:repeat(4,1fr)}
 .pronto .in{border:2px solid var(--line)}
 .pronto .ok-c{background:var(--ok)}
 :root[data-calmo="1"] .agora{border-width:3px}
+.linkbtn,.linkbtn.wz-voltar{color:var(--fg)} .linkbtn[data-del]{color:var(--bad)}
+/* botão Falar fixo numa barra embaixo: não cobre os cards (padrão de barra inferior, conhecido de outros apps) */
+.falar-fab{left:0;right:0;bottom:0;border-radius:0;border:0;border-top:2px solid var(--line);background:var(--bg);color:var(--main);justify-content:center;min-height:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.falar-fab::after{content:none}
+.falar-fab > *{pointer-events:none}
+.falar-fab .fab-in{display:flex;align-items:center;justify-content:center;gap:10px;width:min(100%,520px);min-height:68px;border-radius:999px;background:var(--main);color:var(--main-ink);font-size:1.3rem;font-weight:700}
+.falar-fab.ouvindo .fab-in{background:var(--bad);color:#FFFFFF}
+.falar-fab.ouvindo{background:var(--bg)}
+body.com-falar .wrap{padding-bottom:130px}
+/* opção marcada: preto (o azul fica só para ouvir e falar) */
+.opt[aria-pressed="true"],.seg button[aria-pressed="true"],.letra button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.opt[aria-pressed="true"] small{color:var(--bg)}
+.chips-f button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)} .chips-f button{border-color:var(--fg);color:var(--fg)}
 
 
 /* ===== conversa por voz: para quem não lê ===== */
-.falar-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;display:flex;align-items:center;gap:10px;min-height:76px;padding:0 26px 0 20px;border-radius:999px;border:3px solid var(--main-ink);background:var(--main);color:var(--main-ink);font:inherit;font-weight:700;font-size:1.3rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+.falar-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:16;display:flex;align-items:center;gap:10px;min-height:76px;padding:0 26px 0 20px;border-radius:999px;border:3px solid var(--main-ink);background:var(--main);color:var(--main-ink);font:inherit;font-weight:700;font-size:1.3rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28)}
 .falar-fab svg{width:34px;height:34px}
+.falar-fab.ouvindo{background:var(--bad);border-color:#FFFFFF}
+.bv{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))} .alarm{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+.legenda{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 14px}
+.legenda p{display:flex;align-items:center;gap:8px;margin:0;font-size:.95rem;font-weight:700}
+.legenda i{width:22px;height:22px;border-radius:7px;flex:none}
+.btn-pill:not(:has(svg))::before,.btn-ok:not(:has(svg))::before{content:"";width:28px;height:28px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+.legenda{grid-template-columns:1fr}
+.destaque{outline:6px solid var(--fg)!important;outline-offset:5px;position:relative;z-index:2}
+@media (prefers-reduced-motion:no-preference){ :root:not([data-calmo="1"]) .destaque{animation:realce 1s ease-in-out infinite} }
+@keyframes realce{0%,100%{outline-offset:5px}50%{outline-offset:10px}}
+.legenda p{font-size:1.02rem}
+.legenda .amostra{display:inline-grid;place-items:center;width:44px;height:34px;border-radius:10px;flex:none}
+.legenda .amostra svg{width:22px;height:22px}
+
 body.com-falar .wrap{padding-bottom:120px}
 .mic-g{width:132px;height:132px;border-radius:50%;background:var(--main);color:var(--main-ink);display:grid;place-items:center;margin:4px auto 0;border:0}
 .mic-g svg{width:72px;height:72px}
@@ -623,7 +655,7 @@ body.com-falar .wrap{padding-bottom:120px}
     <p class="small muted">Remédio Falado · versão de outubro de 2026</p>
     <div class="block"><p class="label">1. É um lembrete</p><p>O Remédio Falado lembra a hora do remédio e lê a caixa. <b>Não indica, não muda dose e não substitui o médico ou o farmacêutico.</b> A dose é sempre a da receita do médico.</p></div>
     <div class="block"><p class="label">2. Seus dados ficam no seu celular, criptografados</p><p>Nome, remédios, horários, fotos da caixa, histórico e o contato da família ficam guardados <b>só neste aparelho</b>, embaralhados com criptografia AES de 256 bits. No app instalado, a chave fica no cofre do Android (Android Keystore) e não sai do celular. Não tem cadastro e não tem propaganda. O Squad 4 não recebe nenhum dado seu. Os dados não vão para o backup automático do Google. O app só guarda esses dados depois que você concorda, numa tela própria, e você pode retirar a permissão quando quiser. Base legal: consentimento (LGPD, art. 11, I); segurança dos dados (LGPD, art. 46).</p></div>
-    <div class="block"><p class="label">3. Conexão com a família (só se você quiser)</p><p>Se você conectar o celular de alguém da família, essa pessoa vê seu nome, seus remédios, os horários, o que você marcou como tomado e os avisos (dose atrasada, caixa errada, alarme que pode falhar). <b>Não vê</b> fotos, contatos nem onde você está. Você vê o nome de quem pediu e decide se aceita. As mensagens saem embaralhadas do seu celular e só se desembaralham no celular da família (<b>criptografia de ponta a ponta</b>: AES-256-GCM, com a chave combinada entre os dois celulares por ECDH P-256). No caminho, elas passam por um servidor de passagem (ntfy, de código aberto), que só vê texto embaralhado, não consegue ler e apaga em poucas horas. Qualquer um dos dois pode desligar a conexão a qualquer hora, em Família ou em Ajustes.</p></div>
+    <div class="block"><p class="label">3. Conexão com a família (só se você quiser)</p><p>Se você conectar o celular de alguém da família, essa pessoa vê seu nome, seus remédios, os horários, o que você marcou como tomado e os avisos (dose atrasada, caixa errada, alarme que pode falhar). <b>Não vê</b> fotos, contatos nem onde você está. Você vê o nome de quem pediu e decide se aceita. As mensagens saem embaralhadas do seu celular e só se desembaralham no celular da família (<b>criptografia de ponta a ponta</b>: AES-256-GCM, com a chave combinada entre os dois celulares por ECDH P-256). No caminho, elas passam por um servidor de passagem (ntfy, de código aberto), que só vê texto embaralhado, não consegue ler e apaga em poucas horas. Qualquer um dos dois pode desligar a conexão a qualquer hora, em Família ou em Ajustes. Se a pessoa da família pedir para <b>cuidar dos seus remédios</b> (modo gestor), o pedido diz isso com clareza e você escolhe: aceitar, aceitar só para acompanhar ou não aceitar. Aceitando, essa pessoa pode colocar, mudar e tirar remédios, sempre copiando da receita; cada mudança chega criptografada, o app fala o que mudou e anota com o nome de quem mudou. Você desliga quando quiser, em Ajustes → Quem cuida dos meus remédios. O app continua sem indicar nem mudar dose sozinho.</p></div>
     <div class="block"><p class="label">4. Para que o app pede cada permissão</p>
       <p><b>Câmera:</b> ler o código de barras, o QR code e tirar a foto da caixa, só quando você toca no botão.<br>
       <b>Notificações e alarmes:</b> avisar a hora do remédio e os avisos da família, mesmo com o app fechado.<br>
@@ -633,10 +665,10 @@ body.com-falar .wrap{padding-bottom:120px}
       <b>Internet:</b> abrir o mapa e o WhatsApp, baixar a bula oficial do site da Anvisa (só o número de registro do remédio é enviado) e, se você conectar a família, mandar e receber as mensagens criptografadas. A voz mais natural do Google também usa a internet para falar o texto.</p></div>
     <div class="block"><p class="label">5. Aviso pelo WhatsApp</p><p>O app só prepara a mensagem. <b>Quem decide e envia é você.</b> Depois de enviada, ela segue as regras do WhatsApp.</p></div>
     <div class="block"><p class="label">6. Informações sobre remédios</p><p>Vêm da lista oficial de preços CMED/Anvisa e das bulas. Podem ter erros ou estar desatualizadas. A receita e a bula oficial são as referências. Em caso de dúvida, o farmacêutico pode ajudar.</p></div>
-    <div class="block"><p class="label">7. Como apagar seus dados</p><p>Em Ajustes, toque em "Retirar consentimento e apagar tudo". Isso também desliga a conexão com a família e avisa o celular dela. Desinstalar o app também apaga tudo.</p></div>
+    <div class="block"><p class="label">7. Como apagar seus dados</p><p>Em Ajustes, toque em "Retirar consentimento e apagar tudo". Isso também desliga a conexão com a família e avisa o outro celular. Desinstalar o app também apaga tudo.</p></div>
     <div class="block"><p class="label">8. Quem fez</p><p>Protótipo acadêmico do Squad 4 · CESAR School (Recife/PE), 2026. Os dados são tratados conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).</p></div>
-    <button class="btn btn-ghost" id="termosOuvir" type="button">Ouvir o resumo</button>
-    <button class="btn btn-main" id="termosFechar" type="button">Entendi</button></div></div>
+    <button class="btn btn-main" id="termosOuvir" type="button">${IC.som}Ouvir o resumo</button>
+    <button class="btn btn-pill" id="termosFechar" type="button">Entendi</button></div></div>
 <div class="bv" id="voz" hidden role="dialog" aria-modal="true" aria-labelledby="vozT" style="z-index:15"><div class="bv-in-wrap" style="justify-content:flex-start" id="vozIn"></div></div>
 <button class="falar-fab" id="falarBtn" type="button" hidden aria-label="Falar com o app"></button>
 <div class="alarm" id="alarm" hidden role="alertdialog" aria-labelledby="alarmTitle"></div>
@@ -735,7 +767,7 @@ function med(a){
 const chaveAg = a => a.chave || a.principio;
 const chaveIt = it => it.principio || ('sub:'+it.substancia);
 function dotA(a){ return bolinha(corDe(a), med(a).nome); }
-const nomeP = () => S.pessoa || 'Seu familiar';
+const nomeP = () => S.pessoa || 'A pessoa que você acompanha';
 const vocativo = () => S.pessoa ? S.pessoa+', ' : '';
 const nomeFam = () => S.familiar || 'a família';
 function item(idx){
@@ -776,13 +808,13 @@ function seed(){
   agenda.forEach(a=>a.horarios.forEach(h=>{ if(toMin(h)<agoraMin-90) log.push({dia:k0,ag:a.id,h,em:addMin(h,8),ok:true}); }));
   return Object.assign(novo(),{pessoa:'Dona Lúcia',familiar:'Carla (filha)',agenda,log,demo:true,rotina:Object.assign({},ROTINA_PADRAO)});
 }
-function novo(){ return {pessoa:'',familiar:'',whats:'',agenda:[],log:[],feed:[],tocados:{},demo:false,papel:'idoso',eu:'',pareados:[],seguindo:[],alertas:[],eloAvisados:{}}; }
+function novo(){ return {pessoa:'',familiar:'',whats:'',agenda:[],log:[],feed:[],tocados:{},demo:false,papel:'idoso',eu:'',pareados:[],seguindo:[],alertas:[],eloAvisados:{},mudancas:[]}; }
 let S=null;
 try{ S=JSON.parse(RFCofre.ler(KEY)); }catch(e){ S=null; }
 const primeiroUso = !S;
 if(!S) S=novo();
 if(S.demo===undefined) S.demo = S.pessoa==='Dona Lúcia';
-function normalizar(){ ['pareados','seguindo','alertas','agenda','log','feed'].forEach(k=>{ if(!Array.isArray(S[k])) S[k]=[]; }); ['tocados','eloAvisados'].forEach(k=>{ if(!S[k]||typeof S[k]!=='object') S[k]={}; }); if(!S.papel) S.papel='idoso'; if(S.eu===undefined) S.eu=''; }
+function normalizar(){ ['pareados','seguindo','alertas','agenda','log','feed','mudancas'].forEach(k=>{ if(!Array.isArray(S[k])) S[k]=[]; }); ['tocados','eloAvisados'].forEach(k=>{ if(!S[k]||typeof S[k]!=='object') S[k]={}; }); if(!S.papel) S.papel='idoso'; if(S.eu===undefined) S.eu=''; }
 normalizar();
 let atual='hoje';
 RFCofre.aoErro(()=>{ if(typeof toast==='function') toast('A memória do app está cheia. Remova fotos ou remédios antigos.'); });
@@ -899,7 +931,7 @@ function passoEnergia(n,titulo,txt,ok,botao,id){
   return `<div class="block passo-e"><p class="passo">Passo ${n}</p><p class="label" style="margin:0">${titulo}</p>
     <p class="small" style="margin:4px 0 8px">${txt}</p>
     ${ok===true?`<p class="msg ok" style="margin:0">✓ Pronto</p>`:''}
-    ${ok!==true && botao?`<button class="btn btn-main" id="${id}" type="button">${botao}</button>`:''}</div>`;
+    ${ok!==true && botao?`<button class="btn btn-pill" id="${id}" type="button">${botao}</button>`:''}</div>`;
 }
 async function abrirEnergia(){
   const el=$('#energia'); el.hidden=false; el.scrollTop=0; await renderEnergia(); const t=$('#energiaT'); if(t){ t.setAttribute('tabindex','-1'); t.focus(); }
@@ -917,14 +949,14 @@ async function renderEnergia(){
     h+=passoEnergia(++n,'Tirar da economia de bateria','Na pergunta que aparecer, toque em <b>Permitir</b>.',ENER.bateria,'Liberar','eBateria');
     if(forte) h+=`<div class="block passo-e"><p class="passo">Passo ${++n}</p><p class="label" style="margin:0">Deixar o app iniciar sozinho</p>
       <p class="small" style="margin:4px 0 8px">${dicaMarca()} O nome pode mudar um pouco conforme o celular.</p>
-      ${AP.autoIni?'<p class="msg ok" style="margin:0">✓ Feito</p>':`<button class="btn btn-main" id="eAuto" type="button">Abrir configuração</button>
+      ${AP.autoIni?'<p class="msg ok" style="margin:0">✓ Feito</p>':`<button class="btn btn-pill" id="eAuto" type="button">Abrir configuração</button>
       <button class="conferi" id="eAutoOk" type="button" aria-pressed="false" style="margin-top:8px"><span class="caixa" aria-hidden="true"></span>Já liguei</button>`}</div>`;
     if(/xiaomi|redmi|poco|oppo|realme|vivo|iqoo|huawei|honor/.test(ENER.fab)) h+=`<p class="hint">Dica: na tela de apps abertos, segure o Remédio Falado e toque no <b>cadeado</b>. Assim o celular não fecha o app.</p>`;
     h+=`<div class="block passo-e"><p class="passo">Passo ${++n}</p><p class="label" style="margin:0">Testar com o app fechado</p>
       <p class="small" style="margin:4px 0 8px">Toque no botão e <b>feche o app</b>. Em 1 minuto deve aparecer um aviso de teste. Se não aparecer, refaça os passos acima.</p>
       <button class="btn btn-ghost" id="eTeste" type="button">Testar daqui a 1 minuto</button></div>`;
   }
-  h+=`<button class="btn btn-ghost" id="eOuvir" type="button">Ouvir</button><button class="btn btn-main" id="eFechar" type="button">Fechar</button>`;
+  h+=`<button class="btn btn-main" id="eOuvir" type="button">${IC.som}Ouvir</button><button class="btn btn-ghost" id="eFechar" type="button">Fechar</button>`;
   $('#energiaIn').innerHTML=h;
   const on=(id,f)=>{ const b=$('#'+id); if(b) b.onclick=f; };
   on('eNotif',async()=>{ try{ const p=await NOTIF.requestPermissions(); if(p.display!=='granted') await ENERGIA.abrirApp(); }catch(e){ try{ await ENERGIA.abrirApp(); }catch(x){} } renderEnergia(); });
@@ -1071,9 +1103,11 @@ function renderBula(b,estado){
   if(!b){
     h+= estado==='baixando' ? `<p class="msg info" role="status">Baixando a bula oficial da Anvisa...</p>`
       : estado ? `<p class="msg warn" role="alert">${esc(estado)}</p>` : '';
-    h+= httpPlug() ? `<button class="btn btn-main" id="bBaixarBula" type="button">Baixar a bula oficial</button><p class="hint">Precisa de internet só agora. Depois ela fica guardada no celular e funciona sem internet.</p>`
+    h+= httpPlug() ? `<button class="btn btn-pill" id="bBaixarBula" type="button">Baixar a bula oficial</button><p class="hint">Precisa de internet só agora. Depois ela fica guardada no celular e funciona sem internet.</p>`
       : `<p class="msg info">Pelo navegador, a bula abre no site da Anvisa. No app instalado no celular, ela fica guardada e funciona sem internet.</p>`;
-    h+=`<a class="btn btn-ghost" href="${esc(url||'#')}" target="_blank" rel="noopener">Ver no site da Anvisa</a>`;
+    /* só aqui, quando a bula não abriu, aparecem os outros caminhos (um caminho por vez na tela do remédio) */
+    h+=`<button class="btn btn-ghost" id="bQR" type="button">${QR_SVG}Ler o QR code da bula na caixa</button><div id="qrBox" aria-live="polite"></div>
+      <a class="btn btn-ghost" href="${esc(url||'#')}" target="_blank" rel="noopener">Ver no site da Anvisa</a>`;
   } else {
     h+=`<p class="small muted">${esc(b.fonte||'Bula do paciente oficial')}, versão de ${esc(fmtData(b.data))}. Guardada neste celular: funciona sem internet.</p>
       <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><div><b>A dose é sempre a da receita do médico.</b><br><span class="small">Em caso de dúvida, o farmacêutico pode ajudar. Toque numa pergunta para abrir.</span></div></div>
@@ -1081,9 +1115,10 @@ function renderBula(b,estado){
         <div class="btxt">${paras(b.secoes[n])}</div><button class="btn btn-ghost btn-s" type="button" data-ouvirsec="${n}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir esta parte</button></details>`).join('')}
       ${httpPlug()?`<button class="btn btn-ghost" id="bAtuBula" type="button">Ver se tem versão nova</button>`:''}`;
   }
-  h+=`<button class="btn btn-main" id="bFecharBula" type="button">Fechar</button>`;
+  h+=`<button class="btn btn-ghost" id="bFecharBula" type="button">Fechar</button>`;
   $('#bulaIn').innerHTML=h;
   document.querySelectorAll('#bulaIn [data-ouvirsec]').forEach(x=>x.onclick=()=>{ const n=x.dataset.ouvirsec; ouvirLongo(PERG_BULA[n]+' '+b.secoes[n]); });
+  const bq=$('#bQR'); if(bq) bq.onclick=lerQRBula;
   const bb=$('#bBaixarBula'); if(bb) bb.onclick=async()=>{ renderBula(null,'baixando');
     try{ const nb=await baixarBulaOficial(registro); renderBula(nb); toast('Pronto. Bula guardada no celular.'); falar('Pronto. A bula foi guardada no celular.'); }
     catch(e){ const m=String(e&&e.message||e); renderBula(null, m==='nao-achou'?'Não achei a bula deste registro na Anvisa. Use o QR code da caixa ou o site da Anvisa.' : m==='nao-leu'?'Baixei a bula, mas não consegui separar o texto. Abra no site da Anvisa.' : 'Não consegui baixar agora. Confira a internet e tente de novo.'); } };
@@ -1097,37 +1132,38 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-bula]'); 
 
 /* ---------- consentimento para dados de saúde (LGPD, art. 11, I: específico e destacado) ---------- */
 const CONSENT_VERSAO='2026-10b';
-let consDepois=null, consMarcado=false, consModo='novo';
+let consDepois=null, consMarcado=false, consModo='novo', consVia='';
 function temConsentimento(){ return S.demo || (S.consentimento && S.consentimento.versao===CONSENT_VERSAO); }
-function abrirConsentimento(depois,modo){ consDepois=depois; consMarcado=false; consModo=modo||'novo'; $('#consent').hidden=false; $('#consent').scrollTop=0; renderConsentimento(); }
-const FALA_CONS='Seus dados de saúde. Para lembrar seus remédios, o app precisa guardar neste celular os remédios, as quantidades, os horários e o que você marcou como tomado. Se você quiser, também guarda fotos das caixas e o contato da família. Tudo fica neste celular, criptografado. Só vai para a família se você conectar o celular dela, e vai embaralhado. Você pode apagar quando quiser. Para continuar, toque em concordo.';
-const FALA_CONS_FAM='Dados de saúde de quem você acompanha. Depois que a pessoa aceitar, o app guarda neste celular os remédios, os horários e o que ela marcou como tomado. Fica criptografado e serve só para você acompanhar. Você pode apagar quando quiser. Para continuar, toque em concordo.';
+function abrirConsentimento(depois,modo){ consDepois=depois; consMarcado=false; consModo=modo||'novo'; $('#consent').hidden=false; $('#consent').scrollTop=0; renderConsentimento();
+  perguntarVoz((consModo==='familia'?FALA_CONS_FAM:FALA_CONS).replace('Para continuar, toque em concordo.','Para continuar, toque na caixinha, concordo, e depois no botão laranja, com o sinal de certo, continuar.'), 'Você concorda? Diga: eu concordo. Ou diga não.', ms=>tratarContexto('consent',ms)); }
+const FALA_CONS='Seus dados de saúde. Para lembrar seus remédios, o app precisa guardar neste celular os remédios, as quantidades, os horários e o que você marcou como tomado. Se você quiser, também guarda fotos das caixas e o contato da família. Tudo fica neste celular, criptografado. Só vai para a família se você conectar o celular de alguém, e vai embaralhado. Você pode apagar quando quiser. Para continuar, toque em concordo.';
+const FALA_CONS_FAM='Dados de saúde de quem você acompanha. Depois que a pessoa aceitar, o app guarda neste celular os remédios, os horários e o que foi marcado como tomado. Fica criptografado e serve só para você acompanhar. Você pode apagar quando quiser. Para continuar, toque em concordo.';
 function renderConsentimento(erro){
   const fam=consModo==='familia';
   $('#consIn').innerHTML=(fam?`<h2 id="consT" tabindex="-1">Dados de quem você acompanha</h2>
-    <p>Depois que a pessoa <b>aceitar</b> no celular dela, o app guarda <b>neste celular</b>:</p>
-    <ul class="stack" style="margin:0;padding-left:22px;font-size:1.1rem"><li>os remédios e os horários dela;</li><li>o que ela marcou como tomado e os avisos.</li></ul>
-    <div class="passo-e"><p><b>Criptografado.</b> Fica embaralhado neste celular e chega embaralhado do celular dela (criptografia de ponta a ponta). Ninguém no caminho consegue ler.</p></div>
-    <div class="passo-e"><p><b>Só para acompanhar.</b> Ela pode desligar quando quiser, e você também: Ajustes → Família.</p></div>`
+    <p>Depois que a pessoa <b>aceitar</b> no próprio celular, o app guarda <b>neste celular</b>:</p>
+    <ul class="stack" style="margin:0;padding-left:22px;font-size:1.1rem"><li>os remédios e os horários da pessoa;</li><li>o que foi marcado como tomado e os avisos.</li></ul>
+    <div class="passo-e"><p><b>Criptografado.</b> Fica embaralhado neste celular e chega embaralhado do outro celular (criptografia de ponta a ponta). Ninguém no caminho consegue ler.</p></div>
+    <div class="passo-e"><p><b>Só para acompanhar.</b> A pessoa pode desligar quando quiser, e você também: Ajustes → Família.</p></div>`
    :`<h2 id="consT" tabindex="-1">Seus dados de saúde</h2>
     <p>Para lembrar seus remédios, o app precisa guardar <b>neste celular</b>:</p>
     <ul class="stack" style="margin:0;padding-left:22px;font-size:1.1rem">
       <li>os remédios, as quantidades e os horários;</li><li>o que você marcou como tomado;</li>
       <li>se você quiser: fotos das caixas e o contato da família.</li></ul>
     <div class="passo-e"><p><b>Fica neste celular, criptografado.</b> O Squad 4 e a prefeitura não recebem nada. Não tem cadastro.</p></div>
-    <div class="passo-e"><p><b>Família, só se você quiser.</b> Se você conectar o celular de alguém da família, ela vê seus remédios e o que você marcou. Vai embaralhado (criptografia de ponta a ponta).</p></div>
+    <div class="passo-e"><p><b>Família, só se você quiser.</b> Se você conectar o celular de alguém da família, essa pessoa vê seus remédios e o que você marcou. Vai embaralhado (criptografia de ponta a ponta).</p></div>
     <div class="passo-e"><p><b>Você manda em tudo.</b> Pode apagar quando quiser, em Ajustes → Retirar consentimento e apagar tudo.</p></div>`)+`
     <p class="small muted">Base legal: consentimento para dados de saúde (Lei Geral de Proteção de Dados, Lei 13.709/2018, art. 11, I).</p>
     <button type="button" class="conferi" id="consCk" aria-pressed="${consMarcado}"><span class="caixa" aria-hidden="true">${consMarcado?'✓':''}</span>${fam?'Concordo em guardar neste celular os dados que a pessoa compartilhar comigo':'Concordo que o app guarde meus dados de saúde neste celular'}</button>
     ${erro?`<div class="msg warn" role="alert">${esc(erro)}</div>`:''}
-    <button class="btn btn-pill" id="consOk" type="button">Continuar</button>
-    <button class="btn btn-ghost" id="consOuvir" type="button">${IC.som}Ouvir</button>
+    <button class="btn btn-pill" id="consOk" type="button">${CHECK}Continuar</button>
+    <button class="btn btn-main" id="consOuvir" type="button">${IC.som}Ouvir</button>
     <button class="linkbtn" type="button" data-termos="1" style="text-align:center">Ler a privacidade e os termos de uso</button>
     <button class="linkbtn wz-voltar" id="consNao" type="button">${consModo==='existente'?'Não concordo: apagar meus dados':'Agora não'}</button>`;
   $('#consCk').onclick=()=>{ consMarcado=!consMarcado; renderConsentimento(); };
   $('#consOuvir').onclick=()=>ouvir(fam?FALA_CONS_FAM:FALA_CONS);
   $('#consOk').onclick=()=>{ if(!consMarcado){ const e='Para continuar, toque em “Concordo”.'; renderConsentimento(e); falar(e); return; }
-    S.consentimento={versao:CONSENT_VERSAO,em:new Date().toISOString(),tipo:fam?'familia':'pessoa'}; save(); $('#consent').hidden=true; const f=consDepois; consDepois=null; if(f) f(); };
+    S.consentimento={versao:CONSENT_VERSAO,em:new Date().toISOString(),tipo:fam?'familia':'pessoa',via:consVia||'toque'}; consVia=''; save(); $('#consent').hidden=true; const f=consDepois; consDepois=null; if(f) f(); };
   $('#consNao').onclick=()=>{ $('#consent').hidden=true; calar();
     if(consModo==='existente'){ apagarTudo('Seus dados foram apagados deste celular.'); }
     else toast('Tudo bem. Sem a sua permissão, o app não guarda dados de saúde. Você pode ver a demonstração.'); };
@@ -1135,7 +1171,7 @@ function renderConsentimento(erro){
 }
 
 /* ---------- privacidade e termos ---------- */
-const FALA_TERMOS='Privacidade e termos. Um: o Remédio Falado é um lembrete. Não indica nem muda dose e não substitui o médico. A dose é sempre a da receita. Dois: seus dados ficam só neste celular, criptografados. O Squad 4 não recebe nada. Três: se você conectar o celular de alguém da família, ela vê seus remédios, os horários e o que você marcou. Não vê fotos, contatos nem onde você está. As mensagens vão embaralhadas, de ponta a ponta. Quatro: a câmera, o microfone, os contatos e a localização só são usados quando você toca no botão. O app não grava sua voz. Cinco: no WhatsApp, quem envia a mensagem é você. Seis: as informações vêm da Anvisa e das bulas, e podem ter erros. Em dúvida, pergunte ao farmacêutico. Sete: para apagar tudo, use Ajustes, retirar consentimento e apagar tudo, ou desinstale o app.';
+const FALA_TERMOS='Privacidade e termos. Um: o Remédio Falado é um lembrete. Não indica nem muda dose e não substitui o médico. A dose é sempre a da receita. Dois: seus dados ficam só neste celular, criptografados. O Squad 4 não recebe nada. Três: se você conectar o celular de alguém da família, essa pessoa vê seus remédios, os horários e o que você marcou. Não vê fotos, contatos nem onde você está. As mensagens vão embaralhadas, de ponta a ponta. Quatro: a câmera, o microfone, os contatos e a localização só são usados quando você toca no botão. O app não grava sua voz. Cinco: no WhatsApp, quem envia a mensagem é você. Seis: as informações vêm da Anvisa e das bulas, e podem ter erros. Em dúvida, pergunte ao farmacêutico. Sete: para apagar tudo, use Ajustes, retirar consentimento e apagar tudo, ou desinstale o app.';
 let termosVolta=null;
 function abrirTermos(){ termosVolta=document.activeElement; const t=$('#termos'); t.hidden=false; t.scrollTop=0; $('#termosT').setAttribute('tabindex','-1'); $('#termosT').focus(); }
 function fecharTermos(){ $('#termos').hidden=true; calar(); if(termosVolta&&termosVolta.focus) termosVolta.focus(); }
@@ -1148,9 +1184,9 @@ async function explicar(v){
   let b=null; try{ if(a&&a.registro) b=await bulaDe(a.registro); }catch(e){}
   const sv = b ? trecho(b.secoes[1]) : i.serve, cu = b ? trecho(b.secoes[7],360) : i.cuidado;
   ouvir(`${i.nome}. É o ${i.apelido}. ${sv?'Para que serve, segundo a bula: '+sv+' ':'Para que serve e os cuidados estão na bula oficial. '}${cu?'Se esquecer uma dose, segundo a bula: '+cu:''}`); }
-document.addEventListener('click',e=>{ const b=e.target.closest('[data-fala]'); if(b) explicar(b.dataset.fala); });
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-fala]'); if(b){ explicar(b.dataset.fala); if((S.dicaNome||0)<3){ S.dicaNome=(S.dicaNome||0)+1; save(); } } });
 function calar(){ if(TTS) TTS.stop().catch(()=>{}); else if('speechSynthesis' in window) speechSynthesis.cancel(); }
-let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,3200); }
+let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,Math.min(9000,2600+String(t).length*45)); }
 
 /* ---------- doses do dia ---------- */
 function dosesHoje(est){
@@ -1203,7 +1239,7 @@ const MOMENTOS=[
   {k:'dormir',nome:'Antes de dormir',de:'de antes de dormir',ini:1260,fim:239}];
 const MOM=MOMENTOS.reduce((o,m)=>(o[m.k]=m,o),{});
 const ROTINA_PADRAO={cafe:'07:00',almoco:'12:00',jantar:'19:00',dormir:'21:30'};
-const rot = k => (S.rotina && S.rotina[k]) || ROTINA_PADRAO[k];
+const rot = k => { const r=(wizDestino&&wizDestino.estado&&wizDestino.estado.rot)||S.rotina; return (r&&r[k])||ROTINA_PADRAO[k]; };
 function momentoDe(h){ const m=toMin(h); return MOMENTOS.find(x=> x.k==='dormir' ? (m>=1260||m<240) : m>=x.ini && m<=x.fim) || MOM.dormir; }
 function gruposHoje(st){
   const g=[];
@@ -1227,28 +1263,35 @@ function tomarVarios(ds,via){
   const novos=ds.filter(d=>!S.log.some(l=>l.dia===k&&l.ag===d.a.id&&l.h===d.h));
   if(!novos.length) return;
   novos.forEach(d=>S.log.push({dia:k,ag:d.a.id,h:d.h,em,ok:true}));
+  ultimoTomei={dia:k,itens:novos.map(d=>({ag:d.a.id,h:d.h})),feed:S.feed.length};
   const m=momentoDe(novos[0].h), um=novos.length===1, d0=novos[0];
   const txt = um
     ? `${nomeP()} tomou ${med(d0.a).nome} ${d0.a.dose} (${comoEm(d0.a,d0.h)}, dose das ${d0.h})${via==='caixa'?', conferido pela caixa':''}.`
     : `${nomeP()} tomou os remédios ${m.de} (${d0.h}): ${listaFala(novos.map(d=>`${med(d.a).nome} ${d.a.dose}, ${comoEm(d.a,d.h)}`))}.`;
   S.feed.push({t:'ok',em,txt}); if(S.feed.length>60) S.feed=S.feed.slice(-60); save();
   const frase = um ? `Registrei o ${med(d0.a).apelido} às ${em}.` : `Registrei os remédios ${m.de} às ${em}.`;
-  falar('Muito bem. '+frase); render();
+  render();
   mostrarPronto(frase, txt);
 }
+let ultimoTomei=null;
+function desfazerTomei(){ const u=ultimoTomei; if(!u) return;
+  S.log=S.log.filter(l=>!(l.dia===u.dia && u.itens.some(i=>i.ag===l.ag&&i.h===l.h))); S.feed=S.feed.slice(0,u.feed); ultimoTomei=null; save(); render();
+  $('#pronto').hidden=true; toast('Desfeito. A dose voltou a ficar para marcar.'); falar('Desfeito. A dose voltou a ficar para marcar.'); }
 /* "Pronto!": confirmação grande, escrita e falada. Só fecha quando a pessoa toca (Apple, WWDC 2025: sem tempo-limite). */
 function mostrarPronto(frase, aviso){
   const el=$('#pronto'), pares=S.pareados||[];
   el.innerHTML=`<div class="in"><span class="ok-c">${CHECK}</span><h2 id="prontoT" tabindex="-1">Pronto!</h2><p style="font-size:1.3rem">${esc(frase)}</p>
     ${pares.length ? `<p class="feito" style="justify-content:center">${CHECK}<span>${esc(listaFala(pares.map(p=>p.nome)))} ${pares.length>1?'veem':'vê'} no celular.</span></p>`
       : (S.familiar||S.whats) ? `<button class="btn btn-wa" id="prWa" type="button">${WA_SVG}Avisar ${esc(nomeFam())} no WhatsApp</button>` : ''}
-    <button class="btn btn-main" id="prOk" type="button">Voltar ao início</button>
+    <button class="btn btn-pill" id="prOk" type="button">Voltar ao início</button>
+    <button class="btn btn-ghost" id="prDesf" type="button">Toquei sem querer: desfazer</button>
     <p class="hint">Esta tela só fecha quando você tocar.</p></div>`;
   el.hidden=false;
   const fechar=()=>{ el.hidden=true; calar(); };
-  $('#prOk').onclick=fechar;
+  $('#prOk').onclick=fechar; $('#prDesf').onclick=desfazerTomei;
   const w=$('#prWa'); if(w) w.onclick=()=>{ fechar(); enviarWhats(aviso); };
   $('#prontoT').focus();
+  perguntarVoz('Muito bem. '+frase+' Para voltar ao início, toque no botão laranja, com o sinal de certo.','Diga ok para voltar ao início.',ms=>tratarContexto('pronto',ms));
 }
 function tomar(a,h,via){ tomarVarios([{a,h}],via); }
 
@@ -1274,7 +1317,7 @@ const MEIA='<svg viewBox="0 0 30 18" width="26" height="16" aria-hidden="true" s
 function qtdIcones(txt){ const t=String(txt||'').toLowerCase();
   if(/^meio\s+(comprimido|cápsula)/.test(t)) return MEIA+' ';
   const m=t.match(/^(\d+)\s+(comprimido|cápsula)/); if(!m) return '';
-  const n=+m[1]; return n>=1&&n<=4 ? Array(n+1).join(PILULA)+' ' : ''; }
+  const n=+m[1]; return n>=1&&n<=4 ? Array(n+1).join(PILULA)+(/\be meio\b/.test(t)?MEIA:'')+' ' : ''; }
 function medL(d,botao){
   const i=med(d.a), q=comoEm(d.a,d.h);
   return `<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center">
@@ -1301,17 +1344,21 @@ function renderHoje(){
   const {gs,ativo,feitos,depois}=partesHoje(), hoje=new Date();
   const nome=S.pessoa?`, <b>${esc(S.pessoa)}!</b>`:'!';
   const energia = S.agenda.length && energiaFalta() && S.energiaAdiar!==dayKey(new Date());
+  const mudNova = mudancaNova();
   $('#view-hoje').innerHTML=`<div class="stack" style="gap:16px">
     <div><p class="hoje-data">${DIAS_LONGO[hoje.getDay()]}, ${hoje.getDate()} de ${MESES[hoje.getMonth()]}</p><h2 class="saud">${cumprimento()}${nome}</h2></div>
     ${energia?`<div class="aviso-sm" role="status"><b>O alarme pode não tocar neste celular.</b><span class="small">Leva 1 minuto para arrumar.</span>
-      <div class="btn-row"><button class="btn btn-main btn-s" type="button" data-energia="1">Arrumar agora</button><button class="btn btn-ghost btn-s" type="button" id="bEnerDepois">Depois</button></div></div>`:''}
+      <div class="btn-row"><button class="btn btn-pill btn-s" type="button" data-energia="1">Arrumar agora</button><button class="btn btn-ghost btn-s" type="button" id="bEnerDepois">Depois</button></div></div>`:''}
     ${feitos.map(x=>`<p class="feito">${CHECK}<span>${esc(x.m.nome)}: tomado às ${esc(x.em)}</span></p>`).join('')}
-    ${!S.agenda.length?`<section class="agora"><h2>Nenhum remédio ainda</h2><p>Leia a caixa do remédio e responda 4 perguntas fáceis, copiando da receita.</p>
+    ${!S.agenda.length&&gestorAtivo()?`<section class="agora"><h2>Nenhum remédio ainda</h2><p>${esc(nomeGestor())} vai colocar seus remédios pelo próprio celular. Quando colocar, eu te aviso.</p></section>`
+     : !S.agenda.length?`<section class="agora"><h2>Nenhum remédio ainda</h2><p>Leia a caixa do remédio e responda 4 perguntas fáceis, copiando da receita.</p>
        <button class="btn btn-ok btn-tomei" data-go="ler" data-scan="1" style="font-size:1.35rem">${IC.ler}Colocar o primeiro remédio</button></section>`
      : ativo ? cardAgora(ativo)
      : gs.length && !depois.length ? `<div class="msg ok">${CHECK.replace('<svg','<svg width="22" height="22" style="vertical-align:-4px"')} Todos os remédios de hoje foram tomados.</div>` : ''}
+    ${mudNova?`<section class="al-card info" role="status"><h3>Mudança nos seus remédios</h3><p style="margin:0">${esc(mudNova.txt)}</p><p class="small muted" style="margin:0">${esc(haQuanto(mudNova.ts))}</p>
+       <div class="btn-row"><button class="btn btn-ghost btn-s" type="button" id="bMudOuvir">${IC.som}Ouvir</button><button class="btn btn-pill btn-s" type="button" id="bMudOk">Entendi</button></div></section>`:''}
     ${depois.length?`<section class="depois"><h3>${ativo?'Depois':'Próximo'}</h3>${depois.map(x=>`<div class="dep-l">${ICO[x.m.k]}<span><b>${esc(x.m.nome)}</b><span>${x.h} · ${x.ds.length} ${x.ds.length>1?'remédios':'remédio'}</span></span></div>`).join('')}</section>`:''}
-    ${ativo?`<p class="hint" style="margin-top:-6px">Toque no nome de um remédio para ouvir para que serve.</p>`:''}
+    ${ativo&&(S.dicaNome||0)<3?`<p class="hint" style="margin-top:-6px">Toque no nome de um remédio para ouvir para que serve.</p>`:''}
     <div class="atalhos">
       <button class="atalho at-ler" type="button" data-go="ler" data-scan="1">${IC.ler}Ler a caixa</button>
       <button class="atalho at-meus" type="button" data-go="agenda">${IC.meus}Meus remédios</button>
@@ -1321,14 +1368,18 @@ function renderHoje(){
     <button class="aj-link" type="button" data-go="ajustes">${IC.aj}Ajustes (para o familiar)</button>
   </div>`;
   const bed=$('#bEnerDepois'); if(bed) bed.onclick=()=>{ S.energiaAdiar=dayKey(new Date()); save(); renderHoje(); };
+  const bmo=$('#bMudOuvir'); if(bmo) bmo.onclick=()=>ouvir(mudNova.txt);
+  const bmk=$('#bMudOk'); if(bmk) bmk.onclick=()=>{ S.mudVisto=mudNova.ts; save(); renderHoje(); };
   const G = h => gs.find(x=>x.h===h);
   document.querySelectorAll('#view-hoje [data-tomarg]').forEach(b=>b.onclick=()=>{ const x=G(b.dataset.tomarg); if(x) tomarVarios(x.pend,'botao'); });
   document.querySelectorAll('#view-hoje [data-tomar1]').forEach(b=>b.onclick=()=>{ const [id,h]=b.dataset.tomar1.split('|'); const a=S.agenda.find(q=>q.id===id); if(a) tomar(a,h,'botao'); });
   document.querySelectorAll('#view-hoje [data-alguns]').forEach(b=>b.onclick=()=>{ const h=b.dataset.alguns; algunsAbertos[h]=!algunsAbertos[h]; renderHoje(); });
   document.querySelectorAll('#view-hoje [data-conferirg]').forEach(b=>b.onclick=()=>{ const x=G(b.dataset.conferirg); if(!x) return; alvo={a:x.pend[0].a,h:x.h,lista:x.pend.map(d=>d.a)}; go('ler'); if(SCAN) lerNativo(); });
 }
-function falaHoje(){
-  const {ativo,feitos,depois}=partesHoje();
+function falaHoje(semMud){
+  const {ativo,feitos,depois}=partesHoje(), mn=semMud?null:mudancaNova();
+  if(mn) return `${saudacao()}. ${mn.txt} `+(S.agenda.length?falaHoje(true).replace(saudacao()+'. ',''):'');
+  if(!S.agenda.length && gestorAtivo()) return `${saudacao()}. Ainda não tem remédio guardado. ${nomeGestor()} vai colocar seus remédios pelo próprio celular.`;
   if(!S.agenda.length) return `${saudacao()}. Ainda não tem remédio guardado. Toque em ler a caixa para colocar o primeiro.`;
   let t=saudacao()+'. ';
   if(ativo) t+=falaGrupo(ativo)+' ';
@@ -1343,7 +1394,8 @@ let alvo=null, resultado=null, lendo=false, reader=null;
 function renderLer(){
   const exemplos=['7891317427542','7896004703305','7891721027437','7891721201806'];
   const amostras=exemplos.map(c=>{ const it=buscar(c); return it?`<button class="sample" data-code="${c}">${ean13svg(c)}<span><b>${esc(it.produto)}</b><br><span class="small muted">${esc(it.dose)} · ${c}</span></span></button>`:''; }).join('');
-  const conf = alvo? `<div class="msg info">Conferindo os remédios das ${alvo.h}. Mostre a caixa.</div>`:'';
+  const conf = alvo? `<div class="msg info">Conferindo os remédios das ${alvo.h}. Mostre a caixa.</div>`
+    : gestorAlvo? `<div class="msg info">Lendo a caixa para os remédios de <b>${esc(gestorAlvo.nome)}</b>. Depois, copie da receita.</div>`:'';
   $('#view-ler').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>Que remédio é este?</h2>${conf}
     <div id="resBox"></div>
@@ -1353,11 +1405,11 @@ function renderLer(){
       <button class="btn btn-ghost" id="bVivo" ${SCAN?'hidden':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Usar câmera ao vivo</button>
       <div class="video-box" id="vBox" hidden><video id="video" playsinline muted></video><div class="aim"></div></div>
       <div id="scanMsg"></div>
-      <form class="manual" id="fManual"><input id="code" inputmode="numeric" autocomplete="off" placeholder="Ou digite o número" aria-label="Número do código de barras"><button class="btn btn-main" type="submit">Buscar</button></form>
+      <form class="manual" id="fManual"><input id="code" inputmode="numeric" autocomplete="off" placeholder="Ou digite o número" aria-label="Número do código de barras"><button class="btn btn-pill" type="submit">Buscar</button></form>
     </div>
-    <details class="demo"><summary>Testar sem caixa (para a apresentação)</summary>
+    ${S.demo?`<details class="demo"><summary>Testar sem caixa (demonstração)</summary>
       <p class="small muted" style="margin-top:8px">Códigos reais da lista da Anvisa. Toque num deles, ou abra esta página em outro celular e fotografe o código desta tela.</p>
-      <div class="samples">${amostras}</div></details>
+      <div class="samples">${amostras}</div></details>`:''}
   </div>`;
   $('#bVivo').onclick=vivo;
   if(SCAN) $('#bScan').onclick=lerNativo;
@@ -1404,7 +1456,7 @@ function mostrarQR(txt){
   const box=$('#qrBox'); if(!box) return;
   let url=null; try{ const u=new URL(String(txt).trim()); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
   if(!url){ box.innerHTML='<div class="msg warn">Este QR code não é um link de bula. Procure o QR com a palavra "bula" na caixa, ou use o botão da Anvisa.</div>'; return; }
-  box.innerHTML=`<div class="msg info">Este QR code abre o site <b>${esc(url.hostname)}</b>. A bula oficial fica no site do fabricante ou da Anvisa.</div><button class="btn btn-main" id="bAbrirQR" type="button">Abrir a bula digital</button>`;
+  box.innerHTML=`<div class="msg info">Este QR code abre o site <b>${esc(url.hostname)}</b>. A bula oficial fica no site do fabricante ou da Anvisa.</div><button class="btn btn-pill" id="bAbrirQR" type="button">Abrir a bula digital</button>`;
   $('#bAbrirQR').onclick=()=>abrirLink(url.href);
   falar('Achei o QR code. Toque em abrir a bula digital.');
 }
@@ -1480,7 +1532,7 @@ function agendaDe(ch){ return S.agenda.find(a=>chaveAg(a)===ch); }
 function textoFala(it){
   const ag=agendaDe(chaveIt(it)), i=it.info;
   const dose = it.dose ? ', '+it.dose.replace('mg','miligramas') : '';
-  const como = ag? `Na sua agenda: ${comoFala(ag)}, conforme a receita.` : 'Ainda não está na sua agenda. A dose é sempre a da receita do médico.';
+  const como = ag? `Nos seus remédios: ${comoFala(ag)}, conforme a receita.` : 'Ainda não está nos seus remédios. A dose é sempre a da receita do médico.';
   const sv=txServe(it), cu=txCuid(it);
   if(i.geral && !sv) return `Este é um ${i.apelido}. ${i.nome}${dose}. Para que serve e os cuidados estão na bula oficial, no botão ler a bula completa. ${ag?como:''}`;
   return `Este é o ${i.apelido}. ${i.nome}${dose}. ${sv?'Para que serve, segundo a bula: '+sv+' ':'Para que serve está na bula oficial. '}${como} ${cu?'Se esquecer uma dose, segundo a bula: '+cu:'Os cuidados estão na bula oficial.'}`;
@@ -1505,9 +1557,16 @@ function contaQ(k,txt){
   if(k!=='outra') return +k;
   const t=String(txt||'').toLowerCase().replace(',','.');
   const fr=t.match(/(\d+)\s*\/\s*(\d+)/); if(fr) return +fr[1]/+fr[2];
-  const n=t.match(/\d+(\.\d+)?/); if(n) return +n[0];
+  const n=t.match(/\d+(\.\d+)?/); if(n) return +n[0]+(/\be mei[oa]\b/.test(t)?0.5:0);
   if(/\bmeio\b|\bmeia\b/.test(t)) return 0.5;
   return null; }
+/* "outra quantidade" sem digitar: botões − e + (quem não lê não precisa escrever) */
+const PASSOS_Q=[0.25,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10];
+function passosQ(u){ if(/gota/.test(u[0])) return Array.from({length:60},(_,i)=>i+1); if(/medida/.test(u[0])) return [0.5,1,1.5,2,2.5,3,4,5,6]; return PASSOS_Q; }
+function qtdRotulo(n,u){ if(/gota|medida/.test(u[0])) return fmtNum(n)+' '+(n===1?u[0]:u[1]);
+  if(n===0.25) return '1/4 de '+u[0]; if(n===0.5) return 'meio '+u[0];
+  const i=Math.floor(n); return i+' '+(i===1?u[0]:u[1])+(n-i===0.5?' e meio':''); }
+function inicioQ(u){ return /gota/.test(u[0])?10:/medida/.test(u[0])?1:3; }
 function mgDe(dose){ const m=String(dose||'').replace(',','.').match(/([\d.]+)\s*(mg|g)\b/i); if(!m) return null; return /^g$/i.test(m[2]) ? +m[1]*1000 : +m[1]; }
 function fmtNum(n){ const [i,d]=String(Math.round(n*100)/100).split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(d?','+d:''); }
 const fmtMg = n => fmtNum(n)+' mg';
@@ -1540,14 +1599,25 @@ function faltaSel(it){ const f=[], hs=horasSel();
 const PERIODO = h => { const m=toMin(h); return m<720?'manhã':m<1080?'tarde':'noite'; };
 function formAgenda(it){
   const ja=agendaDe(chaveIt(it));
-  if(ja) return `<div class="msg ok">Este remédio já está na sua agenda: ${esc(comoTxt(ja))}.</div>`;
+  if(ja) return `<div class="msg ok">Este remédio já está nos seus remédios: ${esc(comoTxt(ja))}.</div>`;
   return `<button class="btn btn-pill" id="bAddAg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Colocar na minha agenda</button>`;
 }
 function ligarFormAgenda(it){ const b=$('#bAddAg'); if(b) b.onclick=()=>abrirWizard(it); }
 /* assistente: 4 perguntas, uma por tela, com Voltar escrito (Grindrod et al. 2014; NIA: passo a passo) */
-let wizIt=null;
+let wizIt=null, wizDestino=null, wizEditar=null;
 const PERGUNTAS=['Em que momento a receita manda tomar?','Quanto tomar em cada momento, pela receita?','Confira com a receita','Quer tirar uma foto da caixa?'];
-function abrirWizard(it){ if(!temConsentimento()){ abrirConsentimento(()=>abrirWizard(it)); return; } wizIt=it; addSel=novoSel(); addSel.mom=[]; addSel.passo=1; const w=$('#wiz'); w.hidden=false; renderWizard(); falar('Pegue a receita do médico. São 4 perguntas. '+PERGUNTAS[0]); }
+function abrirWizard(it,opc){ opc=opc||{};
+  if(!temConsentimento()){ abrirConsentimento(()=>abrirWizard(it,opc)); return; }
+  wizDestino=opc.destino||null; wizEditar=opc.editar||null;
+  if(!wizDestino && gestorAtivo()){ pedirAoGestor(it); return; }
+  wizIt=it; addSel=novoSel(); addSel.mom=[]; addSel.passo=1;
+  if(wizEditar){ const ed=wizEditar; addSel.mom=[...new Set(Object.values(ed.mom||{}))]; horasDoMom();
+    const u=unidade(it.apres); (ed.horarios||[]).forEach(h=>{ const q=String((ed.qtd&&ed.qtd[h])||ed.como||'').trim();
+      if(!addSel.h.includes(h)) addSel.outro=h;
+      addSel.q[h] = q==='1 '+u[0]?'1' : q==='2 '+u[1]?'2' : q==='meio '+u[0]?'meio' : 'outra'; if(addSel.q[h]==='outra') addSel.outroQ[h]=q; }); }
+  const w=$('#wiz'); w.hidden=false; renderWizard();
+  if(AP.vozGuia && vozDisponivel()){ vozSeq++; falarE('Pegue a receita do médico. São 4 perguntas.').then(wizVoz); }
+  else falar('Pegue a receita do médico. São 4 perguntas. '+PERGUNTAS[0]+' Toque no que está na receita e depois no botão laranja, com o sinal de certo, continuar. Ou toque no botão azul, responder falando.'); }
 function fecharWizard(){ $('#wiz').hidden=true; addSel=null; calar(); }
 function horasDoMom(){ addSel.h=[...new Set(addSel.mom.map(rot))]; Object.keys(addSel.q).forEach(h=>{ if(!horasSel().includes(h)){ delete addSel.q[h]; delete addSel.outroQ[h]; } }); }
 const nomeHora = h => { const k=addSel&&addSel.mom.find(k=>rot(k)===h); return k? MOM[k].nome : 'Outro horário'; };
@@ -1570,7 +1640,10 @@ function renderWizard(erro){
     <p class="hint">Os horários da sua rotina podem ser mudados em Ajustes → Horários da minha rotina.</p>`;
   if(p===2) corpo=hs.map(h=>`<div class="qh"><p class="qh-h"><span class="mom-ico">${ICO[momentoDe(h).k]}</span> <b>${esc(nomeHora(h))}</b> · ${h}</p>
       <div class="opts opts4">${qs.map(([k,tx,un])=>`<button type="button" class="opt" data-qh="${h}" data-q="${k}" aria-pressed="${addSel.q[h]===k}" aria-label="${esc(tx+' '+un+' às '+h)}"><b>${esc(tx)}</b><small>${esc(un)}</small></button>`).join('')}</div>
-      ${addSel.q[h]==='outra'?`<input class="bv-in" data-qo="${h}" aria-label="Quantidade às ${h}, como está na receita" placeholder="Como está na receita. Ex.: 3 comprimidos, 1/4, 10 gotas" value="${esc(addSel.outroQ[h]||'')}">`:''}</div>`).join('');
+      ${addSel.q[h]!=='outra'?'':(addSel.escrever&&addSel.escrever[h])||contaQ('outra',addSel.outroQ[h])==null&&String(addSel.outroQ[h]||'').trim()
+        ?`<input class="bv-in" data-qo="${h}" aria-label="Quantidade às ${h}, como está na receita" placeholder="Como está na receita. Ex.: 1 comprimido em dias alternados" value="${esc(addSel.outroQ[h]||'')}">`
+        :`<div class="passador"><button type="button" class="btn btn-ghost" data-qmenos="${h}" aria-label="Menos">−</button><output aria-live="polite">${qtdIcones(addSel.outroQ[h])}<b>${esc(addSel.outroQ[h])}</b></output><button type="button" class="btn btn-ghost" data-qmais="${h}" aria-label="Mais">+</button></div>
+          <button type="button" class="linkbtn" data-qescrever="${h}">Está diferente na receita? Escrever</button>`}</div>`).join('');
   if(p===3) corpo=`<div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><div><b>Olhe a receita agora</b><br><span class="small">Está igual ao que você marcou? O app não indica dose.</span></div></div>
     <div class="total">${hs.map(h=>`<div class="resumo-li"><span class="mom-ico">${ICO[momentoDe(h).k]}</span><span><b>${esc(nomeHora(h))}</b> · ${h}<br>${esc(rotuloQ(addSel.q[h],addSel.outroQ[h],u))}</span></div>`).join('')}
       ${t.n!=null?`<p style="margin-top:6px"><b>Total do dia: ${qtdTxt(t.n)}</b>${t.mg!=null?` de ${esc(it.dose)} = <b>${fmtMg(t.mg)}</b>`:''}</p>`:''}</div>
@@ -1581,20 +1654,27 @@ function renderWizard(erro){
   if(p===4) corpo=`<p>Ajuda a reconhecer o remédio pela imagem. Não é obrigatório.</p>
     ${addSel.foto?`<img class="foto-g" src="${addSel.foto}" alt="Foto da caixa">`:''}
     <button type="button" class="btn btn-ghost" id="bFotoAg">${CAM_SVG}${addSel.foto?'Tirar outra foto':'Tirar foto da caixa'}</button>`;
-  $('#wizIn').innerHTML=`<div class="wz-top"><p class="small">Colocar remédio · pergunta ${p} de 4</p><div class="barra" aria-hidden="true"><i style="width:${p*25}%"></i></div>
+  $('#wizIn').innerHTML=`<div class="wz-top"><p class="small">${wizDestino?(wizEditar?'Mudar':'Colocar')+' remédio para '+esc(wizDestino.nome):'Colocar remédio'} · pergunta ${p} de 4</p><div class="barra" aria-hidden="true"><i style="width:${p*25}%"></i></div>
       <p class="wz-med">${bolinha(i.cor,i.nome)}<b>${esc(i.nome)}${it.dose?' '+esc(it.dose):''}</b></p></div>
     <h2 id="wizT" tabindex="-1">${PERGUNTAS[p-1]}</h2>
     ${vozDisponivel()?`<button class="btn btn-main" id="wzFalar" type="button">${IC.mic}Responder falando</button><p class="falando" id="wzStatus" ${wzVozOn?'':'hidden'}>${IC.mic}<span>Ouvindo…</span></p>`:''}
     ${corpo}
     ${erro?`<div class="msg warn" role="alert">${esc(erro)}</div>`:''}
-    ${p<4?`<button class="btn btn-main" id="wzSeg" type="button">Continuar</button>`:`<button class="btn btn-ok" id="wzSalvar" type="button">${CHECK}Salvar nos meus remédios</button>`}
+    ${p<4?`<button class="btn btn-pill" id="wzSeg" type="button">${CHECK}Continuar</button>`:`<button class="btn btn-ok" id="wzSalvar" type="button">${CHECK}Salvar nos meus remédios</button>`}
     <button class="linkbtn wz-voltar" id="wzVoltar" type="button">${p===1?'Cancelar':'Voltar'}</button>`;
   const redesenha=()=>{ const w=$('#wiz'), y=w.scrollTop; renderWizard(); w.scrollTop=y; };
   const avisar=()=>{ const t2=totalSel(it); if(t2.acima && !addSel.ciente) falar(`Atenção. ${fmtMg(t2.mg).replace('mg','miligramas')} por dia passa da maior dose citada na bula. Vale conferir a receita.`); };
   document.querySelectorAll('#wiz [data-mom]').forEach(b=>b.onclick=()=>{ const k=b.dataset.mom; addSel.mom=addSel.mom.includes(k)?addSel.mom.filter(x=>x!==k):addSel.mom.concat(k); horasDoMom(); addSel.ciente=false; redesenha(); });
   const ho=$('#hOutro'); if(ho) ho.onchange=e=>{ const v=e.target.value, old=addSel.outro; if(old && old!==v && !addSel.h.includes(old)){ delete addSel.q[old]; delete addSel.outroQ[old]; } addSel.outro=v; addSel.ciente=false; redesenha(); };
-  document.querySelectorAll('#wiz [data-qh]').forEach(x=>x.onclick=()=>{ const h=x.dataset.qh; addSel.q[h]=x.dataset.q; addSel.ciente=false; redesenha();
-    if(addSel.q[h]==='outra'){ const q=document.querySelector(`#wiz [data-qo="${h}"]`); if(q) q.focus(); } });
+  document.querySelectorAll('#wiz [data-qh]').forEach(x=>x.onclick=()=>{ const h=x.dataset.qh; addSel.q[h]=x.dataset.q; addSel.ciente=false;
+    if(addSel.q[h]==='outra' && !String(addSel.outroQ[h]||'').trim()){ addSel.outroQ[h]=qtdRotulo(inicioQ(u),u); falar(addSel.outroQ[h]+'. Toque em mais ou menos.'); }
+    redesenha(); });
+  const passoQ=(h,dir)=>{ const L=passosQ(u), c=contaQ('outra',addSel.outroQ[h])||inicioQ(u);
+    const n = dir>0 ? (L.find(v=>v>c+1e-9)||L[L.length-1]) : (L.slice().reverse().find(v=>v<c-1e-9)||L[0]);
+    addSel.outroQ[h]=qtdRotulo(n,u); addSel.ciente=false; redesenha(); falar(addSel.outroQ[h]); };
+  document.querySelectorAll('#wiz [data-qmais]').forEach(x=>x.onclick=()=>passoQ(x.dataset.qmais,1));
+  document.querySelectorAll('#wiz [data-qmenos]').forEach(x=>x.onclick=()=>passoQ(x.dataset.qmenos,-1));
+  document.querySelectorAll('#wiz [data-qescrever]').forEach(x=>x.onclick=()=>{ const h=x.dataset.qescrever; addSel.escrever=addSel.escrever||{}; addSel.escrever[h]=true; redesenha(); const q=document.querySelector(`#wiz [data-qo="${h}"]`); if(q) q.focus(); });
   document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ x.oninput=e=>{ addSel.outroQ[x.dataset.qo]=e.target.value; }; });
   const bc=$('#bCiente'); if(bc) bc.onclick=()=>{ addSel.ciente=!addSel.ciente; redesenha(); };
   const bf=$('#bConferi'); if(bf) bf.onclick=()=>{ addSel.conferi=!addSel.conferi; redesenha(); };
@@ -1614,6 +1694,11 @@ function salvarWizard(it){
   const como = iguais ? qtd[hs[0]] : hs.map(h=>`${qtd[h]} às ${h}`).join(', ');
   const mom={}; addSel.mom.forEach(k=>{ mom[rot(k)]=k; });
   const i=it.info;
+  if(wizDestino){ const f=wizDestino, ed=wizEditar;
+    const item={id:ed?ed.id:'g'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,cor:INFO[it.principio]?INFO[it.principio].cor:(i.cor||GENERICO_COR),
+      dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto||'',registro:it.registro||'',receita:true,mgDia:tot.mg,acimaBula:tot.acima};
+    $('#wiz').hidden=true; addSel=null; resultado=null; wizDestino=null; wizEditar=null; gestorAlvo=null;
+    enviarAgenda(f,ed?'edit':'add',item); acompTab='remedios'; go('acomp'); return; }
   S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
     cor: INFO[it.principio] ? INFO[it.principio].cor : novaCor(),
     serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto,registro:it.registro||'',receita:true,foto:addSel.foto||'',
@@ -1631,6 +1716,7 @@ function mostrarResultado(it,code,falarAgora){
   const i=it.info, ag=agendaDe(chaveIt(it));
   let conf='';
   const lista=alvo?(alvo.lista||[alvo.a]):[], certo=alvo?lista.find(a=>chaveAg(a)===chaveIt(it)):null;
+  const gA=gestorAlvo, agG=gA&&gA.estado?stDe(gA.estado).agenda.find(a=>chaveAg(a)===chaveIt(it)):null;
   if(alvo){
     conf = certo
       ? `<div class="msg ok">É o remédio certo das ${alvo.h}: ${esc(med(certo).nome)}. A dose é a da receita: ${esc(comoEm(certo,alvo.h))}.</div><button class="btn btn-ok btn-tomei" id="bTomeiCx">${CHECK}TOMEI</button>`
@@ -1645,7 +1731,9 @@ function mostrarResultado(it,code,falarAgora){
     <div class="res-cab">${fotoAg}<div><p class="small muted" style="margin:0">Este é o</p><div class="big-name">${esc(cap(i.apelido))}</div>
       <p class="prod" style="margin:0">${esc(i.nome)}${it.dose?' '+esc(it.dose):''}</p></div></div>
     <button class="opn o-main" id="bOuvir" type="button"><span class="n">1</span><span>Ouvir de novo</span></button>
-    ${alvo?bulaBtn(2):(ag?`<div class="msg ok">Já está nos seus remédios: ${esc(comoTxt(ag))}.</div>${bulaBtn(2)}`
+    ${alvo?bulaBtn(2):gA?(agG?`<div class="msg ok">Já está nos remédios de ${esc(gA.nome)}: ${esc(comoTxt(agG))}.</div>${bulaBtn(2)}`:`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos remédios de ${esc(gA.nome)}<small>4 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)
+      :(ag?`<div class="msg ok">Já está nos seus remédios: ${esc(comoTxt(ag))}.</div>${bulaBtn(2)}`
+      :gestorAtivo()?`<button class="opn o-pill" id="bPedirAg" type="button"><span class="n">2</span><span>Pedir para ${esc(nomeGestor())} colocar<small>${esc(nomeGestor())} cuida dos seus remédios</small></span></button>${bulaBtn(3)}`
       :`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos meus remédios<small>4 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)}
     <details class="mais"><summary>Mais informações</summary><div class="in">
       ${txServe(it)?`<div class="block"><p class="label">Para que serve, segundo a bula</p><p>“${esc(txServe(it))}”</p><p class="fine">${esc(fonteTx(it))}</p></div>`
@@ -1653,21 +1741,20 @@ function mostrarResultado(it,code,falarAgora){
       ${txCuid(it)?`<div class="warnbox block"><p class="label">Se esquecer uma dose, segundo a bula</p><p>“${esc(txCuid(it))}”</p></div>`
         :`<div class="warnbox block"><p class="label">Cuidados</p><p>${i.cuidado?esc(i.cuidado)+' ':''}Os cuidados estão na bula oficial: perguntas 3, 4 e 8.</p></div>`}
       <p class="small">${esc(it.produto)}${it.qtd?' · '+it.qtd+' '+unidade(it.apres)[1]:''}</p>
-      <button class="btn btn-ghost" id="bQR" type="button">${QR_SVG}Ler o QR code da bula na caixa</button>
-      <div id="qrBox" aria-live="polite"></div>
-      <a class="btn btn-ghost" href="${bulaUrl(it)}" target="_blank" rel="noopener">${IC.bula}Ver a bula no site da Anvisa</a>
       <p class="fine">${i.geral?'O tipo de remédio vem da classificação registrada na Anvisa. ':i.bula?'Trechos da bula do paciente ('+esc(i.bula)+'). ':''}${it.hosp?'Uso hospitalar. ':''}Código ${esc(code)} · Registro Anvisa ${esc(it.registro)}</p>
     </div></details>
   </article>`;
   $('#bOuvir').onclick=()=>ouvir(textoFala(it));
-  $('#bQR').onclick=lerQRBula;
   const bt=$('#bTomeiCx'); if(bt){ const a=alvo, c=certo; bt.onclick=()=>{ alvo=null; resultado=null; go('hoje'); tomar(c,a.h,'caixa'); }; }
-  if(!alvo) ligarFormAgenda(it);
+  if(!alvo && !gA) ligarFormAgenda(it);
+  if(gA){ const b=$('#bAddAg'); if(b) b.onclick=()=>abrirWizard(it,{destino:gA}); }
+  const bp=$('#bPedirAg'); if(bp) bp.onclick=()=>pedirAoGestor(it);
   msgScan('');
   if(falarAgora){
     let pre='';
     if(alvo) pre = certo ? 'É o remédio certo. ' : 'Atenção, este não é o remédio da hora. ';
-    falar(pre+textoFala(it)+(!alvo&&!ag?' Para guardar, toque no dois: colocar nos meus remédios.':''));
+    const perg = alvo ? (certo?'Já tomou? Diga sim quando tomar.':'') : (!ag?(gestorAtivo()?`Quer pedir para ${nomeGestor()} colocar? Diga sim, ou diga não.`:'Quer colocar nos seus remédios? Diga sim, ou diga não.'):'');
+    perguntarVoz(pre+textoFala(it)+(!alvo&&!ag?' Para guardar, toque no botão laranja, com o sinal de certo, número dois: colocar nos meus remédios.':''), perg, ms=>tratarContexto(alvo?'conferir':'resultado',ms));
     rolar($('#resBox'));
   }
 }
@@ -1676,7 +1763,7 @@ function registrarCaixaErrada(it,lista){
   const d=new Date(), m=momentoDe(alvo.h);
   const txt=`${DIAS_LONGO[d.getDay()]}, ${nowHM()}: leu ${it.info.nome} no horário ${m.de} (o certo era ${listaFala(lista.map(a=>med(a).nome))}).`;
   S.alertas.push({ts:Date.now(),t:'caixa',txt}); if(S.alertas.length>20) S.alertas=S.alertas.slice(-20); save();
-  eloAvisar('caixa',{titulo:`Caixa errada no celular de ${nomeP()}`,texto:txt});
+  eloAvisar('caixa',{titulo:`${nomeP()}: caixa errada na hora do remédio`,texto:txt});
 }
 
 /* ---------- tela AGENDA ---------- */
@@ -1694,29 +1781,33 @@ function mudarRotina(nova){
 /* ---------- MEUS REMÉDIOS: só a lista ---------- */
 let removerId='';
 function renderAgenda(){
+  const gest=gestorAtivo();
   const itens=S.agenda.map(a=>`<div class="agenda-item">
     <div class="medlinha">${a.foto?fotoDe(a):dotA(a)}<div style="min-width:0"><h3><button class="fala" data-fala="ag:${a.id}">${esc(med(a).nome)} ${esc(a.dose)}</button></h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
     <ul class="ag-mom">${a.horarios.map(h=>{ const m=momentoDe(h); return `<li>${ICO[m.k]}<span><b>${esc((a.mom&&a.mom[h])?MOM[a.mom[h]].nome:m.nome)} · ${h}</b><span class="q">${qtdIcones(comoEm(a,h))}${esc(comoEm(a,h))}</span></span></li>`; }).join('')}</ul>
     ${a.registro?`<button class="btn btn-ghost btn-s" style="width:100%" type="button" data-bula="${esc(a.registro)}" data-nome="${esc((a.produto||med(a).nome)+(a.dose?' '+a.dose:''))}" data-url="${esc('https://consultas.anvisa.gov.br/#/bulario/q/?numeroRegistro='+reg9(a.registro))}">${IC.bula}Ler a bula</button>`:''}
-    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button><button class="linkbtn" data-del="${a.id}">${removerId===a.id?'Toque de novo para remover':'Remover'}</button></div></div>`).join('');
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button>${gest?'':`<button class="linkbtn" data-del="${a.id}">${removerId===a.id?'Toque de novo para remover':'Remover'}</button>`}</div></div>`).join('');
   $('#view-agenda').innerHTML=`<div class="stack" style="gap:16px">
     <h2>${S.pessoa?'Remédios de '+esc(S.pessoa):'Meus remédios'}</h2>
-    <button class="btn btn-pill" data-go="ler" data-scan="1">${IC.ler}Colocar remédio (ler a caixa)</button>
+    ${gest?`<div class="cadeado">${IC.fam}<div><b>Quem cuida dos seus remédios é ${esc(nomeGestor())}.</b><p class="small" style="margin:4px 0 0">Para colocar ou mudar um remédio, leia a caixa e toque em “Pedir para ${esc(nomeGestor())} colocar”.</p></div></div>`
+      :`<button class="btn btn-pill" data-go="ler" data-scan="1">${IC.ler}Colocar remédio (ler a caixa)</button>`}
     ${itens || '<p class="msg info">Nenhum remédio guardado ainda.</p>'}
-    ${S.agenda.length?`<p class="hint">Para mudar a hora do café, almoço, jantar e de dormir: Ajustes → Horários da minha rotina.</p>`:''}
+    ${gest&&S.mudancas.length?`<div class="form"><h3>Últimas mudanças</h3>${listaMudancas(S.mudancas,5)}</div>`:''}
+    ${S.agenda.length&&!gest?`<p class="hint">Para mudar a hora do café, almoço, jantar e de dormir: Ajustes → Horários da minha rotina.</p>`:''}
   </div>`;
   document.querySelectorAll('#view-agenda [data-foto]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.foto); if(a) tirarFoto(f=>{ a.foto=f; save(); renderAgenda(); toast('Pronto. Foto salva.'); }); });
   document.querySelectorAll('#view-agenda [data-del]').forEach(b=>b.onclick=()=>{ const id=b.dataset.del;
     if(removerId!==id){ removerId=id; renderAgenda(); falar('Toque de novo para remover.'); return; }
     removerId=''; S.agenda=S.agenda.filter(a=>a.id!==id); save(); agendarAlarmes(false); render(); toast('Removido.'); });
 }
-function falaAgenda(){ return S.agenda.length ? 'Seus remédios. '+S.agenda.map(a=>`${med(a).nome}, ${comoFala(a)}.`).join(' ') : 'Ainda não tem remédio guardado. Toque em colocar remédio.'; }
+function falaAgenda(){ if(!S.agenda.length && gestorAtivo()) return `Ainda não tem remédio guardado. ${nomeGestor()} vai colocar pelo próprio celular.`;
+  return S.agenda.length ? (gestorAtivo()?`Quem cuida dos seus remédios é ${nomeGestor()}. `:'')+'Seus remédios. '+S.agenda.map(a=>`${med(a).nome}, ${comoFala(a)}.`).join(' ') : 'Ainda não tem remédio guardado. Toque em colocar remédio.'; }
 
 /* ---------- AJUSTES: o resto, organizado em grupos, para quem ajuda a configurar ---------- */
 let ajSub='', confirma='';
 const linhaAj = (id,titulo,sub,cls) => `<button class="aj-row ${cls||''}" type="button" data-aj="${id}"><span>${esc(titulo)}${sub?`<small>${esc(sub)}</small>`:''}</span>${IC.chev}</button>`;
 const grupoAj = (titulo,linhas) => `<div class="aj-g"><p>${esc(titulo)}</p><div class="aj-lista">${linhas.join('')}</div></div>`;
-const TIT_AJ={rotina:'Horários da rotina',semcaixa:'Adicionar sem a caixa',letra:'Letra e contraste',voz:'Voz e velocidade',calmo:'Modo calmo',dados:'Meus dados',protecao:'Proteção dos dados',apagar:'Apagar tudo',seg:'Quem eu acompanho'};
+const TIT_AJ={conversa:'Conversa por voz',rotina:'Horários da rotina',semcaixa:'Adicionar sem a caixa',letra:'Letra e contraste',voz:'Voz e velocidade',calmo:'Modo calmo',dados:'Meus dados',protecao:'Proteção dos dados',apagar:'Apagar tudo',seg:'Quem eu acompanho',gest:'Quem cuida dos meus remédios'};
 let ajSeg='';
 const credito = () => `<div class="credito" role="contentinfo">${LOGO_SVG.replace('class="logo"','class="credito-logo"')}
   <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Squad 4</b></p><p class="credito-esc">CESAR School · 2026</p></div></div>
@@ -1729,14 +1820,15 @@ function renderAjustes(){
   const linhasFam=[];
   if(!fam) linhasFam.push(linhaAj('dados','Meus dados e contato da família',[S.pessoa,S.familiar].filter(Boolean).join(' · ')||'Nome e WhatsApp'));
   else linhasFam.push(linhaAj('dados','Meu nome',S.eu||'Para a família saber quem é'));
-  if(!fam) linhasFam.push(linhaAj('conectar','Conectar o celular da família',S.pareados.length?listaFala(S.pareados.map(p=>p.nome))+' '+(S.pareados.length>1?'acompanham':'acompanha'):'Ela vê se você tomou o remédio'));
+  S.pareados.filter(p=>p.gestor).forEach(p=>linhasFam.push(linhaAj('gest:'+p.id,'Quem cuida dos meus remédios: '+p.nome,'Ver mudanças ou parar')));
+  if(!fam) linhasFam.push(linhaAj('conectar','Conectar o celular da família',S.pareados.length?listaFala(S.pareados.map(p=>p.nome))+' '+(S.pareados.length>1?'acompanham':'acompanha'):'A família vê se você tomou o remédio'));
   S.seguindo.forEach(f=>linhasFam.push(linhaAj('seg:'+f.id,'Acompanho: '+f.nome,'Ver ou parar de acompanhar')));
-  linhasFam.push(linhaAj('seguir','Acompanhar alguém da família','Pelo código do celular dela'));
+  linhasFam.push(linhaAj('seguir','Acompanhar alguém da família','Pelo código que aparece no outro celular'));
   if(fam) linhasFam.push(linhaAj('eu-remedios','Também tomo remédios','Usar a caixinha neste celular'));
   v.innerHTML=`<div class="stack" style="gap:18px">
     <div><h2>Ajustes</h2><p class="small muted" style="margin:4px 0 0">Para a família ou quem ajuda a configurar.</p></div>
-    ${fam?'':grupoAj('Remédios',[linhaAj('rotina','Horários da minha rotina',['cafe','almoco','jantar','dormir'].map(rot).join(' · ')),linhaAj('semcaixa','Adicionar sem a caixa','Para quem não tem a caixa em mãos')])}
-    ${grupoAj('Leitura e voz',[linhaAj('letra','Tamanho da letra e contraste',(ESCALAS.find(e=>e[0]===AP.escala)||ESCALAS[0])[1]+(AP.contraste?' · contraste alto':'')),linhaAj('voz','Voz e velocidade'),linhaAj('calmo','Modo calmo',AP.calmo?'Ligado':'Desligado')])}
+    ${fam?'':grupoAj('Remédios',[linhaAj('rotina','Horários da minha rotina',['cafe','almoco','jantar','dormir'].map(rot).join(' · '))].concat(gestorAtivo()?[]:[linhaAj('semcaixa','Adicionar sem a caixa','Para quem não tem a caixa em mãos')]))}
+    ${grupoAj('Leitura e voz',[linhaAj('letra','Tamanho da letra e contraste',(ESCALAS.find(e=>e[0]===AP.escala)||ESCALAS[0])[1]+(AP.contraste?' · contraste alto':'')),linhaAj('voz','Voz e velocidade'),linhaAj('calmo','Modo calmo',AP.calmo?'Ligado':'Desligado'),linhaAj('conversa','Conversa por voz',AP.vozGuia?'Ligada: o app fala cada tela e ouve a resposta':'Desligada')])}
     ${grupoAj('Família',linhasFam)}
     ${grupoAj('Celular',[linhaAj('alarme','Para o alarme tocar sempre',energiaFalta()?'Falta ajustar':'Notificações, bateria e início automático'),fam?'':linhaAj('teste','Testar o lembrete agora','Abre a tela do alarme')])}
     ${grupoAj('Seus dados',[linhaAj('protecao','Proteção dos dados',cof.ativo?'Criptografia ligada':'Criptografia indisponível neste navegador'),linhaAj('termos','Privacidade e termos de uso'),
@@ -1757,13 +1849,14 @@ function abrirAj(id){
     confirma=''; eloDespedir(); S = S.demo ? novo() : seed(); normalizar(); save(); agendarAlarmes(false); configurarNativo(); alvo=null; resultado=null;
     if(!S.demo) abrirBoasVindas(); else go('hoje'); toast(S.demo?'Demonstração aberta.':'Pronto para começar.'); return; }
   if(id.indexOf('seg:')===0){ ajSeg=id.slice(4); id='seg'; }
+  if(id.indexOf('gest:')===0){ ajSeg=id.slice(5); id='gest'; }
   ajSub=id; confirma=''; renderAjustes(); renderTopo(); window.scrollTo(0,0);
 }
 function subAjustes(){
   const t=`<h2 id="ajT" tabindex="-1">${esc(TIT_AJ[ajSub]||'Ajustes')}</h2>`;
   if(ajSub==='rotina') return t+`<form class="form" id="fRot"><p class="small muted">O lembrete toca nestas horas. Mude se você come ou dorme em outro horário.</p>
       ${['cafe','almoco','jantar','dormir'].map(k=>`<div class="field" style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center"><span class="mom-ico">${ICO[k]}</span><label for="rot-${k}"><b>${MOM[k].nome}</b></label><input type="time" id="rot-${k}" value="${rot(k)}" style="width:auto"></div>`).join('')}
-      <button class="btn btn-main" type="submit">Salvar horários</button></form>`;
+      <button class="btn btn-pill" type="submit">Salvar horários</button></form>`;
   if(ajSub==='semcaixa'){ const opts=Object.entries(INFO).map(([k,v])=>`<option value="${k}">${v.nome} (${v.apelido})</option>`).join('');
     return t+`<form class="form" id="fAg">
       <div class="field"><label class="label" for="agP">Remédio</label><select id="agP">${opts}</select></div>
@@ -1773,11 +1866,13 @@ function subAjustes(){
         <input type="time" id="agH1" aria-label="Horário 1" required><input type="time" id="agH2" aria-label="Horário 2"><input type="time" id="agH3" aria-label="Horário 3"></div></div>
       <label class="conferi-lbl"><input type="checkbox" id="agConf" required> Conferi com a receita do médico</label>
       <div id="fAgMsg"></div>
-      <button class="btn btn-main" type="submit">Salvar nos meus remédios</button></form>`; }
+      <button class="btn btn-pill" type="submit">Salvar nos meus remédios</button></form>`; }
   if(ajSub==='letra') return t+`<div class="form"><p class="label">Tamanho da letra</p>
       <div class="seg">${ESCALAS.map(([v,tx])=>`<button type="button" data-esc="${v}" aria-pressed="${AP.escala===v}">${tx}</button>`).join('')}</div>
       <p class="label">Contraste</p>
       <div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-ctr="0" aria-pressed="${!AP.contraste}">Normal</button><button type="button" data-ctr="1" aria-pressed="${AP.contraste}">Alto</button></div></div>`;
+  if(ajSub==='conversa') return t+`<div class="form"><div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-vg="0" aria-pressed="${!AP.vozGuia}">Desligada</button><button type="button" data-vg="1" aria-pressed="${!!AP.vozGuia}">Ligada</button></div>
+      <p class="hint">Ligada, o app fala cada tela e já ouve a resposta: “sim”, “não”, “já tomei”, o nome, o telefone. Para quem não lê. O botão azul “Falar” funciona sempre, ligada ou não.</p></div>`;
   if(ajSub==='calmo') return t+`<div class="form">${segCalmo()}<p class="hint">Sem animações e cores mais suaves. A voz só fala quando você toca em Ouvir, e o alarme toca sem voz. Bom para quem se incomoda com estímulos fortes.</p></div>`;
   if(ajSub==='voz') return t+`<div class="form"><p class="label">Voz</p>
       ${VOZES.length? `<div class="stack">${VOZES.slice(0,6).map((v,n)=>`<button type="button" class="conferi" data-voz="${esc(v.name)}" aria-pressed="${AP.voz===v.name}"><span class="caixa" aria-hidden="true">${AP.voz===v.name?'✓':''}</span><span>Voz ${n+1}<br><span class="small" style="font-weight:400">${natural(v.name)?'Mais natural · precisa de internet':'Funciona sem internet'}</span></span></button>`).join('')}</div>
@@ -1788,7 +1883,7 @@ function subAjustes(){
   if(ajSub==='dados'){
     if(modoFamilia()) return t+`<div class="form"><div class="field"><label class="label" for="cfgEu">Seu nome</label><input id="cfgEu" value="${esc(S.eu)}" placeholder="Ex.: Ana (filha)" autocomplete="given-name"></div>
       <p class="hint">A pessoa que você acompanha vê esse nome quando você pede para lembrar o remédio.</p>
-      <button class="btn btn-main" id="bCfgEu" type="button">Salvar</button><p class="hint" id="cfgMsg" role="status"></p></div>`;
+      <button class="btn btn-pill" id="bCfgEu" type="button">Salvar</button><p class="hint" id="cfgMsg" role="status"></p></div>`;
     return t+`<div class="form">
       <div class="field"><label class="label" for="cfgNome">Nome de quem toma os remédios</label><div class="campo-voz"><input id="cfgNome" value="${esc(S.demo?'':S.pessoa)}" placeholder="Ex.: Maria" autocomplete="given-name">${micCampo('cfgNome')}</div></div>
       <div class="field"><label class="label" for="cfgFam">Quem da família recebe os avisos</label><div class="campo-voz"><input id="cfgFam" value="${esc(S.demo?'':S.familiar)}" placeholder="Ex.: Ana (filha)">${micCampo('cfgFam')}</div></div>
@@ -1796,7 +1891,7 @@ function subAjustes(){
       <div class="field"><label class="label" for="cfgWa">Telefone ou WhatsApp de quem recebe os avisos</label><div class="campo-voz"><input id="cfgWa" inputmode="tel" autocomplete="tel" value="${esc(S.demo?'':S.whats||'')}" placeholder="DDD + número, ex.: 81 99999-0000">${micCampo('cfgWa','numero')}</div></div>
       <p class="hint">O nome aparece na tela inicial e nos avisos. O WhatsApp é usado só quando você toca em "Avisar no WhatsApp".</p>
       ${S.demo?`<p class="msg info">Na demonstração, os dados são de exemplo. Saia da demonstração para usar os seus.</p>`:''}
-      <button class="btn btn-main" id="bCfg" type="button">Salvar</button><p class="hint" id="cfgMsg" role="status"></p></div>
+      <button class="btn btn-pill" id="bCfg" type="button">Salvar</button><p class="hint" id="cfgMsg" role="status"></p></div>
       <div class="cadeado">${IC.cadeado}<div><b>Ficam só neste celular, criptografados.</b><p class="small" style="margin:4px 0 0">Ninguém do Squad 4 recebe esses dados. <button class="linkbtn" type="button" data-aj2="protecao" style="color:var(--accent);text-decoration:underline;padding:0;min-height:0">Como funciona</button></p></div></div>`;
   }
   if(ajSub==='protecao'){ const c=RFCofre.info();
@@ -1809,13 +1904,19 @@ function subAjustes(){
       <p class="fine">Base: LGPD (Lei 13.709/2018), art. 46 (medidas de segurança) e art. 11, I (consentimento para dados de saúde).</p>`; }
   if(ajSub==='apagar') return t+`<p>Vai apagar deste celular os remédios, horários, fotos e o histórico, e desligar a conexão com a família.</p>
       <div class="cadeado">${IC.cadeado}<div><p style="margin:0">Desinstalar o app também apaga tudo.</p></div></div>
-      <button class="btn btn-main" id="bApagar" type="button" style="background:var(--bad);border-color:var(--bad);color:#FFFFFF">${confirma==='apagar'?'Toque de novo para apagar':'Retirar consentimento e apagar tudo'}</button>`;
+      <button class="btn btn-main" id="bApagar" type="button" style="background:var(--bad);border-color:var(--bad);color:#FFFFFF">${IC.socorro}${confirma==='apagar'?'Toque de novo para apagar':'Retirar consentimento e apagar tudo'}</button>`;
+  if(ajSub==='gest'){ const p=S.pareados.find(x=>x.id===ajSeg&&x.gestor); if(!p) return t+'<p class="msg info">Você cuida dos seus remédios.</p>';
+    return t+`<div class="pessoa"><span class="av">${esc(iniciais(p.nome))}</span><div><h2>${esc(p.nome)}</h2><p class="small muted" style="margin:0">Coloca e muda os seus remédios pelo próprio celular</p></div></div>
+      <div class="block"><p class="label">Como funciona</p><p>${esc(curto(p.nome))} copia da receita. Toda mudança eu falo e anoto aqui. O app não muda dose sozinho.</p></div>
+      ${S.mudancas.length?`<div class="form"><h3>Últimas mudanças</h3>${listaMudancas(S.mudancas,10)}</div>`:''}
+      <button class="btn btn-ghost" id="bPararGest" type="button">${confirma==='gest'?'Toque de novo para confirmar':'Parar: eu cuido dos meus remédios'}</button>
+      <p class="hint">${esc(p.nome)} continua acompanhando. Os remédios que já estão aqui ficam.</p>`; }
   if(ajSub==='seg'){ const f=S.seguindo.find(x=>x.id===ajSeg); if(!f) return t+'<p class="msg info">Não acompanha mais.</p>';
     return t+`<div class="pessoa"><span class="av">${esc(iniciais(f.nome))}</span><div><h2>${esc(f.nome)}</h2><p class="small muted" style="margin:0">Desde ${esc(fmtData(String(f.desde||'').slice(0,10)))}</p></div></div>
-      <div class="field"><label class="label" for="segFone">Telefone dela (para o botão Ligar)</label><input id="segFone" inputmode="tel" value="${esc(f.fone||'')}" placeholder="DDD + número"></div>
-      <button class="btn btn-main" id="bSegFone" type="button">Salvar telefone</button>
+      <div class="field"><label class="label" for="segFone">Telefone de ${esc(curto(f.nome))} (para o botão Ligar)</label><input id="segFone" inputmode="tel" value="${esc(f.fone||'')}" placeholder="DDD + número"></div>
+      <button class="btn btn-pill" id="bSegFone" type="button">Salvar telefone</button>
       <button class="btn btn-ghost" id="bPararSeg" type="button">${confirma==='parar'?'Toque de novo para parar':'Parar de acompanhar'}</button>
-      <p class="hint">Ao parar, os dados dela são apagados deste celular.</p>`; }
+      <p class="hint">Ao parar, os dados de ${esc(curto(f.nome))} são apagados deste celular.</p>`; }
   return t;
 }
 function ligarSubAjustes(){
@@ -1837,6 +1938,7 @@ function ligarSubAjustes(){
     save(); agendarAlarmes(true); ajSub=''; go('agenda'); toast('Salvo nos seus remédios.'); });
   document.querySelectorAll('#view-ajustes [data-esc]').forEach(b=>b.onclick=()=>{ AP.escala=+b.dataset.esc; aplicarAparencia(); renderAjustes(); });
   document.querySelectorAll('#view-ajustes [data-ctr]').forEach(b=>b.onclick=()=>{ AP.contraste=b.dataset.ctr==='1'; aplicarAparencia(); renderAjustes(); });
+  document.querySelectorAll('#view-ajustes [data-vg]').forEach(b=>b.onclick=()=>{ AP.vozGuia=b.dataset.vg==='1'; aplicarAparencia(); renderAjustes(); falarE(AP.vozGuia?'Conversa por voz ligada.':'Conversa por voz desligada.'); });
   document.querySelectorAll('#view-ajustes [data-mcalmo]').forEach(b=>b.onclick=()=>{ AP.calmo=b.dataset.mcalmo==='1'; aplicarAparencia(); renderAjustes(); toast(AP.calmo?'Modo calmo ligado.':'Modo calmo desligado.'); });
   const amostra='Olá! Eu sou o Remédio Falado. Está na hora do remédio da pressão.';
   document.querySelectorAll('#view-ajustes [data-voz]').forEach(b=>b.onclick=()=>{ AP.voz=b.dataset.voz; aplicarAparencia(); renderAjustes(); ouvir(amostra); });
@@ -1849,10 +1951,14 @@ function ligarSubAjustes(){
   on('#bCfgEu','onclick',()=>{ S.eu=$('#cfgEu').value.trim(); save(); $('#cfgMsg').textContent='Salvo.'; toast('Salvo.'); });
   on('#bApagar','onclick',()=>{ if(confirma!=='apagar'){ confirma='apagar'; renderAjustes(); falar('Toque de novo para apagar.'); return; }
     confirma=''; apagarTudo('Consentimento retirado. Seus dados foram apagados deste celular.'); });
+  on('#bPararGest','onclick',()=>{ if(confirma!=='gest'){ confirma='gest'; renderAjustes(); falar('Toque de novo para confirmar.'); return; }
+    confirma=''; const p=S.pareados.find(x=>x.id===ajSeg); if(p) pararGestor(p); ajSub=''; renderAjustes(); renderTopo(); });
   on('#bSegFone','onclick',()=>{ const f=S.seguindo.find(x=>x.id===ajSeg); if(!f) return; f.fone=$('#segFone').value.trim(); save(); toast('Telefone salvo.'); });
   on('#bPararSeg','onclick',()=>{ if(confirma!=='parar'){ confirma='parar'; renderAjustes(); return; } confirma=''; const f=S.seguindo.find(x=>x.id===ajSeg); if(f) pararAcompanhar(f); ajSub=''; go(modoFamilia()||S.seguindo.length?'ajustes':'hoje'); });
 }
 function apagarTudo(msg){ eloDespedir(); S=novo(); save(); agendarAlarmes(false); configurarNativo(); alvo=null; resultado=null; ajSub=''; abrirBoasVindas(); toast(msg||'Pronto. Tudo apagado.'); }
+/* nome curto, sem pronome de gênero: "Dona Lúcia", "Seu Antônio", "Carla" */
+function curto(n){ const p=String(n||'').replace(/\(.*?\)/g,'').trim().split(/\s+/).filter(Boolean); if(!p.length) return 'a pessoa'; return /^(dona|seu|sr\.?|sra\.?|dr\.?|dra\.?)$/i.test(p[0])&&p[1] ? p[0]+' '+p[1] : p[0]; }
 const iniciais = n => String(n||'?').replace(/\(.*?\)/g,'').trim().split(/\s+/).filter(w=>!/^(de|da|do|dos|das|e)$/i.test(w)).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
 
 /* ---------- tela FAMÍLIA ---------- */
@@ -1881,7 +1987,7 @@ function semana(st){
 }
 function textoSemana(w,nome){ return `Resumo da semana de ${nome||nomeP()}: ${w.ok} de ${w.tot} doses tomadas (${w.pct}%). ${w.faltas.length?'Faltou: '+listaFala(w.faltas)+'.':'Não faltou nenhuma.'}`; }
 function gradeSemana(w,nome){
-  return w.cols.length ? `<div class="form"><h3>Semana de ${esc(nome)}</h3>
+  return w.cols.length ? `<div class="form"><h3>${nome?'Semana de '+esc(curto(nome)):'Sua semana'}</h3>
       <div class="semana" style="grid-template-columns:52px repeat(${w.cols.length},minmax(0,1fr))" role="table" aria-label="Doses dos últimos 7 dias">
         <span></span>${w.cols.map(m=>`<span class="hd" title="${esc(m.nome)}">${ICO[m.k]}<span class="small" style="display:block;color:var(--fg)">${esc(m.nome.split(' ')[0])}</span></span>`).join('')}
         ${w.linhas.map(l=>`<span class="d">${l.nome}</span>${l.cel.map(c=>`<span class="c ${c.c}" aria-label="${c.c==='ok'?'tomado':c.c==='falta'?'não tomado':c.c==='parte'?'tomado em parte':c.c==='futuro'?'mais tarde':'sem remédio'}">${c.c==='ok'?CHECK:c.c==='falta'?XIS:c.c==='parte'?'½':c.c==='futuro'?c.t:''}</span>`).join('')}`).join('')}
@@ -1892,20 +1998,21 @@ function renderFamilia(){
   const w=semana(), pares=S.pareados;
   $('#view-familia').innerHTML=`<div class="stack" style="gap:16px">
     <h2>Família</h2>
-    ${pares.length?`<div class="ve">${pares.map(p=>`<p class="sim">${CHECK}<span><b>${esc(p.nome)}</b> acompanha pelo celular dela${p.desde?' · desde '+esc(fmtData(String(p.desde).slice(0,10))):''}</span></p>`).join('')}
-        <p class="small muted" style="margin-top:4px">Ela vê o que você marca e recebe um aviso se passar 30 minutos do horário. Tudo criptografado.</p></div>`
-      : `<div class="cadeado">${IC.fam}<div><b>Conecte o celular de alguém da família.</b><p class="small" style="margin:4px 0 0">Ela vê se você tomou o remédio e recebe um aviso se passar do horário, mesmo com o app fechado. Tudo criptografado.</p></div></div>`}
+    ${pares.length?`<div class="ve">${pares.map(p=>`<p class="sim">${CHECK}<span><b>${esc(p.nome)}</b> ${p.gestor?'cuida dos seus remédios':'acompanha'} pelo próprio celular${p.desde?' · desde '+esc(fmtData(String(p.desde).slice(0,10))):''}</span></p>`).join('')}
+        <p class="small muted" style="margin-top:4px">Quem está conectado vê o que você marca e recebe um aviso se passar 30 minutos do horário. Tudo criptografado.</p></div>`
+      : `<div class="cadeado">${IC.fam}<div><b>Conecte o celular de alguém da família.</b><p class="small" style="margin:4px 0 0">A família vê se você tomou o remédio e recebe um aviso se passar do horário, mesmo com o app fechado. Tudo criptografado.</p></div></div>`}
     <button class="btn btn-pill" id="bConectar" type="button">${IC.fam}${pares.length?'Conectar mais alguém':'Conectar o celular da família'}</button>
-    ${S.seguindo.length?`<button class="btn btn-main" type="button" data-go="acomp">Ver quem eu acompanho</button>`:''}
-    ${gradeSemana(w,nomeP())}
-    ${w.cols.length?`<button class="btn btn-wa" id="bWaResumo" type="button">${WA_SVG}Mandar resumo no WhatsApp</button>`:''}
-    ${S.agenda.length?`<button class="btn btn-ghost" id="bVerFam" type="button">Ver como a família vê</button>`:''}
+    ${S.seguindo.length?`<button class="btn btn-ghost" type="button" data-go="acomp">Ver quem eu acompanho</button>`:''}
+    ${gestorAtivo()&&S.mudancas.length?`<div class="form"><h3>Últimas mudanças nos remédios</h3>${listaMudancas(S.mudancas,3)}</div>`:''}
+    ${gradeSemana(w,'')}
+    ${w.cols.length&&!pares.length?`<button class="btn btn-wa" id="bWaResumo" type="button">${WA_SVG}Mandar resumo no WhatsApp</button>`:''}
+    ${S.demo&&S.agenda.length?`<button class="btn btn-ghost" id="bVerFam" type="button">Ver como a família vê</button>`:''}
   </div>`;
   $('#bConectar').onclick=abrirConectar;
   const bwr=$('#bWaResumo'); if(bwr) bwr.onclick=()=>enviarWhats(textoSemana(w));
   const bv=$('#bVerFam'); if(bv) bv.onclick=()=>{ acompPrevia=true; acompTab='hoje'; go('acomp'); };
 }
-function falaFamilia(){ const w=semana(); return `Família. ${S.pareados.length? listaFala(S.pareados.map(p=>p.nome))+' acompanha pelo celular. ':'Ninguém da família está conectado ainda. Toque em conectar o celular da família. '}${w.tot?textoSemana(w):''}`; }
+function falaFamilia(){ const w=semana(); return `Família. ${S.pareados.length? listaFala(S.pareados.map(p=>p.nome))+' acompanha pelo celular. '+(gestorAtivo()?nomeGestor()+' cuida dos seus remédios. ':''):'Ninguém da família está conectado ainda. Toque em conectar o celular da família. '}${w.tot?textoSemana(w):''}`; }
 
 /* ---------- WhatsApp (abre com a mensagem pronta; a pessoa toca em enviar) ---------- */
 const WA_SVG='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3z"/></svg>';
@@ -1922,7 +2029,7 @@ function resumoSemana(){
 
 /* ---------- escolher familiar na agenda de contatos (só no APK) ---------- */
 const CONT_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7 18a5 5 0 0 1 10 0"/></svg>';
-function botaoContato(id){ return CONT ? `<button class="btn btn-main" id="${id}" type="button">${CONT_SVG}Escolher dos contatos</button>` : ''; }
+function botaoContato(id){ return CONT ? `<button class="btn btn-ghost" id="${id}" type="button">${CONT_SVG}Escolher dos contatos</button>` : ''; }
 async function escolherContato(boxSel, aoEscolher){
   try{
     const r=await CONT.pickContact({projection:{name:true,phones:true}});
@@ -1978,12 +2085,12 @@ function renderGratis(){
     <div class="farm"><p class="label">Antes de ir, ligue e pergunte</p><p class="say" id="frase">“${esc(frase)}”</p>
       <button class="btn btn-ghost" id="bFrase">Ouvir a frase</button>
       <p class="hint">O estoque muda todo dia. Ligar antes evita viagem perdida. O telefone aparece no mapa.</p></div>
-    ${temCoords?`<button class="btn btn-main" id="bOrdenar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar as mais perto de mim'}</button>
+    ${temCoords?`<button class="btn btn-ghost" id="bOrdenar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar as mais perto de mim'}</button>
       <p class="hint" style="margin-top:-8px">Sua localização fica só no celular. Não é enviada para ninguém.</p>`:''}
     <div class="field"><label class="label" for="selBairro">Bairro</label>
       <select id="selBairro"><option value="">Todos os bairros (${FARMACIAS.length})</option>${bairros.map(b=>`<option ${b===bairroSel?'selected':''}>${esc(b)}</option>`).join('')}</select></div>
     ${lista.length? lista.map((f,i)=>`<div class="farm"><div><h3>${esc(f.nome)}</h3><p class="muted">${esc(f.rua)} · ${esc(f.bairro)}${f.km!==undefined&&f.km<999?` · <span class="dist">a ${fmtKm(f.km)}</span>`:''}</p></div>
-      <div class="btn-row"><a class="btn btn-main" href="${mapa(f)}" target="_blank" rel="noopener">Ver no mapa</a><button class="btn btn-ghost" data-farm="${i}">Ouvir</button></div></div>`).join('')
+      <div class="btn-row"><a class="btn btn-ghost" href="${mapa(f)}" target="_blank" rel="noopener">Ver no mapa</a><button class="btn btn-ghost" data-farm="${i}">Ouvir</button></div></div>`).join('')
       : '<p class="msg info">Carregando a lista de farmácias...</p>'}
     <p class="fine">Farmácias credenciadas da Farmácia Popular no Recife: ${FARMACIAS.length} na lista. Remédios grátis conforme o Ministério da Saúde (fevereiro de 2025).</p>
   </div>`;
@@ -2025,7 +2132,7 @@ function renderPostos(){
       <p class="small">Leve a <b>receita</b>, o <b>Cartão SUS</b> e um <b>documento com foto</b>. Pergunte no posto se aceitam receita de médico particular.</p>
       <button class="btn btn-ghost" id="bOuvirSus">Ouvir como pegar</button></div>
     ${todos.length?`
-    <button class="btn btn-main" id="bOrdenarP" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar os mais perto de mim'}</button>
+    <button class="btn btn-ghost" id="bOrdenarP" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar os mais perto de mim'}</button>
     <p class="hint" style="margin-top:-8px">Sua localização fica só no celular. Não é enviada para ninguém.</p>
     ${meus.length?`<button type="button" class="conferi" id="bSoMeus" aria-pressed="${soMeus}"><span class="caixa" aria-hidden="true">${soMeus?'✓':''}</span>Só postos que tinham todos os meus remédios</button>`:''}
     <div class="field"><label class="label" for="selBairroP">Bairro</label>
@@ -2035,7 +2142,7 @@ function renderPostos(){
         ${f.horario?`<p class="small">Horário: ${esc(f.horario)}</p>`:''}
         ${f.ff?`<p class="small"><b>Tem Farmácia da Família</b></p>`:''}
         ${temTxt(f)}</div>
-      <div class="btn-row"><a class="btn btn-main" href="${mapaP(f)}" target="_blank" rel="noopener">Ver no mapa</a>${telBtn(f)}<button class="btn btn-ghost" data-posto="${i}">Ouvir</button></div></div>`).join('')
+      <div class="btn-row"><a class="btn btn-ghost" href="${mapaP(f)}" target="_blank" rel="noopener">Ver no mapa</a>${telBtn(f)}<button class="btn btn-ghost" data-posto="${i}">Ouvir</button></div></div>`).join('')
       : `<p class="msg info">${soMeus?'Nenhum posto tinha todos os seus remédios. Desmarque a opção acima para ver todos.':'Nenhum posto neste bairro.'}</p>`}
     ${lista.length>60?`<p class="hint">Mostrando os 60 primeiros. Escolha o bairro ou use sua localização.</p>`:''}
     <p class="fine">Fonte: Secretaria de Saúde do Recife, dados abertos ("Medicamentos por unidade de saúde" e "Rede de atenção à saúde"). A lista de estoque publicada é de ${esc(data||'data não informada')}; o estoque de hoje pode ser diferente. Ligue antes de ir.</p>`
@@ -2067,15 +2174,17 @@ function abrirAlarmeGrupo(h,teste){
     ${um && pend[0].a.foto ? fotoDe(pend[0].a,'foto-g') : ''}
     <div class="cx" style="text-align:left"><div class="cx-meds">${pend.map(d=>medLinha(d,false)).join('')}</div></div>
     <button class="btn btn-ok" id="alTomei">${CHECK}${um?'TOMEI':'Tomei todos'}</button>
-    <div class="btn-row"><button class="btn btn-ghost" id="alOuvir">Ouvir de novo</button><button class="btn btn-ghost" id="alDepois">Daqui a 10 min</button></div></div>`;
+    <div class="btn-row"><button class="btn btn-main" id="alOuvir">${IC.som}Ouvir de novo</button><button class="btn btn-ghost" id="alDepois">Daqui a 10 min</button></div></div>`;
   el.hidden=false;
   const frase = um
     ? `${vocativo()}horário do ${i.apelido}: ${i.nome}, ${comoEm(pend[0].a,h)}, conforme a receita. O botão tomei registra a dose.`
     : `${vocativo()}horário dos remédios ${m.de}: ${listaFala(pend.map(d=>med(d.a).nome+', '+comoEm(d.a,d.h)))}, conforme a receita. O botão tomei registra as doses.`;
-  falar(frase);
+  perguntarVoz(frase+' Quando tomar, toque no botão laranja, com o sinal de certo, escrito tomei.', 'Já tomou? Diga sim quando tomar, ou diga depois.', ms=>tratarContexto('alarm',ms));
   $('#alTomei').onclick=()=>{ el.hidden=true; tomarVarios(pend,'alarme'); };
   $('#alOuvir').onclick=()=>ouvir(frase);
-  $('#alDepois').onclick=()=>{ el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.'); setTimeout(()=>abrirAlarmeGrupo(h),600000); };
+  $('#alDepois').onclick=()=>{ el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.');
+    if(NOTIF) NOTIF.schedule({notifications:[{id:990000+toMin(h),title:titulo,body:'Lembrete de novo, 10 minutos depois. Toque para marcar.',schedule:{at:new Date(Date.now()+600000),allowWhileIdle:true},extra:{h}}]}).catch(()=>setTimeout(()=>abrirAlarmeGrupo(h),600000));
+    else setTimeout(()=>abrirAlarmeGrupo(h),600000); };
   $('#alTomei').focus();
 }
 function abrirAlarme(d){ abrirAlarmeGrupo(d.h,true); }
@@ -2101,27 +2210,60 @@ function ean13svg(code){
 
 /* ---------- boas-vindas (primeiro uso) ---------- */
 let passo=0, bvAberto=false;
-function abrirBoasVindas(){ passo=0; bvAberto=true; $('#bv').hidden=false; renderBV(); }
+function abrirBoasVindas(){ passo=0; bvAberto=true; $('#bv').hidden=false; renderBV(); guiarBV(); }
+/* fala a tela de boas-vindas e, na conversa por voz, ouve a resposta */
+function guiarBV(){ const f=$('#bv').querySelector('input'); if(f && !AP.vozGuia) setTimeout(()=>f.focus(),300);
+  if(passo===0 && (AP.vozGuia || !AP.calmo)){ tourBotoes().then(()=>perguntarVoz('', PERG_BV[0], ms=>tratarContexto('bv0',ms))); return; }
+  perguntarVoz(FALA_BV[passo], PERG_BV[passo], ms=>tratarContexto('bv'+passo,ms)); }
+/* mostra cada botão de verdade enquanto explica para que ele serve (em vez de uma legenda escrita) */
+let tourSeq=0;
+async function tourBotoes(){
+  const seq=++tourSeq;
+  const passos=[[null,FALA_BV[0]],
+    ['#bvComecar','Este botão laranja, com o sinal de certo, é para seguir. Em todas as telas, o laranja é o próximo passo.'],
+    ['#bvVoz','Este azul, com o microfone, é para fazer tudo falando.'],
+    ['#bvSouFam','Os brancos são outras opções, ou para voltar.'],
+    ['#bvOuvir','E este azul, lá em cima, com o alto-falante, é para eu falar de novo. Ele fica no mesmo lugar em todas as telas.']];
+  for(const [sel,t] of passos){
+    if(seq!==tourSeq || $('#bv').hidden || passo!==0) return;
+    const el=sel?$(sel):null; if(sel && !el) continue;
+    document.querySelectorAll('.destaque').forEach(x=>x.classList.remove('destaque'));
+    if(el){ el.classList.add('destaque'); el.scrollIntoView({block:'center',behavior:AP.calmo?'auto':'smooth'}); }
+    await falarE(t);
+  }
+  document.querySelectorAll('.destaque').forEach(x=>x.classList.remove('destaque'));
+  const t=$('#bv'); if(t) t.scrollTop=0;
+}
 function fecharBV(depois){ bvAberto=false; $('#bv').hidden=true; topo(); go('hoje'); if(depois) depois(); }
-const FALA_BV=['Olá! Eu sou o Remédio Falado. Eu leio a caixa do remédio, falo para que serve e lembro a hora de tomar. Eu não indico dose: a dose é sempre a da receita do médico. Toque em começar.',
-  'Qual é o seu nome? Toque em falar e diga seu nome, ou escreva. Se preferir, toque em pular.',
-  'Quem da família vai receber os avisos? Toque em falar e diga o nome. Depois, o telefone. Se preferir, toque em pular.',
-  'Vamos colocar o primeiro remédio? Pegue a caixa e a receita do médico, e toque em ler a caixa do remédio.'];
+const COR_FALA='O botão laranja, com o sinal de certo, é para seguir. O azul, com o alto-falante ou o microfone, é para ouvir e falar. O branco é para voltar. O vermelho, com o sinal de alerta, é para pedir socorro.';
+const FALA_BV=['Olá! Eu sou o Remédio Falado. Eu leio a caixa do remédio, falo para que serve e lembro a hora de tomar. Eu não indico dose: a dose é sempre a da receita do médico.',
+  'Qual é o seu nome? Toque no botão azul, falar, e diga seu nome. Depois, toque no botão laranja, com o sinal de certo, continuar.',
+  'Quem da família vai receber os avisos? Toque no botão azul, falar, e diga o nome. Depois, o telefone. Se preferir, toque em pular.',
+  'Vamos colocar o primeiro remédio? Pegue a caixa e a receita do médico, e toque no botão laranja, com o sinal de certo, ler a caixa do remédio.'];
+const PERG_BV=['Vamos começar? Diga sim.','Qual é o seu nome? Fale agora.','Quem da família vai receber os avisos? Diga o nome, ou diga pular.','Quer colocar o primeiro remédio agora? Diga sim, ou diga depois.'];
+const legendaCores = () => `<div class="legenda" aria-label="O que cada botão faz: cor e símbolo">
+  <p><span class="amostra" style="background:var(--pill);color:var(--pill-ink);border:2px solid var(--pill-ink)">${CHECK}</span>Laranja com ✓: seguir, sim</p>
+  <p><span class="amostra" style="background:var(--main);color:var(--main-ink)">${IC.som}</span>Azul com alto-falante: ouvir e falar</p>
+  <p><span class="amostra" style="background:var(--surface);color:var(--fg);border:2px solid var(--fg)">${IC.voltar}</span>Branco: voltar, não</p>
+  <p><span class="amostra" style="background:var(--bad);color:#FFFFFF">${IC.socorro}</span>Vermelho com alerta: socorro</p></div>`;
+let bvMais=false;
 function renderBV(){
   const el=$('#bv'), dots=`<p class="passo" style="text-align:center;margin:0">Passo ${passo} de 3</p><div class="bv-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=passo?'on':''}"></i>`).join('')}</div>`;
-  const btnOuvir=`<button class="btn btn-ghost" id="bvOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir</button>`;
+  const btnOuvir=`<button class="btn btn-main" id="bvOuvir" type="button">${IC.som}Ouvir</button>`;
   let h='';
-  if(passo===0) h=`<div class="bv-logo"><svg class="bv-logo-svg" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  if(passo===0) h=`<div class="bv-cab"><button class="tbtn ouvir" id="bvOuvir" type="button" aria-label="Ouvir de novo">${IC.som}Ouvir</button></div><div class="bv-logo"><svg class="bv-logo-svg" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <h2 id="bvT">Olá! Eu sou o Remédio Falado</h2>
     <p>Eu leio a caixa do remédio, <b>falo para que serve</b> e <b>lembro a hora de tomar</b>.</p>
-    <p class="small muted">Sou um lembrete: não indico nem mudo dose. A dose é sempre a da receita do médico.</p>
-    <p class="small" style="margin:0">Não precisa saber ler: toque em <b>Ouvir</b> para eu falar e em <b>Falar</b> para pedir com a voz.</p>
-    <button class="btn btn-pill" id="bvComecar" type="button">Começar</button>${btnOuvir}
-    <p class="small" style="margin:0;text-align:center">Antes de guardar qualquer remédio, o app pede sua permissão. <button class="linkbtn" type="button" data-termos="1" style="display:inline;min-height:0;padding:0">Privacidade e termos de uso</button>.</p>
-    <div class="field"><p class="label">Tamanho da letra</p><div class="seg">${ESCALAS.map(([v,t])=>`<button type="button" data-esc="${v}" aria-pressed="${AP.escala===v}">${t}</button>`).join('')}</div></div>
-    <div class="field"><p class="label">Modo calmo</p>${segCalmo()}<p class="hint" style="margin:0">Sem animações e a voz só fala quando você pedir.</p></div>
+    <button class="btn btn-pill" id="bvComecar" type="button">${CHECK}Começar</button>
+    ${vozDisponivel()?`<button class="btn btn-main" id="bvVoz" type="button">${IC.mic}Usar falando</button>`:''}
     <button class="btn btn-ghost" id="bvSouFam" type="button">${IC.fam}Sou da família: quero acompanhar alguém</button>
-    <button class="btn btn-ghost" id="bvDemo" type="button">Ver demonstração</button>
+    <p class="small muted" style="margin:0">Sou um lembrete: não indico nem mudo dose. A dose é sempre a da receita do médico.</p>
+    <details class="mais" ${bvMais?'open':''}><summary>Mais opções: letra maior, modo calmo</summary><div class="in">
+      <div class="field"><p class="label">Tamanho da letra</p><div class="seg">${ESCALAS.map(([v,t])=>`<button type="button" data-esc="${v}" aria-pressed="${AP.escala===v}">${t}</button>`).join('')}</div></div>
+      <div class="field"><p class="label">Modo calmo</p>${segCalmo()}<p class="hint" style="margin:0">Sem animações e a voz só fala quando você pedir.</p></div>
+      <button class="btn btn-ghost" id="bvDemo" type="button">Ver demonstração</button>
+      <p class="small" style="margin:0">Antes de guardar qualquer remédio, o app pede sua permissão. <button class="linkbtn" type="button" data-termos="1" style="display:inline;min-height:0;padding:0">Privacidade e termos de uso</button>.</p>
+    </div></details>
     <div class="credito" role="contentinfo">
       <svg class="credito-logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <div><p class="credito-nome">Remédio Falado</p><p class="credito-por">Criado por <b>Squad 4</b></p><p class="credito-esc">CESAR School · 2026</p></div>
@@ -2140,12 +2282,13 @@ function renderBV(){
     <button class="linkbtn bv-pular" id="bvDepois" type="button">Fazer isso depois</button>`;
   el.classList.toggle('aq0',passo===0);
   el.innerHTML=`<div class="bv-in-wrap">${h}</div>`;
-  $('#bvOuvir').onclick=()=>ouvir(FALA_BV[passo]);
-  const seg=()=>{ passo++; renderBV(); falar(FALA_BV[passo]); const f=el.querySelector('input'); if(f) setTimeout(()=>f.focus(),300); };
-  if(passo===0) el.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{ AP.escala=+b.dataset.esc; aplicarAparencia(); renderBV(); });
-  if(passo===0) el.querySelectorAll("[data-mcalmo]").forEach(b=>b.onclick=()=>{ AP.calmo=b.dataset.mcalmo==='1'; aplicarAparencia(); renderBV(); });
-  if(passo===0){ $('#bvComecar').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; save(); seg(); }); falar(FALA_CONS); }; $('#bvDemo').onclick=()=>{ S=seed(); normalizar(); save(); agendarAlarmes(false); fecharBV(()=>falar('Esta é a demonstração, com a Dona Lúcia.')); };
-    $('#bvSouFam').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; S.papel='familia'; save(); fecharBV(()=>abrirSeguir()); },'familia'); falar(FALA_CONS_FAM); }; }
+  $('#bvOuvir').onclick=()=>{ if(passo===0) tourBotoes(); else ouvir(FALA_BV[passo]); };
+  const seg=()=>{ passo++; renderBV(); guiarBV(); };
+  if(passo===0) el.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{ AP.escala=+b.dataset.esc; aplicarAparencia(); bvMais=true; renderBV(); });
+  if(passo===0) el.querySelectorAll("[data-mcalmo]").forEach(b=>b.onclick=()=>{ AP.calmo=b.dataset.mcalmo==='1'; aplicarAparencia(); bvMais=true; renderBV(); });
+  if(passo===0){ $('#bvComecar').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; save(); seg(); }); };
+    const bvz=$('#bvVoz'); if(bvz) bvz.onclick=()=>{ AP.vozGuia=true; aplicarAparencia(); falarE('Pronto. Vou falar com você em cada tela e ouvir a sua resposta. Quando eu terminar de falar, responda.').then(()=>$('#bvComecar').click()); }; $('#bvDemo').onclick=()=>{ S=seed(); normalizar(); save(); agendarAlarmes(false); fecharBV(()=>falar('Esta é a demonstração, com a Dona Lúcia.')); };
+    $('#bvSouFam').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; S.papel='familia'; save(); fecharBV(()=>abrirSeguir()); },'familia'); }; }
   if(passo===1){ $('#bvOk').onclick=()=>{ S.pessoa=$('#bvNome').value.trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
   if(passo===2 && $('#bvCont')) $('#bvCont').onclick=()=>escolherContato('#bvFones',(n,f)=>{ if(n) $('#bvFam').value=n; if(f) $('#bvWa').value=f; falar(n?'Pronto. '+n+' vai receber os avisos.':'Pronto.'); });
   if(passo===2){ $('#bvOk').onclick=()=>{ S.familiar=$('#bvFam').value.trim(); S.whats=$('#bvWa').value.trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
@@ -2186,7 +2329,7 @@ function falaTela(){
 function render(){ ({hoje:renderHoje,ler:renderLer,agenda:renderAgenda,familia:renderFamilia,gratis:renderGratis,ajustes:renderAjustes,acomp:renderAcomp})[atual](); renderTopo(); renderNavFam(); renderFalar(); }
 function go(v,opc){
   if(v==='hoje' && modoFamilia()) v='acomp';
-  if(atual==='ler' && v!=='ler'){ parar(); alvo=null; }
+  if(atual==='ler' && v!=='ler'){ parar(); alvo=null; gestorAlvo=null; }
   if(v!=='ajustes') ajSub='';
   if(v!=='acomp') acompPrevia=false;
   atual=v; removerId=''; confirma=''; ligarAberto=false;
@@ -2262,7 +2405,8 @@ async function relayPost(topic,corpo){
 function montarEstado(){
   const desde=dayKey(new Date(Date.now()-7*864e5));
   return {de:'idoso',t:'estado',v:1,n:S.pessoa||'',ts:Date.now(),rot:S.rotina||null,
-    ag:S.agenda.map(a=>({id:a.id,p:a.principio||'',n:a.nome||'',ap:a.apelido||'',d:a.dose||'',c:a.como||'',q:a.qtd||null,h:a.horarios,m:a.mom||null,cor:a.cor||''})),
+    ag:S.agenda.map(a=>({id:a.id,p:a.principio||'',n:a.nome||'',ap:a.apelido||'',d:a.dose||'',c:a.como||'',q:a.qtd||null,h:a.horarios,m:a.mom||null,cor:a.cor||'',r:a.registro||'',pr:a.produto||'',ch:a.chave||''})),
+    mud:(S.mudancas||[]).slice(-5),
     log:S.log.filter(l=>l.dia>=desde).map(l=>[l.dia,l.ag,l.h,l.em]),
     al:(S.alertas||[]).filter(x=>x.ts>Date.now()-7*864e5).slice(-6),
     en:energiaFalta()?faltasEnergia():[]};
@@ -2291,7 +2435,8 @@ function configurarNativo(){
   const k=dayKey(new Date()), gs=gruposHoje();
   const cfg={relay:RELAY,
     canais:S.pareados.map(p=>({topic:p.topic,key:p.key,nome:p.nome,papel:'idoso',visto:p.visto||0,estado:p.estadoEnv||''}))
-      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0}))),
+      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0,
+        pend:f.gestor?(f.pend||[]).filter(p=>p.cif).map(p=>({uid:p.uid,id:p.item.id,op:p.op,ts:p.ts,cif:p.cif})):[]}))),
     doses:S.pareados.length?gs.map(x=>Object.assign({h:x.h},avisoAtraso(x))):[], dia:k,
     tomados:gs.filter(x=>!x.pend.length).map(x=>x.h), avisados:Object.keys(S.eloAvisados).filter(x=>x.indexOf(k)===0)};
   ELO.configurar({json:JSON.stringify(cfg)}).catch(()=>{});
@@ -2311,7 +2456,7 @@ async function eloRodada(){
   if(eloOcupado || !eloAtivo()) return;
   eloOcupado=true; let mudou=false;
   try{ for(const p of S.pareados.slice()) mudou=(await lerCanal(p,'idoso'))||mudou;
-       for(const f of S.seguindo.slice()) mudou=(await lerCanal(f,'familia'))||mudou; }
+       for(const f of S.seguindo.slice()){ mudou=(await lerCanal(f,'familia'))||mudou; const n=(f.pend||[]).length; await reenviarPend(f); if(n) mudou=true; } }
   finally{ eloOcupado=false; }
   if(mudou){ save(); if(atual==='acomp'||atual==='familia') render(); }
 }
@@ -2334,23 +2479,26 @@ function tratarMsg(c,papel,o,m){
     toast(`${c.nome} desligou a conexão.`); configurarNativo(); if(papel==='familia' && !S.seguindo.length && S.papel==='familia' && atual==='acomp') setTimeout(()=>go('hoje'),0); return; }
   if(papel==='familia'){
     c.ultima=Math.max(c.ultima||0,t);
-    if(o.t==='estado'){ if(!c.estado || (o.ts||0)>=(c.estado.ts||0)){ c.estado=o; c.estadoEm=t; if(o.n) c.nome=o.n; } }
+    if(o.t==='estado'){ if(!c.estado || (o.ts||0)>=(c.estado.ts||0)){ c.estado=o; c.estadoEm=t; if(o.n) c.nome=o.n; confirmarPend(c); } }
     else if(o.aviso){ c.alertas=(c.alertas||[]).concat([{ts:t,t:o.t,h:o.h||'',tit:o.aviso.titulo||'',txt:o.aviso.texto||''}]).slice(-20);
       if(!document.hidden && Date.now()-t<15*60000) toast(o.aviso.titulo||'Aviso da família'); }
+    if(o.t==='pedir'){ c.pedidos=(c.pedidos||[]).concat([{ts:t,code:o.code||'',nome:o.nome||'',dose:o.dose||''}]).slice(-10); }
+    if(o.t==='gestor-off'){ c.gestor=false; c.pend=[]; c.pedidos=[]; }
   } else {
+    if(o.t==='agenda'){ aplicarAgenda(c,o); return; }
     if(o.t==='lembrar' && Date.now()-t<60*60000){ const h=o.h; const pend=h && dosesHoje().some(d=>d.h===h&&!d.reg);
       if(pend && $('#alarm').hidden) abrirAlarmeGrupo(h); toast(`${c.nome} pediu para lembrar do remédio.`); }
   }
 }
 async function enviarLembrar(f,h){
   try{ await relayPost(f.topic, await cifrarElo(f.key,{de:'familia',t:'lembrar',h,ts:Date.now(),aviso:{titulo:`${S.eu||'Sua família'} pediu para lembrar`,texto:`Remédios ${momentoDe(h).de} (${h}). Abra o Remédio Falado para marcar.`}}));
-    toast('Pronto. O celular dela vai mostrar o lembrete.'); falar('Pronto. O celular dela vai mostrar o lembrete.'); }
+    toast(`Pronto. O celular de ${curto(f.nome)} vai mostrar o lembrete.`); falar(`Pronto. O celular de ${curto(f.nome)} vai mostrar o lembrete.`); }
   catch(e){ toast('Não consegui enviar. Confira a internet.'); }
 }
 async function despedir(c){ try{ await relayPost(c.topic, await cifrarElo(c.key,{de:S.pareados.indexOf(c)>=0?'idoso':'familia',t:'tchau',ts:Date.now()})); }catch(e){} }
 function eloDespedir(){ (S.pareados||[]).concat(S.seguindo||[]).forEach(c=>despedir(c)); }
 function pararCompartilhar(p){ despedir(p); S.pareados=S.pareados.filter(x=>x!==p); save(); configurarNativo(); toast(`${p.nome} não acompanha mais.`); }
-function pararAcompanhar(f){ despedir(f); S.seguindo=S.seguindo.filter(x=>x!==f); if(!S.seguindo.length && S.papel==='familia' && !S.agenda.length) S.papel='idoso'; save(); configurarNativo(); toast(`Você não acompanha mais ${f.nome}. Os dados dela foram apagados deste celular.`); }
+function pararAcompanhar(f){ despedir(f); S.seguindo=S.seguindo.filter(x=>x!==f); if(!S.seguindo.length && S.papel==='familia' && !S.agenda.length) S.papel='idoso'; save(); configurarNativo(); toast(`Você não acompanha mais ${f.nome}. Os dados foram apagados deste celular.`); }
 
 /* ----- telas da conexão (janela #elo) ----- */
 let conv=null;
@@ -2365,7 +2513,7 @@ async function abrirConectar(){
   const c={modo:'conectar',passo:'aguardando',codigo:novoCodigo(),inicio:Date.now(),desde:Math.floor(Date.now()/1000)-2};
   c.topico=await topicoCodigo(c.codigo); c.chave=await chaveCodigo(c.codigo); conv=c;
   $('#elo').hidden=false; $('#elo').scrollTop=0; renderElo();
-  falar(`Conectar a família. Peça para a pessoa da família abrir o Remédio Falado no celular dela, tocar em sou da família, e apontar para o quadrado. Ou digitar o código: ${c.codigo.split('').join(' ')}.`);
+  falar(`Conectar a família. Peça para a pessoa da família abrir o Remédio Falado no próprio celular, tocar em sou da família, e apontar para o quadrado. Ou digitar o código: ${c.codigo.split('').join(' ')}.`);
   c.timer=setInterval(pollConvite,6000);
 }
 function abrirSeguir(){
@@ -2380,62 +2528,75 @@ function renderElo(erro){
   let h='';
   if(c.modo==='conectar'){
     if(c.passo==='aguardando') h=`<h2 id="eloT" tabindex="-1">Conectar a família</h2>
-      <p>No celular da pessoa da família: abrir o Remédio Falado, tocar em <b>“Sou da família”</b> e apontar para este quadrado.</p>
+      <p>No outro celular: abrir o Remédio Falado, tocar em <b>“Sou da família”</b> e apontar para este quadrado.</p>
       <div class="qr-box">${qrSvg('RF1:'+c.codigo)}</div>
       <p class="small muted" style="text-align:center;margin:0">ou digitar o código</p><p class="codigo" aria-label="Código ${c.codigo.split('').join(' ')}">${c.codigo.slice(0,3)} ${c.codigo.slice(3)}</p>
       ${VE_LISTA}
-      <p class="hint">O código vale por 10 minutos. Antes de conectar, você vê o nome de quem pediu e decide.</p>
+      <p class="hint">Vale por 10 minutos. Você vê quem pediu antes de aceitar.</p>
       <button class="btn btn-ghost" id="eloNao" type="button">Agora não</button>`;
-    if(c.passo==='pedido') h=`<h2 id="eloT" tabindex="-1">${esc(c.pedido.nome)} quer acompanhar seus remédios</h2>
-      ${VE_LISTA}<p>Só aceite se você conhece esta pessoa.</p>
+    if(c.passo==='pedido') h=`<h2 id="eloT" tabindex="-1">${esc(c.pedido.nome)} quer ${c.pedido.gestor?'cuidar dos':'acompanhar'} seus remédios</h2>
+      ${VE_LISTA}
+      ${c.pedido.gestor?`<div class="cadeado">${IC.meus}<div><b>Também vai poder colocar, mudar e tirar seus remédios.</b><p class="small" style="margin:4px 0 0">Toda mudança eu falo para você. Dá para desligar quando quiser.</p></div></div>`:''}
+      <p>Só aceite se você conhece esta pessoa.</p>
       <button class="btn btn-ok btn-tomei" id="eloAceitar" type="button" style="font-size:1.45rem">${CHECK}Aceitar</button>
+      ${c.pedido.gestor?`<button class="btn btn-ghost" id="eloAceitarSo" type="button">Aceitar só para acompanhar</button>`:''}
       <button class="btn btn-ghost" id="eloRecusar" type="button">Não aceitar</button>`;
     if(c.passo==='pronto') h=`<span class="ok-c" style="width:96px;height:96px;border-radius:50%;background:var(--ok);color:var(--ok-ink);display:grid;place-items:center;margin:0 auto">${CHECK.replace('<svg','<svg width="56" height="56"')}</span>
-      <h2 id="eloT" tabindex="-1" style="text-align:center">Pronto! ${esc(c.pedido.nome)} está conectada</h2>
-      <p>Ela vê o que você marcar e recebe um aviso se passar 30 minutos do horário. Tudo vai criptografado.</p>
-      <p class="hint">Para parar, é só ir em Família ou em Ajustes → Família.</p><button class="btn btn-main" id="eloOk" type="button">Voltar</button>`;
+      <h2 id="eloT" tabindex="-1" style="text-align:center">Pronto! Conectado com ${esc(c.pedido.nome)}</h2>
+      <p>${c.aceitouGestor?esc(curto(c.pedido.nome))+' cuida dos seus remédios. Toda mudança eu falo para você.':esc(curto(c.pedido.nome))+' recebe um aviso se você não marcar o remédio em 30 minutos.'}</p>
+      <p class="hint">Tudo vai criptografado. Para parar: Ajustes → Família.</p><button class="btn btn-ghost" id="eloOk" type="button">Voltar</button>`;
     if(c.passo==='expirou') h=`<h2 id="eloT" tabindex="-1">O código venceu</h2><p>Ninguém usou o código em 10 minutos.</p>
       <button class="btn btn-pill" id="eloDeNovo" type="button">Gerar outro código</button><button class="btn btn-ghost" id="eloNao" type="button">Voltar</button>`;
   } else {
-    if(c.passo==='nome') h=`<h2 id="eloT" tabindex="-1">Qual é o seu nome?</h2><p>A pessoa que você vai acompanhar vê esse nome antes de aceitar.</p>
+    if(c.passo==='nome') h=`<h2 id="eloT" tabindex="-1">Qual é o seu nome?</h2><p>A pessoa vê esse nome antes de aceitar.</p>
       <input class="bv-in" id="eloEu" placeholder="Ex.: Ana (filha)" autocomplete="given-name" value="${esc(S.eu)}">
       <button class="btn btn-pill" id="eloSeg" type="button">Continuar</button><button class="btn btn-ghost" id="eloNao" type="button">Voltar</button>`;
-    if(c.passo==='codigo') h=`<h2 id="eloT" tabindex="-1">Conectar com o celular dela</h2>
-      <p>No celular de quem toma o remédio: <b>Família → Conectar o celular da família</b>. Vai aparecer um quadrado e um código.</p>
+    if(c.passo==='tipo') h=`<h2 id="eloT" tabindex="-1">O que você vai fazer?</h2>
+      <button class="opn o-ghost" id="eloSoAcomp" type="button"><span class="n">1</span><span>Só acompanhar<small>Ver os remédios, saber se tomou e receber os avisos</small></span></button>
+      <button class="opn o-pill" id="eloGestor" type="button"><span class="n">2</span><span>Acompanhar e cuidar dos remédios<small>Você coloca e muda os remédios, copiando da receita. Bom para quem não lê.</small></span></button>
+      <p class="hint">Quem toma o remédio decide se aceita.</p>
+      <button class="btn btn-ghost" id="eloNao" type="button">Voltar</button>`;
+    if(c.passo==='codigo') h=`<h2 id="eloT" tabindex="-1">Conectar com o celular de quem toma o remédio</h2>
+      <p>No outro celular: <b>Família → Conectar o celular da família</b>.</p>
       <button class="btn btn-pill" id="eloQR" type="button">${QR_SVG}Ler o quadrado</button>
       <label class="label" for="eloCod">Ou digite o código de 6 números</label>
       <input class="bv-in cod-in" id="eloCod" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000 000">
       ${erro?`<div class="msg warn" role="alert">${esc(erro)}</div>`:''}
-      <button class="btn btn-main" id="eloConectar" type="button">Conectar</button><button class="btn btn-ghost" id="eloNao" type="button">Voltar</button>`;
+      <button class="btn btn-pill" id="eloConectar" type="button">Conectar</button><button class="btn btn-ghost" id="eloNao" type="button">Voltar</button>`;
     if(c.passo==='esperando') h=`<h2 id="eloT" tabindex="-1">Pedido enviado</h2>
-      <div class="cadeado">${IC.relogio}<div><b>Agora, no celular dela, é só tocar em “Aceitar”.</b><p class="small" style="margin:4px 0 0">Esta tela atualiza sozinha.</p></div></div>
+      <div class="cadeado">${IC.relogio}<div><b>Agora, no outro celular, é só tocar em “Aceitar”.</b><p class="small" style="margin:4px 0 0">Esta tela atualiza sozinha.</p></div></div>
       <button class="btn btn-ghost" id="eloNao" type="button">Cancelar</button>`;
     if(c.passo==='pronto') h=`<span style="width:96px;height:96px;border-radius:50%;background:var(--ok);color:var(--ok-ink);display:grid;place-items:center;margin:0 auto">${CHECK.replace('<svg','<svg width="56" height="56"')}</span>
-      <h2 id="eloT" tabindex="-1" style="text-align:center">Pronto! Você acompanha ${esc(c.nome)}</h2>
-      <p>Você vê os remédios dela e recebe um aviso se ela não marcar a dose em 30 minutos, mesmo com o app fechado.</p>
-      <button class="btn btn-pill" id="eloVer" type="button">Ver os remédios dela</button>`;
+      <h2 id="eloT" tabindex="-1" style="text-align:center">Pronto! Você ${c.gestorOk?'cuida dos remédios de':'acompanha'} ${esc(c.nome)}</h2>
+      <p>Você recebe um aviso se a dose não for marcada em 30 minutos, mesmo com o app fechado.${c.gestorOk?' Em Remédios, você coloca e muda os remédios.':(c.gestor?' '+esc(curto(c.nome))+' aceitou só para você acompanhar.':'')}</p>
+      <button class="btn btn-pill" id="eloVer" type="button">Ver os remédios</button>`;
     if(c.passo==='erro') h=`<h2 id="eloT" tabindex="-1">Não deu para conectar</h2><p>${esc(c.erro||'Tente de novo com um código novo.')}</p>
-      <button class="btn btn-main" id="eloDeNovo" type="button">Tentar de novo</button><button class="btn btn-ghost" id="eloNao" type="button">Voltar</button>`;
+      <button class="btn btn-pill" id="eloDeNovo" type="button">Tentar de novo</button><button class="btn btn-ghost" id="eloNao" type="button">Voltar</button>`;
   }
   $('#eloIn').innerHTML=h;
   const on=(id,f)=>{ const b=$('#'+id); if(b) b.onclick=f; };
   on('eloNao',fecharElo); on('eloOk',fecharElo);
   on('eloDeNovo',()=>{ if(c.modo==='conectar') abrirConectar(); else { conv={modo:'seguir',passo:'codigo'}; renderElo(); } });
-  on('eloAceitar',aceitarPedido);
+  on('eloAceitar',()=>aceitarPedido());
   on('eloRecusar',async()=>{ try{ await relayPost(c.topico, await cifrarElo(c.chave,{t:'recusado',para:c.pedido.pub.slice(0,16)})); }catch(e){} fecharElo(); toast('Tudo bem. Ninguém foi conectado.'); });
-  on('eloSeg',()=>{ const n=$('#eloEu').value.trim(); if(!n){ toast('Escreva seu nome.'); return; } S.eu=n; save(); c.passo='codigo'; renderElo(); });
+  on('eloSeg',()=>{ const n=$('#eloEu').value.trim(); if(!n){ toast('Escreva seu nome.'); return; } S.eu=n; save(); c.passo='tipo'; renderElo(); });
+  on('eloSoAcomp',()=>{ c.gestor=false; c.passo='codigo'; renderElo(); });
+  on('eloGestor',()=>{ c.gestor=true; c.passo='codigo'; renderElo(); });
+  on('eloAceitarSo',()=>aceitarPedido(false));
   on('eloQR',async()=>{ const t=await lerQRTexto(); if(!t) return; const m=String(t).match(/RF1:(\d{6})/); if(!m){ renderElo('Este quadrado não é do Remédio Falado.'); return; } conectarCodigo(m[1]); });
   on('eloConectar',()=>{ const d=($('#eloCod').value||'').replace(/\D/g,''); if(d.length!==6){ renderElo('O código tem 6 números.'); return; } conectarCodigo(d); });
   on('eloVer',()=>{ fecharElo(); acompTab='hoje'; go('acomp'); });
   const t=$('#eloT'); if(t) t.focus();
 }
-async function aceitarPedido(){
+async function aceitarPedido(comoGestor){
   const c=conv; if(!c||!c.pedido) return;
+  const gestor = comoGestor===false ? false : !!c.pedido.gestor;
   try{
     const kp=await parECDH(), d=await derivar(kp.priv,c.pedido.pub);
-    await relayPost(c.topico, await cifrarElo(c.chave,{t:'aceito',pub:kp.pub,nome:S.pessoa||'Seu familiar',para:c.pedido.pub.slice(0,16)}));
-    S.pareados.push({id:'p'+Date.now(),nome:c.pedido.nome,topic:d.topic,key:d.key,desde:new Date().toISOString(),visto:Math.floor(Date.now()/1000)-2});
-    save(); clearInterval(c.timer); c.passo='pronto'; renderElo(); falar(`Pronto. ${c.pedido.nome} está conectada.`);
+    await relayPost(c.topico, await cifrarElo(c.chave,{t:'aceito',pub:kp.pub,nome:S.pessoa||'Seu familiar',para:c.pedido.pub.slice(0,16),gestor}));
+    S.pareados.push({id:'p'+Date.now(),nome:c.pedido.nome,topic:d.topic,key:d.key,desde:new Date().toISOString(),visto:Math.floor(Date.now()/1000)-2,gestor});
+    if(gestor){ S.mudancas.push({ts:Date.now(),por:c.pedido.nome,txt:`${c.pedido.nome} passou a cuidar dos seus remédios.`}); S.mudVisto=Date.now(); }
+    save(); clearInterval(c.timer); c.passo='pronto'; c.aceitouGestor=gestor; renderElo(); falar(`Pronto. Conectado com ${c.pedido.nome}.${gestor?' '+curto(c.pedido.nome)+' vai cuidar dos seus remédios. Toda mudança, eu falo para você.':''}`);
     ultimoEstado=''; enviarEstado(true);
   }catch(e){ toast('Não consegui conectar. Confira a internet e tente de novo.'); }
 }
@@ -2444,31 +2605,105 @@ async function conectarCodigo(cod){
   try{
     c.codigo=cod; c.topico=await topicoCodigo(cod); c.chave=await chaveCodigo(cod); c.inicio=Date.now(); c.desde=Math.floor(Date.now()/1000)-2;
     const kp=await parECDH(); c.priv=kp.priv; c.pub=kp.pub;
-    await relayPost(c.topico, await cifrarElo(c.chave,{t:'pedido',nome:S.eu||'Família',pub:kp.pub}));
+    await relayPost(c.topico, await cifrarElo(c.chave,{t:'pedido',nome:S.eu||'Família',pub:kp.pub,gestor:!!c.gestor}));
     c.passo='esperando'; renderElo(); c.timer=setInterval(pollConvite,6000);
   }catch(e){ renderElo('Não consegui enviar o pedido. Confira a internet e tente de novo.'); }
 }
 async function pollConvite(){
   const c=conv; if(!c || c.ocupado || !c.topico) return;
   if(Date.now()-c.inicio>10*60000 && (c.passo==='aguardando'||c.passo==='esperando')){ clearInterval(c.timer);
-    if(c.modo==='conectar') c.passo='expirou'; else { c.passo='erro'; c.erro='O código venceu. Peça para ela gerar um código novo.'; } renderElo(); return; }
+    if(c.modo==='conectar') c.passo='expirou'; else { c.passo='erro'; c.erro='O código venceu. Peça para gerar um código novo no outro celular.'; } renderElo(); return; }
   c.ocupado=true;
   try{
     const ms=await relayGet(c.topico,c.desde); c.falhas=0;
     for(const m of ms){ let o; try{ o=await decifrarElo(c.chave,m.message); }catch(e){ continue; }
-      if(c.modo==='conectar' && c.passo==='aguardando' && o.t==='pedido' && o.pub){ c.pedido={nome:String(o.nome||'Família').slice(0,40),pub:o.pub}; c.passo='pedido'; renderElo();
-        falar(`${c.pedido.nome} quer acompanhar seus remédios. Se você conhece, toque em aceitar.`); }
+      if(c.modo==='conectar' && c.passo==='aguardando' && o.t==='pedido' && o.pub){ c.pedido={nome:String(o.nome||'Família').slice(0,40),pub:o.pub,gestor:!!o.gestor}; c.passo='pedido'; renderElo();
+        perguntarVoz(`${c.pedido.nome} quer ${c.pedido.gestor?'cuidar dos seus remédios: vai poder colocar, mudar e tirar remédios, e eu falo para você toda mudança':'acompanhar seus remédios'}. Se você conhece, toque no botão laranja, com o sinal de certo, aceitar.`,'Você aceita? Diga sim ou não.',ms=>tratarContexto('pedido',ms)); }
       if(c.modo==='seguir' && c.passo==='esperando' && o.para===String(c.pub).slice(0,16)){
-        if(o.t==='recusado'){ clearInterval(c.timer); c.passo='erro'; c.erro='Ela tocou em “Não aceitar”.'; renderElo(); }
+        if(o.t==='recusado'){ clearInterval(c.timer); c.passo='erro'; c.erro='No outro celular, tocaram em “Não aceitar”.'; renderElo(); }
         if(o.t==='aceito' && o.pub){ clearInterval(c.timer); const d=await derivar(c.priv,o.pub);
-          const f={id:'f'+Date.now(),nome:String(o.nome||'Familiar').slice(0,40),topic:d.topic,key:d.key,desde:new Date().toISOString(),visto:0};
+          const f={id:'f'+Date.now(),nome:String(o.nome||'Familiar').slice(0,40),topic:d.topic,key:d.key,desde:new Date().toISOString(),visto:0,gestor:!!o.gestor,pedidos:[]};
           S.seguindo.push(f); if(!S.agenda.length) S.papel='familia'; acompSel=f.id; save(); configurarNativo();
-          c.passo='pronto'; c.nome=f.nome; renderElo(); falar(`Pronto. Você acompanha ${f.nome}.`); eloRodada(); }
+          c.passo='pronto'; c.nome=f.nome; c.gestorOk=f.gestor; renderElo(); falar(`Pronto. Você acompanha ${f.nome}.`); eloRodada(); }
       }
     }
   }catch(e){ c.falhas=(c.falhas||0)+1; if(c.falhas===3) toast('Sem internet? Estou tentando de novo.'); }
   finally{ c.ocupado=false; }
 }
+
+/* ---------- modo gestor: alguém capaz cuida dos remédios (filho, mãe, farmacêutica, médico) ----------
+   Apple, Assistive Access: quem configura é a pessoa de apoio. Aqui, adaptado:
+   - quem toma o remédio aceita no celular dela e pode desligar quando quiser (Agency);
+   - toda mudança é falada e fica anotada com o nome de quem mudou (Responsibility);
+   - o gestor só copia a receita, confirmando "conferi com a receita"; o app não sugere dose (Lei 12.842/2013). */
+let gestorAlvo=null;
+const gestorAtivo = () => S.pareados.some(p=>p.gestor);
+const nomeGestor = () => { const g=S.pareados.filter(p=>p.gestor).map(p=>p.nome); return listaFala(g)||'a família'; };
+function itemSeguro(x){ const str=v=>String(v==null?'':v).slice(0,120);
+  const hs=(Array.isArray(x.horarios)?x.horarios:[]).filter(h=>/^\d{2}:\d{2}$/.test(h)).slice(0,8);
+  const qtd={}, mom={}; hs.forEach(h=>{ if(x.qtd&&x.qtd[h]) qtd[h]=str(x.qtd[h]); if(x.mom&&MOM[x.mom[h]]) mom[h]=x.mom[h]; });
+  return {id:str(x.id),chave:str(x.chave),principio:INFO[x.principio]?x.principio:'',nome:str(x.nome),apelido:str(x.apelido),cor:/^#[0-9a-f]{6}$/i.test(x.cor)?x.cor:GENERICO_COR,
+    dose:str(x.dose),como:str(x.como),qtd,mom,horarios:hs,produto:str(x.produto),registro:str(x.registro).replace(/\D/g,''),receita:true,mgDia:+x.mgDia||null,acimaBula:!!x.acimaBula}; }
+/* no celular do gestor: manda a mudança, criptografada */
+const msgAgenda = (op,item,uid) => { const nome=item.nome||'remédio', dose=item.dose||'';
+  return {de:'familia',t:'agenda',op,item,uid,por:S.eu||'Família',ts:Date.now(),conferi:true,
+    aviso:{titulo:`${S.eu||'Sua família'} ${op==='add'?'colocou um remédio novo':op==='edit'?'mudou um remédio':'tirou um remédio'}`,texto:`${nome} ${dose}. Abra o Remédio Falado para ouvir e atualizar os alarmes.`}}; };
+async function enviarAgenda(f,op,item){
+  const uid='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  /* fica pendente até o celular dela confirmar; se ela demorar a abrir o app, o envio é repetido */
+  let cif=''; try{ cif=await cifrarElo(f.key,msgAgenda(op,item,uid)); }catch(e){ toast('Não consegui preparar a mudança.'); return; }
+  /* a mensagem já vai criptografada para o Android guardar: se o app fechar, ele reenvia sozinho */
+  f.pend=(f.pend||[]).filter(p=>p.item.id!==item.id).concat([{uid,op,item,ts:Date.now(),env:Date.now(),cif}]);
+  if(op==='add') f.pedidos=(f.pedidos||[]).filter(p=>sem(p.nome)!==sem(item.nome));
+  save();
+  try{ await relayPost(f.topic, cif);
+    toast(`Enviado para o celular de ${f.nome}.`); falar(`Pronto. Enviei para o celular de ${f.nome}. Quando ${curto(f.nome)} abrir o app, a mudança é falada.`); }
+  catch(e){ f.pend.forEach(p=>{ if(p.uid===uid) p.env=0; }); save(); toast('Sem internet agora. Eu envio sozinho quando a internet voltar.'); }
+  if(atual==='acomp') renderAcomp();
+}
+/* o estado que chega do celular dela confirma o que já foi aplicado */
+function confirmarPend(f){ const e=f.estado; if(!e||!f.pend||!f.pend.length) return;
+  const tem=id=>(e.ag||[]).some(a=>a.id===id);
+  f.pend=f.pend.filter(p=>!((e.ts||0)>p.ts && (p.op==='del'?!tem(p.item.id):tem(p.item.id)))); }
+async function reenviarPend(f){ if(!f.pend||!f.pend.length||!f.gestor) return;
+  for(const p of f.pend){ if(Date.now()-(p.env||0)<6*3600000) continue;
+    try{ await relayPost(f.topic, p.cif || await cifrarElo(f.key,msgAgenda(p.op,p.item,p.uid))); p.env=Date.now(); }catch(e){ return; } } }
+/* no celular de quem toma: aplica a mudança, fala e anota */
+function aplicarAgenda(c,o){
+  if(!c.gestor || !o.item) return;
+  const it=itemSeguro(o.item); if(!it.id) return;
+  S.agVistos=S.agVistos||[]; if(o.uid){ if(S.agVistos.indexOf(o.uid)>=0) return; S.agVistos=S.agVistos.concat([String(o.uid).slice(0,20)]).slice(-60); }
+  const antes=S.agenda.find(a=>a.id===it.id);
+  if(o.op==='del') S.agenda=S.agenda.filter(a=>a.id!==it.id);
+  else if(antes) Object.assign(antes,it,{foto:antes.foto||''});
+  else S.agenda.push(Object.assign(it,{foto:''}));
+  const desc = o.op==='del' ? `${it.nome} ${it.dose}` : `${it.nome} ${it.dose}, ${comoFala(o.op==='del'?it:S.agenda.find(a=>a.id===it.id))}`;
+  const t=`${c.nome} ${o.op==='add'?'colocou um remédio novo':o.op==='edit'?'mudou um remédio':'tirou um remédio'}: ${desc}.`;
+  S.mudancas.push({ts:Date.now(),por:c.nome,txt:t}); if(S.mudancas.length>30) S.mudancas=S.mudancas.slice(-30);
+  save(); agendarAlarmes(false); render(); toast(t);
+  if(AP.vozGuia) falarE(t); else falar(t);
+}
+/* no modo simples: lê a caixa e pede para o gestor colocar */
+async function pedirAoGestor(it){
+  const g=S.pareados.filter(p=>p.gestor); if(!g.length) return;
+  const nome=(it.info&&it.info.nome)||it.produto, dose=it.dose||'';
+  for(const p of g){ try{ await relayPost(p.topic, await cifrarElo(p.key,{de:'idoso',t:'pedir',ts:Date.now(),code:resultado&&resultado.code||'',nome,dose,
+      aviso:{titulo:`${nomeP()} pediu para colocar um remédio`,texto:`${nome} ${dose}. Abra o Remédio Falado para colocar, copiando da receita.`}})); }catch(e){} }
+  const t=`Pronto. Pedi para ${nomeGestor()} colocar ${nome} nos seus remédios. Quando colocar, eu te aviso.`;
+  toast(t); if(AP.vozGuia) falarE(t); else falar(t);
+}
+function pararGestor(p){ p.gestor=false; S.mudancas.push({ts:Date.now(),por:S.pessoa||'Você',txt:`${p.nome} não cuida mais dos seus remédios. Continua só acompanhando.`});
+  save(); cifrarElo(p.key,{de:'idoso',t:'gestor-off',ts:Date.now(),aviso:{titulo:`${nomeP()} voltou a cuidar dos próprios remédios`,texto:'Você continua acompanhando.'}}).then(env=>relayPost(p.topic,env)).catch(()=>{});
+  toast(`${p.nome} não cuida mais dos seus remédios.`); render(); }
+/* no celular do gestor: abre o assistente para mudar um remédio que já está no celular dela */
+function mudarRemedioDela(f,a){
+  const it={principio:a.principio||'',produto:a.produto||a.nome,dose:a.dose,registro:a.registro||'',apres:/c[aá]psula/i.test(a.como||'')?'CAP':'COM',
+    info: INFO[a.principio] || {nome:a.nome||'Remédio',apelido:a.apelido||'remédio',cor:a.cor||GENERICO_COR,serve:'',cuidado:''}};
+  abrirWizard(it,{destino:f,editar:a});
+}
+const mudancaNova = () => { const m=(S.mudancas||[]).slice(-1)[0]; return m && m.ts>(S.mudVisto||0) && Date.now()-m.ts<48*3600000 && m.por!==(S.pessoa||'Você') ? m : null; };
+const fmtQuando = ts => { const d=new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const listaMudancas = (ms,max) => (ms||[]).slice(-(max||5)).reverse().map(m=>`<p class="small" style="margin:0"><b>${esc(fmtQuando(m.ts))}</b> · ${esc(m.txt)}</p>`).join('');
 
 /* ---------- painel de quem acompanha (no celular da família) ---------- */
 let acompSel='', acompTab='hoje', acompPrevia=false, ligarAberto=false;
@@ -2476,7 +2711,7 @@ function seguidoAtual(){
   if(acompPrevia) return {id:'previa',nome:S.pessoa||'Dona Lúcia',estado:montarEstado(),ultima:Date.now(),alertas:[],previa:true};
   return S.seguindo.find(f=>f.id===acompSel) || S.seguindo[0] || null;
 }
-function stDe(e){ return {agenda:(e.ag||[]).map(x=>({id:x.id,principio:x.p,nome:x.n,apelido:x.ap,dose:x.d,como:x.c,qtd:x.q,horarios:x.h||[],mom:x.m,cor:x.cor})),
+function stDe(e){ return {agenda:(e.ag||[]).map(x=>({id:x.id,principio:x.p,nome:x.n,apelido:x.ap,dose:x.d,como:x.c,qtd:x.q,horarios:x.h||[],mom:x.m,cor:x.cor,registro:x.r,produto:x.pr,chave:x.ch})),
   log:(e.log||[]).map(l=>({dia:l[0],ag:l[1],h:l[2],em:l[3],ok:true}))}; }
 const hhmm = ms => { const d=new Date(ms); return pad(d.getHours())+':'+pad(d.getMinutes()); };
 function haQuanto(ms){ const m=Math.round((Date.now()-ms)/60000), d=new Date(ms);
@@ -2486,21 +2721,21 @@ function renderAcomp(){
   if(!f){ v.innerHTML=`<div class="stack" style="gap:16px"><h2>Família</h2><p>Você ainda não acompanha ninguém.</p><button class="btn btn-pill" id="bSeguir0" type="button">${IC.fam}Acompanhar alguém</button></div>`;
     $('#bSeguir0').onclick=abrirSeguir; return; }
   const e=f.estado, recente=f.ultima && Date.now()-f.ultima<3*3600000, st=e?stDe(e):null, nome=f.nome;
-  let h=`${acompPrevia?`<p class="msg info">Exemplo: é assim que a família vê, no celular dela.</p>`:''}
-    ${!acompPrevia && S.seguindo.length>0?`<div class="chips-f">${S.seguindo.map(x=>`<button type="button" data-sel="${x.id}" aria-pressed="${x===f}">${esc(x.nome.split(' ')[0]==='Dona'||x.nome.split(' ')[0]==='Seu'?x.nome.split(' ').slice(0,2).join(' '):x.nome.split(' ')[0])}</button>`).join('')}<button type="button" id="bMaisSeg">+ Adicionar</button></div>`:''}
-    <div class="pessoa"><span class="av">${esc(iniciais(nome))}</span><div><h2>${esc(nome)}</h2><p class="small" style="margin:2px 0 0"><span class="st-dot ${recente?'':'velho'}"></span>${f.ultima?'Última notícia do celular dela: '+haQuanto(f.ultima):'Esperando o celular dela'}</p></div></div>`;
-  if(!e){ h+=`<div class="cadeado">${IC.relogio}<div><b>Assim que o celular de ${esc(nome)} abrir o Remédio Falado, os remédios aparecem aqui.</b></div></div><button class="btn btn-main" id="bAtuAc" type="button">Atualizar agora</button>`; }
+  let h=`${acompPrevia?`<p class="msg info">Exemplo: é assim que a família vê, no celular de quem acompanha.</p>`:''}
+    ${!acompPrevia && S.seguindo.length>0?`<div class="chips-f">${S.seguindo.map(x=>`<button type="button" data-sel="${x.id}" aria-pressed="${x===f}">${esc(curto(x.nome))}</button>`).join('')}<button type="button" id="bMaisSeg">+ Adicionar</button></div>`:''}
+    <div class="pessoa"><span class="av">${esc(iniciais(nome))}</span><div><h2>${esc(nome)}</h2><p class="small" style="margin:2px 0 0"><span class="st-dot ${recente?'':'velho'}"></span>${f.ultima?'Última notícia do celular: '+haQuanto(f.ultima):'Esperando o outro celular'}</p></div></div>`;
+  if(!e){ h+=`<div class="cadeado">${IC.relogio}<div><b>Assim que o celular de ${esc(nome)} abrir o Remédio Falado, os remédios aparecem aqui.</b></div></div><button class="btn btn-pill" id="bAtuAc" type="button">Atualizar agora</button>`; }
   else if(acompTab==='hoje'){
     const gs=gruposHoje(st), late=gs.filter(x=>x.st==='late'), outros=gs.filter(x=>x.st!=='late'), w=semana(st);
     const soc=(f.alertas||[]).concat(e.al||[]).filter(x=>x.t==='socorro' && Date.now()-x.ts<3*3600000).sort((a,b)=>b.ts-a.ts)[0];
     if(soc) h+=`<section class="al-card" style="border-color:var(--bad);background:var(--bad-soft)" role="alert"><h3>${IC.socorro.replace('<svg','<svg width="28" height="28" style="vertical-align:-6px;color:var(--bad)"')} ${esc(nome)} pediu ajuda</h3>
       <p class="q" style="margin:0;color:var(--bad)">Às ${hhmm(soc.ts)}, pelo app.</p>
-      <button class="btn btn-main" type="button" data-ligar="1">${IC.tel}Ligar para ela</button><button class="btn btn-samu" type="button" id="bSamuAc">${IC.tel}Ligar para o SAMU · 192</button></section>`;
+      <button class="btn btn-pill" type="button" data-ligar="1">${IC.tel}Ligar para ${esc(curto(nome))}</button><button class="btn btn-samu" type="button" id="bSamuAc">${IC.tel}Ligar para o SAMU · 192</button></section>`;
     h+=late.map(x=>{ const min=toMin(nowHM())-toMin(x.h);
       return `<section class="al-card" aria-label="${esc(x.m.nome)} atrasado"><h3>${esc(x.m.nome)} · ${x.h}</h3><p class="q" style="margin:0">Ainda não marcou · faz ${min>=60?Math.floor(min/60)+' h '+pad(min%60):min+' min'}</p>
         <p style="margin:0">${esc(x.pend.map(d=>med(d.a).nome+' '+d.a.dose).join(' · '))}</p>
-        <button class="btn btn-main" type="button" data-ligar="1">${IC.tel}Ligar para ela</button><button class="btn btn-ghost" type="button" data-lembrar="${x.h}">${IC.sino}Lembrar no celular dela</button>
-        ${ligarAberto&&!f.fone?`<div class="field"><label class="label" for="acFone">Telefone de ${esc(nome)}</label>${botaoContato('acCont')}<div id="acFones" class="stack" hidden></div><div class="manual"><input id="acFone" inputmode="tel" placeholder="DDD + número"><button class="btn btn-main" id="acFoneOk" type="button">Ligar</button></div></div>`:''}
+        <button class="btn btn-pill" type="button" data-ligar="1">${IC.tel}Ligar para ${esc(curto(nome))}</button><button class="btn btn-ghost" type="button" data-lembrar="${x.h}">${IC.sino}Lembrar no celular</button>
+        ${ligarAberto&&!f.fone?`<div class="field"><label class="label" for="acFone">Telefone de ${esc(nome)}</label>${botaoContato('acCont')}<div id="acFones" class="stack" hidden></div><div class="manual"><input id="acFone" inputmode="tel" placeholder="DDD + número"><button class="btn btn-pill" id="acFoneOk" type="button">Ligar</button></div></div>`:''}
       </section>`; }).join('');
     h+=outros.map(x=>`<div class="mo ${x.st==='ok'?'ok':''}"><div><h3>${esc(x.m.nome)}</h3><p class="s" style="margin:0">${x.st==='ok'?'Tomou às '+esc(x.em):(x.st==='next'?'Agora':x.h)+' · '+x.ds.length+' '+(x.ds.length>1?'remédios':'remédio')}</p></div>${ICO[x.m.k]}</div>`).join('');
     if(!gs.length) h+=`<p class="msg info">Sem remédios para hoje.</p>`;
@@ -2509,19 +2744,37 @@ function renderAcomp(){
     const w=semana(st), al=(e.al||[]).filter(x=>x.t==='caixa'), en=e.en||[];
     h+=gradeSemana(w,nome);
     if(al.length||en.length) h+=`<h3>Vale olhar</h3>`+al.slice().reverse().map(x=>`<div class="vale">${IC.ler}<div><b>Caixa errada</b><p class="small" style="margin:4px 0 0">${esc(x.txt)}</p></div></div>`).join('')
-      +(en.length?`<div class="vale">${IC.sino}<div><b>O alarme dela pode falhar</b><p class="small" style="margin:4px 0 0">No celular dela: ${esc(listaFala(en))}. No celular dela, abra Ajustes → Para o alarme tocar sempre.</p></div></div>`:'');
+      +(en.length?`<div class="vale">${IC.sino}<div><b>O alarme de ${esc(curto(nome))} pode falhar</b><p class="small" style="margin:4px 0 0">No celular de ${esc(curto(nome))}: ${esc(listaFala(en))}. Lá, abra Ajustes → Para o alarme tocar sempre.</p></div></div>`:'');
     if(w.tot) h+=`<button class="btn btn-wa" id="bWaAc" type="button">${WA_SVG}Mandar resumo no WhatsApp</button>`;
   } else {
+    const g=!!f.gestor && !f.previa, pend=g?(f.pend||[]):[], pedidos=g?(f.pedidos||[]):[];
+    if(g) h+=`<div class="cadeado">${IC.cadeado}<div><b>Você cuida dos remédios de ${esc(curto(nome))}.</b><p class="small" style="margin:4px 0 0">Copie sempre da receita.</p></div></div>
+      <button class="btn btn-pill" id="bGestAdd" type="button">${IC.ler}Colocar remédio para ${esc(curto(nome))}</button>`;
+    h+=pedidos.slice().reverse().map((p,n)=>`<section class="al-card info"><h3>${esc(nome)} pediu para colocar</h3><p style="margin:0;font-weight:700">${esc(p.nome)} ${esc(p.dose)} · ${esc(haQuanto(p.ts))}</p>
+      <button class="btn btn-pill" type="button" data-pedido="${pedidos.length-1-n}">Colocar agora, copiando da receita</button><button class="btn btn-ghost" type="button" data-pedido-x="${pedidos.length-1-n}">Não é para colocar</button></section>`).join('');
+    if(pend.length) h+=`<div class="vale">${IC.relogio}<div><b>Esperando o celular de ${esc(nome)}</b>${pend.map(p=>`<p class="small" style="margin:4px 0 0">${p.op==='add'?'Colocar':p.op==='edit'?'Mudar':'Tirar'}: ${esc(p.item.nome)} ${esc(p.item.dose)}</p>`).join('')}<p class="small muted" style="margin:4px 0 0">Muda quando ${esc(curto(nome))} abrir o app. Se demorar, eu envio de novo.</p></div></div>`;
     h+=st.agenda.map(a=>`<div class="agenda-item"><div class="medlinha">${dotA(a)}<div style="min-width:0"><h3>${esc(med(a).nome)} ${esc(a.dose)}</h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
-      <ul class="ag-mom">${a.horarios.map(hh=>{ const m=momentoDe(hh); return `<li>${ICO[m.k]}<span><b>${esc((a.mom&&a.mom[hh])?MOM[a.mom[hh]].nome:m.nome)} · ${hh}</b><span class="q">${qtdIcones(comoEm(a,hh))}${esc(comoEm(a,hh))}</span></span></li>`; }).join('')}</ul></div>`).join('')
-      || `<p class="msg info">Nenhum remédio guardado no celular dela.</p>`;
-    h+=`<p class="hint">Quem muda os remédios é ${esc(nome)}, no celular dela, sempre pela receita.</p>`;
+      <ul class="ag-mom">${a.horarios.map(hh=>{ const m=momentoDe(hh); return `<li>${ICO[m.k]}<span><b>${esc((a.mom&&a.mom[hh])?MOM[a.mom[hh]].nome:m.nome)} · ${hh}</b><span class="q">${qtdIcones(comoEm(a,hh))}${esc(comoEm(a,hh))}</span></span></li>`; }).join('')}</ul>
+      ${g?`<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" type="button" data-gmudar="${esc(a.id)}">Mudar horário ou quantidade</button><button class="linkbtn" type="button" data-del="${esc(a.id)}" data-gdel="${esc(a.id)}">${removerId===a.id?'Toque de novo para tirar':'Tirar'}</button></div>`:''}</div>`).join('')
+      || `<p class="msg info">Nenhum remédio guardado no celular de ${esc(curto(nome))}.</p>`;
+    const mud=(e.mud||[]);
+    if(g && mud.length) h+=`<div class="form"><h3>Últimas mudanças</h3>${listaMudancas(mud,5)}</div>`;
+    if(!g) h+=`<p class="hint">Só ${esc(curto(nome))} muda esta lista, pela receita.</p>`;
   }
   v.innerHTML=`<div class="stack" style="gap:14px">${h}</div>`;
   document.querySelectorAll('#view-acomp [data-sel]').forEach(b=>b.onclick=()=>{ acompSel=b.dataset.sel; renderAcomp(); });
   const on=(id,fn)=>{ const b=$('#'+id); if(b) b.onclick=fn; };
   on('bMaisSeg',abrirSeguir); on('bSamuAc',()=>abrirLink('tel:192')); on('bAtuAc',()=>{ eloRodada(); toast('Procurando notícias...'); });
   on('bWaAc',()=>enviarWhats(textoSemana(semana(st),nome)));
+  on('bGestAdd',()=>{ gestorAlvo=f; resultado=null; go('ler'); falar(`Vamos colocar um remédio para ${f.nome}. Leia a caixa do remédio. Depois, copie da receita.`); if(SCAN) lerNativo(); });
+  document.querySelectorAll('#view-acomp [data-pedido]').forEach(b=>b.onclick=()=>{ const p=(f.pedidos||[])[+b.dataset.pedido]; if(!p) return;
+    const it=p.code?buscar(p.code):null;
+    if(it) abrirWizard(it,{destino:f}); else { gestorAlvo=f; resultado=null; go('ler'); toast(`Leia a caixa do remédio que ${curto(f.nome)} pediu.`); } });
+  document.querySelectorAll('#view-acomp [data-pedido-x]').forEach(b=>b.onclick=()=>{ f.pedidos.splice(+b.dataset.pedidoX,1); save(); renderAcomp(); });
+  document.querySelectorAll('#view-acomp [data-gmudar]').forEach(b=>b.onclick=()=>{ const a=st.agenda.find(x=>x.id===b.dataset.gmudar); if(a) mudarRemedioDela(f,a); });
+  document.querySelectorAll('#view-acomp [data-gdel]').forEach(b=>b.onclick=()=>{ const id=b.dataset.gdel, a=st.agenda.find(x=>x.id===id); if(!a) return;
+    if(removerId!==id){ removerId=id; renderAcomp(); falar(`Toque de novo para tirar este remédio do celular de ${curto(f.nome)}.`); return; }
+    removerId=''; enviarAgenda(f,'del',{id,nome:med(a).nome,dose:a.dose}); });
   document.querySelectorAll('#view-acomp [data-lembrar]').forEach(b=>b.onclick=()=>{ if(f.previa){ toast('No exemplo, este botão não envia nada.'); return; } enviarLembrar(f,b.dataset.lembrar); });
   document.querySelectorAll('#view-acomp [data-ligar]').forEach(b=>b.onclick=()=>{ if(f.previa){ toast('No exemplo, este botão não liga.'); return; }
     if(f.fone) abrirLink('tel:'+String(f.fone).replace(/[^\d+]/g,'')); else { ligarAberto=true; renderAcomp(); const i=$('#acFone'); if(i) i.focus(); } });
@@ -2530,7 +2783,7 @@ function renderAcomp(){
 }
 function falaAcomp(){
   const f=seguidoAtual(); if(!f) return 'Você ainda não acompanha ninguém.';
-  if(!f.estado) return `${f.nome}. Esperando o celular dela mandar os remédios.`;
+  if(!f.estado) return `${f.nome}. Esperando o celular mandar os remédios.`;
   const gs=gruposHoje(stDe(f.estado)), late=gs.filter(x=>x.st==='late'), ok=gs.filter(x=>x.st==='ok');
   return `${f.nome}. ${late.length?'Ainda não marcou: '+listaFala(late.map(x=>x.m.nome.toLowerCase()+', das '+falaHora(x.h)))+'. ':''}${ok.length?'Já tomou: '+listaFala(ok.map(x=>x.m.nome.toLowerCase()))+'.':''}`;
 }
@@ -2560,7 +2813,7 @@ const vozDisponivel = () => !!(SR || window.SpeechRecognition || window.webkitSp
 async function escutar(){
   calar(); await espera(250);
   if(SR){
-    try{ let pm=await SR.checkPermissions(); if(pm.speechRecognition!=='granted'){ pm=await SR.requestPermissions(); if(pm.speechRecognition!=='granted') throw new Error('permissao'); }
+    try{ let pm=await SR.checkPermissions(); if(pm.speechRecognition!=='granted'){ await falarE('O celular vai perguntar se eu posso usar o microfone. Toque na opção: durante o uso do app.'); pm=await SR.requestPermissions(); if(pm.speechRecognition!=='granted') throw new Error('permissao'); }
       let r; try{ r=await SR.start({language:'pt-BR',maxResults:5,prompt:'Pode falar',partialResults:false,popup:true}); }
       catch(e){ if(/permiss/i.test(String(e&&e.message||e))) throw e; r=await SR.start({language:'pt-BR',maxResults:5,partialResults:false,popup:false}); }
       return (r&&r.matches)||[]; }
@@ -2581,6 +2834,7 @@ const COMANDOS=[
   ['ligar',/\b(liga|ligar|ligue|chama|chamar|telefona|telefonar)\b/],
   ['ler',/\b(que remedio e (esse|este)|qual e (esse|este) remedio|ler a caixa|le a caixa|ler o codigo|ler|escanear|codigo de barras|caixa)\b/],
   ['bula',/\b(bula|para que serve)\b/],
+  ['mudou',/\b(o que mudou|mudanca|mudancas|mudou|quem mudou|quem colocou)\b/],
   ['agora',/\b(qual (e o )?remedio( de)? agora|que remedio (eu )?tomo|tenho que tomar|qual o proximo|proximo remedio|que horas|horario|agora)\b/],
   ['meus',/\b(meus remedios|quais (sao )?(os )?meus remedios|lista)\b/],
   ['gratis',/\b(gratis|de graca|farmacia popular|posto de saude|sem pagar)\b/],
@@ -2589,8 +2843,8 @@ const COMANDOS=[
 function entender(ms){ for(const t of ms.map(sem)) for(const [k,re] of COMANDOS) if(re.test(t)) return k; return ''; }
 /* ----- janela de voz ----- */
 let vozResp=null;
-function abrirVoz(){ $('#voz').hidden=false; $('#voz').scrollTop=0; }
-function fecharVoz(){ $('#voz').hidden=true; vozResp=null; calar(); }
+function abrirVoz(){ $('#voz').hidden=false; $('#voz').scrollTop=0; const f=$('#falarBtn'); if(f) f.hidden=true; }
+function fecharVoz(){ $('#voz').hidden=true; vozResp=null; calar(); renderFalar(); }
 const SUGS=[['tomei','Já tomei',CHECK],['agora','Qual remédio agora?',IC.relogio],['ler','Que remédio é esse?',IC.ler],['ligar','Ligar para a família',IC.tel],['meus','Meus remédios',IC.meus],['socorro','Socorro',IC.socorro]];
 function telaVoz(estado,texto,disse){
   const sugs=`<div class="sugs">${SUGS.map(([k,t,svg])=>`<button class="sug ${k==='socorro'?'socorro':''}" type="button" data-vcmd="${k}">${svg}${esc(t)}</button>`).join('')}</div>`;
@@ -2628,10 +2882,75 @@ function confirmar(pergunta){
     }
   });
 }
+/* ----- conversa por voz guiada: o app fala cada tela e ouve a resposta (para quem não lê) ----- */
+let vozSeq=0;
+function fabOuvindo(on){ const b=$('#falarBtn'); if(!b) return; b.classList.toggle('ouvindo',!!on); b.innerHTML=`<span class="fab-in">${IC.mic}<span>${on?'Ouvindo… pode falar':'Falar'}</span></span>`; }
+const nomeFalado = t => String(t||'').replace(/^(meu nome (e|é)|eu sou (a |o )?|me chamo|o nome (e|é)|ela se chama|ele se chama|é a|é o)\s*/i,'').replace(/[.,!?]/g,'').replace(/\s+/g,' ').trim()
+  .split(' ').filter(Boolean).map((w,i)=>i&&/^(da|de|do|das|dos|e)$/i.test(w)?w.toLowerCase():cap(w.toLowerCase())).join(' ');
+const PARENTES=['filha','filho','neta','neto','irmã','irmão','mãe','pai','esposa','marido','sobrinha','sobrinho','nora','genro','cuidadora','cuidador','vizinha','vizinho'];
+function nomeFamFalado(t){ let rel=''; const n=String(t||'').replace(/\b(minha|meu|a|o)\s+(\S+)\b/gi,(m,a,w)=>{ const k=PARENTES.find(p=>sem(p)===sem(w)); if(k&&!rel){ rel=k; return ''; } return m; });
+  const nome=nomeFalado(n); return nome ? nome+(rel?' ('+rel+')':'') : (rel?cap(rel):''); }
+const numeroFalado = t => { const d=String(t||'').replace(/\bmeia\b/gi,'6').replace(/\D/g,''); return d.length>=8 && d.length<=13 ? d : ''; };
+async function simNaoFalado(texto){ await falarE(texto+' Diga sim ou não.'); fabOuvindo(true); let ms=[]; try{ ms=await escutar(); }catch(e){} fabOuvindo(false); return simOuNao(ms); }
+/* fala o texto; na conversa por voz, faz a pergunta e ouve a resposta */
+async function perguntarVoz(texto,pergunta,tratar){
+  const seq=++vozSeq;
+  if(!(AP.vozGuia && vozDisponivel())){ if(texto) falar(texto); return; }
+  if(!pergunta){ if(texto) falarE(texto); return; }
+  await falarE((texto?texto+' ':'')+pergunta);
+  if(seq!==vozSeq) return;
+  fabOuvindo(true); let ms=[]; try{ ms=await escutar(); }catch(e){} fabOuvindo(false);
+  if(seq!==vozSeq) return;
+  if(!ms.length){ falarE('Não ouvi. Quando quiser responder, toque no botão azul, falar.'); return; }
+  const r=await tratar(ms);
+  if(r===false && seq===vozSeq) falarE('Não entendi. Toque no botão azul, falar, e tente de novo. Ou toque no botão da tela.');
+}
+function ctxAtual(){
+  const v=id=>!$('#'+id).hidden;
+  if(v('consent')) return 'consent'; if(v('pronto')) return 'pronto';
+  if(v('elo')) return conv&&conv.passo==='pedido'?'pedido':'elo'; if(v('wiz')) return 'wiz'; if(v('alarm')) return 'alarm';
+  if(v('bv')) return 'bv'+passo; if(v('bulaV')||v('energia')||v('termos')) return 'leitura';
+  if(atual==='ler' && resultado) return alvo?'conferir':'resultado';
+  return '';
+}
+async function tratarContexto(ctx,ms){
+  const t=ms.map(sem).join(' | '), yn=simOuNao(ms);
+  const clica=id=>{ const b=$('#'+id); if(b){ b.click(); return true; } return false; };
+  if(/\b(socorro|emergencia|me ajuda|passando mal|preciso de ajuda)\b/.test(t)){ pedirSocorro(true); return true; }
+  if(ctx!=='bv1' && ctx!=='bv2' && /\b(repete|repetir|de novo|nao entendi|fala de novo)\b/.test(t)){ ouvir(ultimaFala||falaTela()); return true; }
+  if(ctx==='consent'){ if(/concordo|aceito/.test(t)||yn===true){ consMarcado=true; consVia='voz'; renderConsentimento(); return clica('consOk'); } if(yn===false) return clica('consNao'); return false; }
+  if(ctx==='bv0'){ if(/\b(comecar|vamos|bora)\b/.test(t)||yn===true) return clica('bvComecar'); if(/demonstra|exemplo/.test(t)) return clica('bvDemo'); if(/familia|acompanhar/.test(t)) return clica('bvSouFam'); if(/letra|maior|grande|nao (estou )?enxerg/.test(t)){ const i=ESCALAS.findIndex(e=>e[0]===AP.escala); AP.escala=ESCALAS[Math.min(ESCALAS.length-1,i+1)][0]; aplicarAparencia(); renderBV(); setTimeout(()=>perguntarVoz('Pronto. Aumentei a letra.',PERG_BV[0],ms=>tratarContexto('bv0',ms)),0); return true; } return false; }
+  if(ctx==='bv1'){ if(/\bpular\b/.test(t)) return clica('bvPular'); const n=nomeFalado(ms[0]); if(!n) return false; $('#bvNome').value=n;
+    const ok=await simNaoFalado(`Seu nome é ${n}?`); if(ok) return clica('bvOk');
+    $('#bvNome').value=''; perguntarVoz('','Tudo bem. Diga seu nome de novo.',m2=>tratarContexto('bv1',m2)); return true; }
+  if(ctx==='bv2'){ if(/\bpular\b/.test(t)) return clica('bvPular'); const n=nomeFamFalado(ms[0]); if(!n) return false; $('#bvFam').value=n;
+    perguntarVoz(`${n}.`,'Qual é o telefone, com DDD? Ou diga pular.',m2=>tratarContexto('bv2f',m2)); return true; }
+  if(ctx==='bv2f'){ if(/\bpular\b/.test(t)) return clica('bvOk'); const d=numeroFalado(ms[0]); if(!d) return false; $('#bvWa').value=d;
+    const ok=await simNaoFalado(`O telefone é ${d.split('').join(' ')}?`); if(ok) return clica('bvOk');
+    $('#bvWa').value=''; perguntarVoz('','Diga o telefone de novo, devagar.',m2=>tratarContexto('bv2f',m2)); return true; }
+  if(ctx==='bv3'){ if(yn===true||/\b(ler|caixa|camera|agora)\b/.test(t)) return clica('bvLer'); if(yn===false||/depois/.test(t)) return clica('bvDepois'); return false; }
+  if(ctx==='alarm'){ if(yn===true||/tomei|tomado/.test(t)) return clica('alTomei'); if(yn===false||/depois|dez minutos|10 minutos|mais tarde/.test(t)) return clica('alDepois'); return false; }
+  if(ctx==='pronto'){ if(/desfaz|sem querer|errei|nao tomei/.test(t)) return clica('prDesf'); if(yn===true||/\b(ok|okay|voltar|inicio|pronto|obrigad\w*|entendi)\b/.test(t)) return clica('prOk'); if(/whats|avisar/.test(t)) return clica('prWa'); return false; }
+  if(ctx==='pedido'){ if(yn===true||/aceit/.test(t)) return clica('eloAceitar'); if(yn===false) return clica('eloRecusar'); return false; }
+  if(ctx==='resultado'){ if(yn===true||/\b(colocar|guardar|pedir)\b/.test(t)) return clica('bAddAg')||clica('bPedirAg'); if(/\bbula\b/.test(t)){ const b=$('#resBox [data-bula]'); if(b){ b.click(); return true; } } if(yn===false){ falarE('Tudo bem. Não guardei.'); return true; } return false; }
+  if(ctx==='conferir'){ if(yn===true||/tomei/.test(t)) return clica('bTomeiCx'); return false; }
+  return false;
+}
 let conversando=false;
 async function conversar(){
   if(conversando) return;
   if(!vozDisponivel()){ abrirVoz(); telaVoz('menu','Este celular não tem reconhecimento de voz. Toque no que você quer.'); falarE('Toque no que você quer.'); return; }
+  const ctx=ctxAtual();
+  if(ctx==='wiz'){ wizVoz(); return; }
+  if(ctx && ctx!=='leitura' && ctx!=='elo'){
+    conversando=true; vozSeq++; fabOuvindo(true); let ms=[];
+    try{ ms=await escutar(); }catch(e){ toast(String(e&&e.message)==='permissao'?'Preciso da permissão do microfone.':'Não consegui usar o microfone.'); }
+    fabOuvindo(false); conversando=false;
+    if(!ms.length){ falarE('Não ouvi. Toque no botão azul, falar, e fale perto do celular.'); return; }
+    if(await tratarContexto(ctx,ms)) return;
+    if(ctx==='resultado'||ctx==='conferir'){ const k=entender(ms); if(k){ abrirVoz(); executar(k,'voz',ms[0]); return; } }
+    falarE('Não entendi. Diga sim ou não, ou toque no botão da tela.'); return;
+  }
   conversando=true; abrirVoz(); telaVoz('ouvindo');
   try{
     let ms; try{ ms=await escutar(); }catch(e){ const m=String(e&&e.message||e);
@@ -2667,13 +2986,14 @@ async function executar(k,via,disse){
   if(k==='bula'){ if(resultado && atual==='ler'){ fecharVoz(); abrirBula(resultado.it.registro,resultado.it.produto,bulaUrl(resultado.it)); return; }
     return diz('Primeiro, mostre a caixa. Diga: que remédio é esse.'); }
   if(k==='meus') return diz(falaAgenda());
+  if(k==='mudou'){ const ms=(S.mudancas||[]).slice(-3).reverse(); return diz(ms.length?ms.map(m=>m.txt).join(' '):'Nenhuma mudança nos seus remédios.'); }
   if(k==='gratis'){ fecharVoz(); go('gratis'); await falarE(falaTela()); return; }
 }
 async function pedirSocorro(perguntar){
   if(perguntar){ const ok=await confirmar('Você precisa de ajuda?'); if(!ok){ if(ok===false){ telaVoz('resposta','Tudo bem.'); await falarE('Tudo bem.'); } return; } }
   const pares=S.pareados.map(p=>p.nome);
   S.alertas.push({ts:Date.now(),t:'socorro',txt:`Pediu ajuda às ${nowHM()}.`}); if(S.alertas.length>20) S.alertas=S.alertas.slice(-20); save();
-  eloAvisar('socorro',{titulo:`${nomeP()} pediu ajuda`,texto:`Pediu ajuda pelo Remédio Falado às ${nowHM()}. Ligue para ela.`});
+  eloAvisar('socorro',{titulo:`${nomeP()} pediu ajuda`,texto:`Pediu ajuda pelo Remédio Falado às ${nowHM()}. Ligue agora.`});
   const t=`${pares.length?'Avisei '+listaFala(pares)+' no celular. ':''}${S.whats?'Toque no botão verde para ligar para '+nomeFam()+'. ':''}Se for urgente, toque no botão vermelho para ligar para o SAMU (192).`;
   abrirVoz(); telaVoz('socorro',t); await falarE(t.replace('(192)','1 9 2'));
 }
@@ -2685,8 +3005,8 @@ document.addEventListener('click',async e=>{ const b=e.target.closest('[data-mic
   let ms=[]; try{ ms=await escutar(); }catch(x){ toast(String(x&&x.message)==='permissao'?'Preciso da permissão do microfone.':'Não consegui usar o microfone.'); }
   b.innerHTML=antes; if(!ms.length){ falarE('Não ouvi. Tente de novo.'); return; }
   let v=ms[0];
-  if(tipo==='numero'){ v=v.replace(/\b(meia)\b/gi,'6').replace(/\D/g,''); if(v.length<8){ falarE('Não entendi o número. Fale devagar, com o DDD.'); return; } }
-  else v=v.replace(/^(meu nome (e|é)|eu sou (a |o )?|me chamo|o nome (e|é))\s*/i,'').replace(/\s+/g,' ').trim().split(' ').map((w,i)=>i&&/^(da|de|do|das|dos|e)$/i.test(w)?w.toLowerCase():cap(w)).join(' ');
+  if(tipo==='numero'){ v=numeroFalado(v); if(!v){ falarE('Não entendi o número. Fale devagar, com o DDD.'); return; } }
+  else v = (b.dataset.micc==='bvFam'||b.dataset.micc==='cfgFam') ? nomeFamFalado(v) : nomeFalado(v);
   inp.value=v; inp.dispatchEvent(new Event('input'));
   falarE(tipo==='numero'?`Entendi: ${v.split('').join(' ')}.`:`Entendi: ${v}.`); });
 /* cadastro do remédio respondendo falando (pergunta, ouve, confirma e segue) */
@@ -2738,11 +3058,12 @@ async function wizVoz(){
 }
 function renderFalar(){
   const b=$('#falarBtn'); if(!b) return;
-  const mostra=!modoFamilia() && atual!=='acomp';
+  const mostra=!modoFamilia() && atual!=='acomp' && $('#voz').hidden;
   b.hidden=!mostra; document.body.classList.toggle('com-falar',mostra);
-  if(!b.innerHTML) b.innerHTML=`${IC.mic}<span>Falar</span>`;
+  if(!b.innerHTML) b.innerHTML=`<span class="fab-in">${IC.mic}<span>Falar</span></span>`;
 }
 $('#falarBtn').onclick=()=>conversar();
+renderFalar();
 
 /* ---------- início ---------- */
 setInterval(()=>{ if(!document.hidden) eloRodada(); },15000);

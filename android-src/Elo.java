@@ -35,7 +35,8 @@ import javax.crypto.spec.SecretKeySpec;
  * Conexão com a família, com o app fechado.
  * A cada 15 minutos (JobScheduler do Android):
  *  - no celular de quem toma o remédio: se uma dose passou 30 minutos sem ser marcada, manda o aviso para a família;
- *  - nos dois celulares: busca mensagens novas e mostra a notificação.
+ *  - nos dois celulares: busca mensagens novas e mostra a notificação;
+ *  - no celular de quem cuida dos remédios (modo gestor): reenvia, de 6 em 6 horas, a mudança que o outro celular ainda não confirmou.
  * Tudo que passa pelo servidor vai criptografado de ponta a ponta (AES-256-GCM). O servidor não consegue ler.
  */
 final class Elo {
@@ -44,6 +45,8 @@ final class Elo {
     private static final String PREFS = "remedio_falado_elo";
     private static final String CANAL = "familia";
     private static final long PULSO_MS = 2L * 60 * 60 * 1000;
+    private static final long REENVIO_MS = 6L * 60 * 60 * 1000;
+    private static final long DESISTE_MS = 3L * 24 * 60 * 60 * 1000;
 
     private Elo() {}
 
@@ -107,7 +110,9 @@ final class Elo {
             String papel = c.optString("papel", "idoso");
             String topic = c.optString("topic"), key = c.optString("key");
             if (topic.isEmpty() || key.isEmpty()) continue;
-            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0)); } catch (Exception e) { /* sem internet: tenta na próxima */ }
+            JSONArray pend = c.optJSONArray("pend");
+            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0), pend); } catch (Exception e) { /* sem internet: tenta na próxima */ }
+            if ("familia".equals(papel) && pend != null && pend.length() > 0) reenviar(st, relay, topic, pend);
             // sinal de vida: reenvia o último resumo de 2 em 2 horas (já criptografado pelo app)
             String estado = c.optString("estado", "");
             if ("idoso".equals(papel) && !estado.isEmpty() && System.currentTimeMillis() - st.getLong("pulso:" + topic, 0) > PULSO_MS) {
@@ -181,10 +186,47 @@ final class Elo {
         return String.format(java.util.Locale.ROOT, "%04d-%02d-%02d", c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH));
     }
 
-    private static void buscar(Context ctx, SharedPreferences st, String relay, String topic, String key, String papel, long vistoApp) throws Exception {
+    /* modo gestor: a mudança vai de novo enquanto o celular de quem toma não confirmar (o servidor guarda só por algumas horas) */
+    private static void reenviar(SharedPreferences st, String relay, String topic, JSONArray pend) {
+        Set<String> conf = st.getStringSet("conf:" + topic, new HashSet<String>());
+        long agora = System.currentTimeMillis();
+        SharedPreferences.Editor ed = st.edit();
+        for (int i = 0; i < pend.length(); i++) {
+            JSONObject p = pend.optJSONObject(i);
+            if (p == null) continue;
+            String uid = p.optString("uid"), cif = p.optString("cif");
+            long ts = p.optLong("ts", agora);
+            if (uid.isEmpty() || cif.isEmpty() || conf.contains(uid) || agora - ts > DESISTE_MS) continue;
+            long ultimo = st.getLong("reenv:" + uid, ts);
+            if (agora - ultimo < REENVIO_MS) continue;
+            try { publicar(relay, topic, cif); ed.putLong("reenv:" + uid, agora); } catch (Exception e) { break; }
+        }
+        ed.apply();
+    }
+
+    /* o resumo que chega do celular de quem toma confirma o que já foi aplicado */
+    private static void confirmar(SharedPreferences st, String topic, JSONObject estado, JSONArray pend) {
+        if (pend == null) return;
+        Set<String> ids = new HashSet<>();
+        JSONArray ag = estado.optJSONArray("ag");
+        if (ag != null) for (int i = 0; i < ag.length(); i++) { JSONObject a = ag.optJSONObject(i); if (a != null) ids.add(a.optString("id")); }
+        long ts = estado.optLong("ts", 0);
+        Set<String> conf = new HashSet<>(st.getStringSet("conf:" + topic, new HashSet<String>()));
+        for (int i = 0; i < pend.length(); i++) {
+            JSONObject p = pend.optJSONObject(i);
+            if (p == null || ts <= p.optLong("ts", 0)) continue;
+            boolean tem = ids.contains(p.optString("id"));
+            if ("del".equals(p.optString("op")) ? !tem : tem) conf.add(p.optString("uid"));
+        }
+        if (conf.size() > 80) conf.clear();
+        st.edit().putStringSet("conf:" + topic, conf).apply();
+    }
+
+    private static void buscar(Context ctx, SharedPreferences st, String relay, String topic, String key, String papel, long vistoApp, JSONArray pend) throws Exception {
         long desde = Math.max(st.getLong("desde:" + topic, 0), vistoApp);
         if (desde == 0) desde = System.currentTimeMillis() / 1000 - 15 * 60;
         Set<String> vistos = new HashSet<>(st.getStringSet("ids:" + topic, new HashSet<String>()));
+        Set<String> uids = new HashSet<>(st.getStringSet("uids:" + topic, new HashSet<String>()));
         HttpURLConnection c = (HttpURLConnection) new URL(relay + "/" + topic + "/json?poll=1&since=" + desde).openConnection();
         c.setConnectTimeout(15000); c.setReadTimeout(20000);
         long maior = desde;
@@ -203,12 +245,16 @@ final class Elo {
                 try { txt = decifrar(key, ev.optString("message")); } catch (Exception e) { continue; }
                 JSONObject msg = new JSONObject(txt);
                 if (papel.equals(msg.optString("de"))) continue;
+                if ("familia".equals(papel) && "estado".equals(msg.optString("t"))) { confirmar(st, topic, msg, pend); continue; }
+                String uid = msg.optString("uid", "");
+                if (!uid.isEmpty()) { if (uids.contains(uid)) continue; uids.add(uid); } // mudança reenviada: avisa uma vez só
                 JSONObject av = msg.optJSONObject("aviso");
                 if (av != null) notificar(ctx, av.optString("titulo"), av.optString("texto"), id.hashCode());
             }
         } finally { c.disconnect(); }
         if (vistos.size() > 60) vistos.clear();
-        st.edit().putLong("desde:" + topic, maior).putStringSet("ids:" + topic, vistos).apply();
+        if (uids.size() > 80) uids.clear();
+        st.edit().putLong("desde:" + topic, maior).putStringSet("ids:" + topic, vistos).putStringSet("uids:" + topic, uids).apply();
     }
 
     /* ---------------- servidor de passagem (ntfy) ---------------- */

@@ -18,6 +18,7 @@ A tela inicial mostra **só o momento de agora** (café da manhã, almoço, tard
 | Cadastro com uma pergunta por tela | Idosos se perderam em menus e submenus (Grindrod et al., 2014) |
 | Botões de 64 a 104 px (TOMEI) | Alvos de ~14 mm tiveram o melhor desempenho com idosos (Leitão e Silva, 2012) |
 | Paleta petróleo (#0F4C5C) + mel (#F2A33A) em fundo creme liso, texto escuro; verde só para "tomado" | NIA/NLM (texto escuro em fundo claro, sem textura atrás do texto) e WCAG 2.2 (contraste ≥ 4,5:1) |
+| Cor + símbolo fixo em cada botão: laranja com ✓ = seguir; azul com alto-falante/microfone = ouvir e falar; branco = voltar; vermelho com alerta = socorro. A voz diz a cor e o símbolo | A voz consegue apontar o botão ("toque no botão laranja, com o sinal de certo"). O símbolo garante a leitura para daltônicos: conferido com simulação de deuteranopia, protanopia e tritanopia (Machado et al., 2009) |
 | Ajustes ficam "para o familiar" | No modo simplificado da Apple, quem configura é a pessoa de apoio |
 | Frases curtas, ordem direta, palavras comuns | Lei 15.263/2025 (Política Nacional de Linguagem Simples), art. 5º |
 | Usar o app inteiro falando e ouvindo, sem precisar ler nem escrever | 51% dos brasileiros de 50 a 64 anos são analfabetos funcionais (Inaf 2024) |
@@ -27,7 +28,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 ## O que o app faz
 
 - **Que remédio é este?** Lê o código de barras da caixa e consulta a lista oficial de preços da CMED/Anvisa, com mais de 27 mil códigos, sem internet. Fala o tipo de remédio e, quando há bula, o trecho literal de "para que serve".
-- **Colocar nos meus remédios:** 4 perguntas, uma por tela: em que momento a receita manda tomar, quanto em cada momento, conferir com a receita (com o total do dia) e foto da caixa (opcional). A pessoa copia da receita do médico; o app não sugere dose.
+- **Colocar nos meus remédios:** 4 perguntas, uma por tela: em que momento a receita manda tomar, quanto em cada momento, conferir com a receita (com o total do dia) e foto da caixa (opcional). A pessoa copia da receita do médico; o app não sugere dose. Quantidade diferente de 1, 2 ou meio se escolhe com os botões − e + (sem digitar); "Escrever" fica para receita fora do padrão.
 - **Total do dia e aviso de dose:** soma o que foi marcado. Nos 10 remédios com texto próprio, se o total passar da maior dose por dia citada na bula, aparece um aviso pedindo para conferir a receita. Não bloqueia.
 - **Bula completa:** a bula do paciente oficial, nas 9 perguntas, com letra grande e "Ouvir esta parte". 69 bulas já vêm no app (`www/bulas.json`); as outras são baixadas do Bulário Eletrônico da Anvisa e ficam guardadas.
 - **Alarme:** o Android avisa na hora, mesmo com o app fechado. A pessoa aperta TOMEI. "Conferir a caixa" confirma pela câmera se é o remédio certo.
@@ -40,6 +41,14 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   - um bloco "Vale olhar", com caixa errada e alarme que pode falhar.
 
   Se uma dose passar 30 minutos sem ser marcada, a família recebe uma notificação sozinha, mesmo com os dois apps fechados. Isso roda numa tarefa do Android (JobScheduler) a cada 15 minutos; com o celular parado, o Android pode atrasar o aviso.
+- **Modo gestor (alguém capaz cuida dos remédios):** ao conectar, a pessoa da família escolhe "Acompanhar e cuidar dos remédios" (filho, mãe, cuidadora, farmacêutica). Quem toma o remédio vê o pedido e escolhe: aceitar, aceitar só para acompanhar ou não aceitar. Depois:
+  - o gestor lê a caixa no celular dele, responde as 4 perguntas copiando da receita, e a mudança vai criptografada para o celular de quem toma;
+  - o celular de quem toma aplica a mudança, refaz os alarmes, **fala o que mudou** e anota com o nome de quem mudou ("Últimas mudanças");
+  - quem toma fica no modo simples: vê e ouve os remédios, recebe os alarmes e marca TOMEI. Ao ler uma caixa nova, toca em "Pedir para X colocar";
+  - o gestor também muda horário e quantidade, ou tira um remédio (com dois toques). Se o celular de quem toma demorar a abrir o app, a mudança fica "Esperando" e é reenviada de 6 em 6 horas pelo próprio Android (`Elo.java`), mesmo com o app do gestor fechado, até o outro celular confirmar;
+  - quem toma desliga quando quiser: Ajustes → Quem cuida dos meus remédios → "Parar: eu mesmo cuido".
+
+  Base: Apple Assistive Access (a pessoa de apoio configura, quem usa vê menos opções), com uma adaptação nossa: a pessoa que toma o remédio aceita e pode desligar, e toda mudança é falada (Agency e Responsibility).
 - **Falar com o app (para quem não lê):** o botão **Falar** fica em toda tela. A pessoa diz:
   - "já tomei";
   - "qual remédio agora?";
@@ -47,6 +56,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   - "liga pra minha filha";
   - "meus remédios";
   - "remédio de graça";
+  - "o que mudou" (no modo gestor);
   - "socorro".
 
   O app responde em voz e **confirma antes de agir** ("Vou marcar os remédios do almoço. Diga sim ou não"). Se não entender, mostra 6 botões grandes com desenho.
@@ -56,6 +66,10 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 - **"Ver como a família vê":** mostra o painel da família com os dados do próprio celular, para apresentar sem um segundo aparelho.
 
 ## Acessibilidade
+
+- **Sem gênero fixo:** os textos usam o nome da pessoa ("Ligar para Seu Antônio", "celular de Dona Lúcia") em vez de "ela/dela".
+- **Um caminho por vez:** a bula abre por "Ler a bula"; o QR code e o site da Anvisa só aparecem se a bula não abrir. "Testar sem caixa" e "Ver como a família vê" só existem no modo demonstração. O WhatsApp só aparece quando ninguém está conectado.
+- **Boas-vindas com 3 escolhas** (Começar, Usar falando, Sou da família); tamanho da letra e modo calmo em "Mais opções" ou por voz ("letra maior").
 
 - Letra Atkinson Hyperlegible, feita para baixa visão, de Normal a Muito grande (130%).
 - Contraste alto, modo escuro e **Modo calmo** (sem animações e voz só quando a pessoa pede).
