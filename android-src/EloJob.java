@@ -12,6 +12,7 @@ public class EloJob extends JobService {
             @Override
             public void run() {
                 try { Elo.executar(getApplicationContext()); } catch (Throwable t) { }
+                try { Elo.agendarAtraso(getApplicationContext()); } catch (Throwable t) { }
                 jobFinished(params, false);
             }
         }).start();

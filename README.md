@@ -51,7 +51,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   **Mensagens grandes vão em partes:** o servidor de passagem gratuito só aceita 4 KB por mensagem; acima disso, a mensagem vira um anexo que o app não lê e que some em 3 horas (era por isso que o pareamento parava depois de algumas horas, com muitos remédios). Agora o resumo, já criptografado, vai em partes de 3.000 caracteres e é montado de novo no outro celular (no app e no Android com o app fechado). Se o servidor pedir para esperar (limite de mensagens), o app espera 5 minutos e tenta de novo, sem desfazer a conexão. Ao abrir o app, a família pede o resumo atualizado e quem toma o remédio reenvia o seu se estiver velho.
   **Estado da conexão** (Família ou Ajustes): último envio, última notícia do outro celular, último erro em português e "Testar conexão agora" (o outro celular responde sozinho, até com o app fechado). Na família, depois de 3 horas sem notícia, aparece um aviso claro com o atalho para essa tela.
 
-  Se uma dose passar 30 minutos sem ser marcada, a família recebe uma notificação sozinha, mesmo com os dois apps fechados. Isso roda numa tarefa do Android (JobScheduler) a cada 15 minutos; com o celular parado, o Android pode atrasar o aviso.
+  Se uma dose passar 30 minutos sem ser marcada, a família recebe uma notificação sozinha, mesmo com os dois apps fechados. Um alarme exato do Android (`android-src/EloAlarme.java`, `setExactAndAllowWhileIdle`) acorda o celular de quem toma 31 minutos depois de cada dose, mesmo parado, confere e avisa na hora; ele é remarcado sozinho depois de cada aviso, quando o celular liga ou o app atualiza. A tarefa de 15 em 15 minutos (JobScheduler) continua como reserva, por exemplo se faltar internet na hora. Sem a permissão "Alarme na hora certa" (Android 12 ou mais novo pede para ligar), o Android pode atrasar alguns minutos; o passo para ligar está em Ajustes → Para o alarme tocar sempre.
 - **Modo gestor (alguém capaz cuida dos remédios):** ao conectar, a pessoa da família escolhe "Acompanhar e cuidar dos remédios" (filho, mãe, cuidadora, farmacêutica). Quem toma o remédio vê o pedido e escolhe: aceitar, aceitar só para acompanhar ou não aceitar. Depois:
   - o gestor lê a caixa no celular dele, responde as 4 perguntas copiando da receita, e a mudança vai criptografada para o celular de quem toma;
   - o celular de quem toma aplica a mudança, refaz os alarmes, **fala o que mudou** e anota com o nome de quem mudou ("Últimas mudanças");
@@ -89,6 +89,8 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 - Tudo o que aparece na tela pode ser ouvido pelo botão "Ouvir".
 - Botão Voltar do Android funciona: fecha a janela aberta ou volta uma tela.
 - Cada remédio tem cor e inicial (ou a foto da caixa), para não depender só da cor.
+- **Sinais sem palavras:** um bipe que sobe quando o app começa a ouvir e um que desce quando para (desliga em Ajustes → Voz e velocidade, se o celular já fizer o próprio bipe). Ao ler a caixa, o QR code ou a receita, o celular vibra: uma vibração longa quando reconheceu, duas curtas quando não reconheceu (plugin `@capacitor/haptics`).
+- **Voz em português instalada:** o app confere se o celular tem a voz em português. Se faltar, avisa em Ajustes → Voz e velocidade, com o botão "Instalar a voz em português", e mostra no "Vale olhar" da família. As vozes que funcionam sem internet vêm primeiro, para o alarme falar mesmo sem sinal.
 
 ## Segurança e criptografia
 
@@ -112,7 +114,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 ## Tecnologias
 
-HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala e o reconhecimento de voz do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre, Elo (com EloJob) e Receita (leitura do texto da receita com ML Kit Text Recognition 16.0.1, modelo dentro do app). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`.
+HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala e o reconhecimento de voz do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre, Elo (com EloJob e EloAlarme) e Receita (leitura do texto da receita com ML Kit Text Recognition 16.0.1, modelo dentro do app). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`, na versão final (release), assinado com a chave fixa de `keystore/`: instala por cima das versões anteriores sem apagar os remédios. Para publicar na Google Play, troque essa chave por uma guardada nos Secrets do GitHub e gere também o `.aab` (`bundleRelease`).
 
 ## Estrutura
 
@@ -125,7 +127,7 @@ www/bulas.json        69 bulas do paciente oficiais (Bulário Eletrônico da Anv
 www/farmacias.json    farmácias da Farmácia Popular no Recife
 www/postos.json       postos de saúde do Recife e remédios em estoque (dados abertos)
 www/privacidade.html  privacidade e termos (link para a Google Play)
-android-src/          plugins Android próprios: Energia, Cofre (Keystore), Elo e EloJob (família com o app fechado), Receita (texto da foto)
+android-src/          plugins Android próprios: Energia, Cofre (Keystore), Elo, EloJob e EloAlarme (família com o app fechado), Receita (texto da foto)
 scripts/              cópia de bibliotecas, ajustes do Android e conversão dos dados
 .github/workflows/    geração automática do APK
 ```

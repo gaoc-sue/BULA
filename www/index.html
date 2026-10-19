@@ -1033,16 +1033,18 @@ aplicarAparencia();
 
 /* ---------- voz ---------- */
 /* vozes em português do Brasil disponíveis no celular; escolhe a mais natural */
-let VOZES=[];
+let VOZES=[], VOZ_PT=null;  /* VOZ_PT: false = a voz em português não está instalada no celular */
 const natural = n => /network|neural|natural|online|wavenet|enhanced|premium/i.test(n);
 async function carregarVozes(){
   let lista=[];
-  if(TTS){ try{ const r=await TTS.getSupportedVoices(); lista=(r.voices||[]).map((v,i)=>({i,name:v.name||v.voiceURI||('voz '+i),lang:String(v.lang||'').replace('_','-'),local:v.localService!==false})); }catch(e){} }
+  if(TTS){ try{ const r=await TTS.getSupportedVoices(); lista=(r.voices||[]).map((v,i)=>({i,name:v.voiceURI||v.name||('voz '+i),lang:String(v.lang||'').replace('_','-'),local:v.localService!==false})); }catch(e){}
+    try{ const x=await TTS.isLanguageSupported({lang:'pt-BR'}); VOZ_PT=!!x.supported; }catch(e){ VOZ_PT=null; } }
   else if('speechSynthesis' in window){ lista=speechSynthesis.getVoices().map((v,i)=>({i,name:v.name,lang:v.lang,local:v.localService,ref:v})); }
   VOZES=lista.filter(v=>/^pt-?BR/i.test(v.lang)||/pt-br|portugu[eê]s.*brasil/i.test(v.name));
   if(!VOZES.length) VOZES=lista.filter(v=>/^pt/i.test(v.lang));
-  VOZES.sort((a,b)=>(natural(b.name)-natural(a.name)));
-  if(!AP.voz || !VOZES.some(v=>v.name===AP.voz)){ const melhor=VOZES.find(v=>natural(v.name)&&navigator.onLine)||VOZES.find(v=>v.local)||VOZES[0]; if(melhor){ AP.voz=melhor.name; aplicarAparencia(); } }
+  /* primeiro as que funcionam sem internet: o alarme fala mesmo sem sinal */
+  VOZES.sort((a,b)=>(b.local-a.local)||(natural(b.name)-natural(a.name))||(a.name<b.name?-1:1));
+  if(!AP.voz || !VOZES.some(v=>v.name===AP.voz)){ const melhor=VOZES.find(v=>v.local)||VOZES[0]; if(melhor){ AP.voz=melhor.name; aplicarAparencia(); } }
   if(atual==='ajustes' && ajSub==='voz') renderAjustes();
 }
 if('speechSynthesis' in window && !TTS) speechSynthesis.onvoiceschanged=carregarVozes;
@@ -1050,6 +1052,24 @@ setTimeout(carregarVozes,0);
 $('#termosOuvir').onclick=()=>ouvir(FALA_TERMOS);
 $('#termosFechar').onclick=fecharTermos;
 const vozAtual = () => VOZES.find(v=>v.name===AP.voz) || null;
+/* sinais sem palavras, para quem não lê: bipe ao abrir e fechar o microfone, vibração ao ler a caixa ou a receita */
+const HAPT = plug('Haptics');
+let SOM=null;
+function tom(f0,f1,dur){
+  if(AP.bipe===false) return;
+  try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; SOM=SOM||new AC(); if(SOM.state==='suspended') SOM.resume();
+    const t=SOM.currentTime, o=SOM.createOscillator(), g=SOM.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(f0,t); o.frequency.linearRampToValueAtTime(f1,t+dur);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(SOM.destination); o.start(t); o.stop(t+dur+0.03); }catch(e){}
+}
+const bipeAbre = () => tom(660,990,0.15);   /* sobe: pode falar */
+const bipeFecha = () => tom(880,520,0.15);  /* desce: parei de ouvir */
+/* ok: vibração de sucesso (li e reconheci); 'erro': duas batidas curtas (li, mas não reconheci) */
+function vibrar(tipo){
+  try{ if(HAPT){ HAPT.notification({type:tipo==='erro'?'WARNING':'SUCCESS'}).catch(()=>{}); return; }
+    if(navigator.vibrate) navigator.vibrate(tipo==='erro'?[70,90,70]:[40,60,180]); }catch(e){}
+}
 /* fala automática: no modo calmo fica em silêncio (a pessoa toca em Ouvir quando quiser) */
 function falar(t){ if(AP.calmo) return; ouvir(t); }
 /* fala pedida pela pessoa: sempre fala */
@@ -1147,7 +1167,7 @@ async function renderEnergia(){
   on('eFechar',()=>{ $('#energia').hidden=true; calar(); render(); });
 }
 /* volta das configurações do Android: confere de novo */
-document.addEventListener('visibilitychange',()=>{ if(document.hidden||!nativo) return; checarEnergia().then(()=>{ if(!$('#energia').hidden) renderEnergia(); else if(atual==='hoje'||atual==='ajustes') render(); }); eloRodada(); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden||!nativo) return; if(VOZ_PT===false) carregarVozes(); checarEnergia().then(()=>{ if(!$('#energia').hidden) renderEnergia(); else if(atual==='hoje'||atual==='ajustes') render(); }); eloRodada(); });
 setTimeout(()=>checarEnergia().then(()=>{ if(atual==='hoje' && !bvAberto) renderHoje(); }),800);
 document.addEventListener('click',e=>{ if(e.target.closest('[data-energia]')){ e.preventDefault(); abrirEnergia(); } });
 
@@ -1637,6 +1657,7 @@ function mostrarQR(txt){
   const box=$('#qrBox'); if(!box) return;
   let url=null; try{ const u=new URL(String(txt).trim()); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
   if(!url){ box.innerHTML='<div class="msg warn">Este QR code não é um link de bula. Procure o QR com a palavra "bula" na caixa, ou use o botão da Anvisa.</div>'; return; }
+  vibrar('ok');
   box.innerHTML=`<div class="msg info">Este QR code abre o site <b>${esc(url.hostname)}</b>. A bula oficial fica no site do fabricante ou da Anvisa.</div><button class="btn btn-pill" id="bAbrirQR" type="button">Abrir a bula digital</button>`;
   $('#bAbrirQR').onclick=()=>abrirLink(url.href);
   falar('Achei o QR code. Toque em abrir a bula digital.');
@@ -1697,7 +1718,7 @@ async function achou(code){
   code=String(code).replace(/\D/g,'');
   await baseOk;
   if(!code){ msgScan('Digite os números que ficam embaixo das barras.','warn'); return; }
-  const it=buscar(code);
+  const it=buscar(code); vibrar(it?'ok':'erro');
   if(!it){
     resultado=null; $('#resBox').innerHTML=`<div class="msg bad">Não reconheci este remédio (código ${esc(code)}). Peça ajuda ao farmacêutico ou a alguém da família.</div>`;
     msgScan(''); falar('Não reconheci este remédio. Peça ajuda ao farmacêutico ou a alguém da família.'); return;
@@ -2024,6 +2045,7 @@ function rxMontar(linhas){
   RX.itens=lidos.map(o=>({o, its:o.opcoes.map(rxIt), escolha:o.alternativa?null:(o.opcoes.length?0:null), resp:{}, status:'pend', ciente:false,
     crop: rxRecorte(RX.canvas,o.caixa)}));
   RX.i=0; RX.canvas=null;  /* a foto sai da memória: ficam só os recortes, até o fim da conferência */
+  vibrar(RX.itens.some(x=>!x.o.desconhecido)?'ok':'erro');
   rxTela(RX.itens.length?'resumo':'nada');
 }
 const rxIdo = x => x.escolha!=null ? x.its[x.escolha] : null;
@@ -2198,7 +2220,7 @@ function lerCodigoCaixa(){
 }
 async function rxLerCaixa(x){
   const code=await lerCodigoCaixa(); if(!code||!RX) return;
-  const it=buscar(code); if(!it){ toast('Não reconheci esta caixa. Confira o código ou não coloque este remédio.'); return; }
+  const it=buscar(code); vibrar(it?'ok':'erro'); if(!it){ toast('Não reconheci esta caixa. Confira o código ou não coloque este remédio.'); return; }
   x.its=[it]; x.escolha=0; x.o.desconhecido=false; x.resp.dose=null; it.rx={tipo:'caixa',nome:it.produto,mg:mgDe(it.dose),dose:it.dose,doses:[],caixa:true};
   rxTela('item'); toast('Li a caixa: '+rxNomeIt(it)+'.');
 }
@@ -2354,7 +2376,7 @@ function renderAjustes(){
   v.innerHTML=`<div class="stack" style="gap:18px">
     <div><h2>Ajustes</h2><p class="small muted" style="margin:4px 0 0">Para a família ou quem ajuda a configurar.</p></div>
     ${fam?'':grupoAj('Remédios',[linhaAj('rotina','Horários da minha rotina',['cafe','almoco','jantar','dormir'].map(rot).join(' · '))].concat(gestorAtivo()?[]:[linhaAj('semcaixa','Adicionar sem a caixa','Para quem não tem a caixa em mãos')]))}
-    ${grupoAj('Leitura e voz',[linhaAj('letra','Tamanho da letra e contraste',(ESCALAS.find(e=>e[0]===AP.escala)||ESCALAS[0])[1]+(AP.contraste?' · contraste alto':'')),linhaAj('voz','Voz e velocidade'),linhaAj('calmo','Modo calmo',AP.calmo?'Ligado':'Desligado'),linhaAj('conversa','Conversa por voz',AP.vozGuia?'Ligada: o app fala cada tela e ouve a resposta':'Desligada')])}
+    ${grupoAj('Leitura e voz',[linhaAj('letra','Tamanho da letra e contraste',(ESCALAS.find(e=>e[0]===AP.escala)||ESCALAS[0])[1]+(AP.contraste?' · contraste alto':'')),linhaAj('voz','Voz e velocidade',VOZ_PT===false?'Falta instalar a voz em português':''),linhaAj('calmo','Modo calmo',AP.calmo?'Ligado':'Desligado'),linhaAj('conversa','Conversa por voz',AP.vozGuia?'Ligada: o app fala cada tela e ouve a resposta':'Desligada')])}
     ${grupoAj('Família',linhasFam)}
     ${grupoAj('Celular',[linhaAj('alarme','Para o alarme tocar sempre',energiaFalta()?'Falta ajustar':'Notificações, bateria e início automático'),fam?'':linhaAj('teste','Testar o lembrete agora','Abre a tela do alarme')])}
     ${window.RFReceita?grupoAj('Teste',[linhaAj('rx','Ler receita (teste)',AP.rxTeste!==false?'Ligado: fotografar a receita, em Ler a caixa':'Desligado')]):''}
@@ -2405,10 +2427,14 @@ function subAjustes(){
       <p class="hint">Ligado, aparece “Fotografar a receita” em Ler a caixa. O app lê a receita impressa (ou o PDF e o QR code da receita digital), separa os remédios e mostra um por um para você conferir: está certo, corrigir ou não colocar. Nada é salvo sem o seu sim. É um teste: o leitor pode errar, e letra de mão ele quase não entende. A foto é lida no próprio celular e não fica guardada.</p></div>`;
   if(ajSub==='calmo') return t+`<div class="form">${segCalmo()}<p class="hint">Sem animações e cores mais suaves. A voz só fala quando você toca em Ouvir, e o alarme toca sem voz. Bom para quem se incomoda com estímulos fortes.</p></div>`;
   if(ajSub==='voz') return t+`<div class="form"><p class="label">Voz</p>
-      ${VOZES.length? `<div class="stack">${VOZES.slice(0,6).map((v,n)=>`<button type="button" class="conferi" data-voz="${esc(v.name)}" aria-pressed="${AP.voz===v.name}"><span class="caixa" aria-hidden="true">${AP.voz===v.name?'✓':''}</span><span>Voz ${n+1}<br><span class="small" style="font-weight:400">${natural(v.name)?'Mais natural · precisa de internet':'Funciona sem internet'}</span></span></button>`).join('')}</div>
-        <p class="hint">Toque numa voz para ouvir e escolher.</p>` : `<p class="hint">Nenhuma voz em português encontrada neste celular.</p>`}
+      ${VOZES.length? `<div class="stack">${VOZES.slice(0,6).map((v,n)=>`<button type="button" class="conferi" data-voz="${esc(v.name)}" aria-pressed="${AP.voz===v.name}"><span class="caixa" aria-hidden="true">${AP.voz===v.name?'✓':''}</span><span>Voz ${n+1}<br><span class="small" style="font-weight:400">${v.local?'Funciona sem internet':'Mais natural · precisa de internet'}</span></span></button>`).join('')}</div>
+        <p class="hint">Toque numa voz para ouvir e escolher.</p>` : (VOZ_PT===false?'':`<p class="hint">Nenhuma voz em português encontrada neste celular.</p>`)}
+      ${VOZ_PT===false?`<div class="msg warn" style="margin:0">A voz em português não está instalada. Sem ela, o app pode ficar mudo sem internet.</div><button class="btn btn-ghost" id="bInstVoz" type="button">Instalar a voz em português</button>`:''}
       <p class="label">Velocidade da fala</p>
       <div class="seg">${[[0.8,'Devagar'],[0.92,'Normal'],[1.05,'Rápida']].map(([v,tx])=>`<button type="button" data-vel="${v}" aria-pressed="${(AP.vel||0.92)===v}">${tx}</button>`).join('')}</div>
+      <p class="label">Bipe do microfone</p>
+      <div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-bipe="0" aria-pressed="${AP.bipe===false}">Desligado</button><button type="button" data-bipe="1" aria-pressed="${AP.bipe!==false}">Ligado</button></div>
+      <p class="hint">Um bipe que sobe quando o app começa a ouvir e um que desce quando para. Se o celular já fizer o próprio bipe, pode desligar este.</p>
       <p class="hint">Se todas soarem robóticas, instale a voz do Google: Configurações do celular → Acessibilidade → Conversão de texto em voz → Mecanismo preferido: Google → Português (Brasil).</p></div>`;
   if(ajSub==='dados'){
     if(modoFamilia()) return t+`<div class="form"><div class="field"><label class="label" for="cfgEu">Seu nome</label><input id="cfgEu" value="${esc(S.eu)}" placeholder="Ex.: Ana (filha)" autocomplete="given-name"></div>
@@ -2474,6 +2500,8 @@ function ligarSubAjustes(){
   const amostra='Olá! Eu sou o Remédio Falado. Está na hora do remédio da pressão.';
   document.querySelectorAll('#view-ajustes [data-voz]').forEach(b=>b.onclick=()=>{ AP.voz=b.dataset.voz; aplicarAparencia(); renderAjustes(); ouvir(amostra); });
   document.querySelectorAll('#view-ajustes [data-vel]').forEach(b=>b.onclick=()=>{ AP.vel=+b.dataset.vel; aplicarAparencia(); renderAjustes(); ouvir(amostra); });
+  document.querySelectorAll('#view-ajustes [data-bipe]').forEach(b=>b.onclick=()=>{ AP.bipe=b.dataset.bipe==='1'; aplicarAparencia(); renderAjustes(); if(AP.bipe) bipeAbre(); });
+  on('#bInstVoz','onclick',()=>{ if(TTS&&TTS.openInstall) TTS.openInstall().catch(()=>toast('Abra Configurações → Acessibilidade → Conversão de texto em voz.')); });
   on('#cfgCont','onclick',()=>escolherContato('#cfgFones',(n,f)=>{ if(n) $('#cfgFam').value=n; if(f) $('#cfgWa').value=f; falar(n?'Pronto. Agora toque em salvar.':'Pronto.'); }));
   on('#bCfg','onclick',()=>{ if(S.demo){ toast('Saia da demonstração para usar seus dados.'); return; }
     if(!temConsentimento()){ abrirConsentimento(()=>$('#bCfg').click()); return; }
@@ -2978,7 +3006,7 @@ function montarEstado(){
     mud:(S.mudancas||[]).slice(-5),
     log:S.log.filter(l=>l.dia>=desde).map(l=>[l.dia,l.ag,l.h,l.em]),
     al:(S.alertas||[]).filter(x=>x.ts>Date.now()-7*864e5).slice(-6),
-    en:energiaFalta()?faltasEnergia():[]};
+    en:energiaFalta()?faltasEnergia():[], vz:VOZ_PT===false?1:0};
 }
 function faltasEnergia(){ const f=[]; if(ENER.notif===false) f.push('notificações desligadas'); if(ENER.exato===false) f.push('alarme na hora certa desligado'); if(ENER.bateria===false) f.push('economia de bateria ligada'); if((marcaForte()||marcaSamsung())&&!AP.autoIni) f.push('início automático não confirmado'); return f; }
 let ultimoEstado='', estadoT=null, cfgT=null;
@@ -3380,8 +3408,9 @@ function renderAcomp(){
   } else if(acompTab==='semana'){
     const w=semana(st), al=(e.al||[]).filter(x=>x.t==='caixa'), en=e.en||[];
     h+=gradeSemana(w,nome);
-    if(al.length||en.length) h+=`<h3>Vale olhar</h3>`+al.slice().reverse().map(x=>`<div class="vale">${IC.ler}<div><b>Caixa errada</b><p class="small" style="margin:4px 0 0">${esc(x.txt)}</p></div></div>`).join('')
-      +(en.length?`<div class="vale">${IC.sino}<div><b>O alarme de ${esc(curto(nome))} pode falhar</b><p class="small" style="margin:4px 0 0">No celular de ${esc(curto(nome))}: ${esc(listaFala(en))}. Lá, abra Ajustes → Para o alarme tocar sempre.</p></div></div>`:'');
+    if(al.length||en.length||e.vz) h+=`<h3>Vale olhar</h3>`+al.slice().reverse().map(x=>`<div class="vale">${IC.ler}<div><b>Caixa errada</b><p class="small" style="margin:4px 0 0">${esc(x.txt)}</p></div></div>`).join('')
+      +(en.length?`<div class="vale">${IC.sino}<div><b>O alarme de ${esc(curto(nome))} pode falhar</b><p class="small" style="margin:4px 0 0">No celular de ${esc(curto(nome))}: ${esc(listaFala(en))}. Lá, abra Ajustes → Para o alarme tocar sempre.</p></div></div>`:'')
+      +(e.vz?`<div class="vale">${IC.som}<div><b>Falta a voz em português no celular de ${esc(curto(nome))}</b><p class="small" style="margin:4px 0 0">Sem ela, o app pode ficar mudo sem internet. Lá, abra Ajustes → Voz e velocidade → Instalar a voz em português. Precisa de internet só para baixar.</p></div></div>`:'');
     if(w.tot) h+=`<button class="btn btn-wa" id="bWaAc" type="button">${WA_SVG}Mandar resumo no WhatsApp</button>`;
   } else {
     const g=!!f.gestor && !f.previa, pend=g?(f.pend||[]):[], pedidos=g?(f.pedidos||[]):[];
@@ -3449,6 +3478,10 @@ const vozDisponivel = () => !!(SR || window.SpeechRecognition || window.webkitSp
 /* escuta uma frase; devolve as possibilidades que o reconhecimento entendeu */
 async function escutar(){
   calar(); await espera(250);
+  bipeAbre(); await espera(200);
+  try{ return await escutarJa(); } finally { bipeFecha(); }
+}
+async function escutarJa(){
   if(SR){
     try{ let pm=await SR.checkPermissions(); if(pm.speechRecognition!=='granted'){ await falarE('O celular vai perguntar se eu posso usar o microfone. Toque na opção: durante o uso do app.'); pm=await SR.requestPermissions(); if(pm.speechRecognition!=='granted') throw new Error('permissao'); }
       let r; try{ r=await SR.start({language:'pt-BR',maxResults:5,prompt:'Pode falar',partialResults:false,popup:true}); }

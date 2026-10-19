@@ -1,6 +1,6 @@
 // Ajusta o projeto Android gerado pelo Capacitor:
 // permissões, leitor de código de barras, ícone da notificação, motor de voz,
-// cofre (Android Keystore) e a conexão com a família que roda com o app fechado (JobScheduler).
+// cofre (Android Keystore) e a conexão com a família que roda com o app fechado (JobScheduler + alarme exato do atraso).
 const fs = require('fs'), path = require('path');
 const res = path.join(__dirname, '..', 'android', 'app', 'src', 'main');
 const manifestPath = path.join(res, 'AndroidManifest.xml');
@@ -35,6 +35,17 @@ if (!m.includes('com.google.mlkit.vision.DEPENDENCIES')) {
 if (!m.includes('br.com.remediofalado.app.EloJob')) {
   m = m.replace('</application>', '        <service android:name="br.com.remediofalado.app.EloJob" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />\n    </application>');
 }
+// aviso de atraso para a família na hora certa: alarme exato 30 minutos depois da dose (e remarca ao ligar o celular)
+if (!m.includes('br.com.remediofalado.app.EloAlarme')) {
+  m = m.replace('</application>', `        <receiver android:name="br.com.remediofalado.app.EloAlarme" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    </application>`);
+}
 // receita pelo "Compartilhar" do Android: PDF, foto ou texto (ex.: receita digital que chegou no WhatsApp)
 if (!m.includes('android.intent.action.SEND')) {
   const filtro = mime => `\n            <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="${mime}" />\n            </intent-filter>`;
@@ -52,19 +63,31 @@ fs.writeFileSync(path.join(draw, 'ic_stat_icon.xml'),
   <path android:fillColor="#FFFFFFFF" android:pathData="M8,6h8a6,6 0,0 1,0 12h-8a6,6 0,0 1,0 -12zM8,8a4,4 0,0 0,0 8h3v-8z"/>
 </vector>
 `);
-// assinatura fixa: assim cada APK novo instala por cima do anterior, sem apagar os dados
+// assinatura fixa: assim cada APK novo instala por cima do anterior, sem apagar os dados.
+// A versão "release" (a que vai para as pessoas) usa a mesma chave da antiga versão de teste,
+// então quem já tem o app instalado só atualiza, sem perder os remédios.
 const gradlePath = path.join(__dirname, '..', 'android', 'app', 'build.gradle');
 let g = fs.readFileSync(gradlePath, 'utf8');
 if (!g.includes('remedio-falado-teste.jks')) {
-  g = g.replace(/android \{/, `android {
-    signingConfigs {
-        debug {
+  const chave = `
             storeFile file("../../keystore/remedio-falado-teste.jks")
             storePassword "remediofalado"
             keyAlias "remediofalado"
-            keyPassword "remediofalado"
+            keyPassword "remediofalado"`;
+  g = g.replace(/buildTypes \{\s*release \{/, m0 => m0 + '\n            signingConfig signingConfigs.release');
+  g = g.replace(/android \{/, `android {
+    signingConfigs {
+        debug {${chave}
         }
+        release {${chave}
+        }
+    }
+    // a checagem automática do Android não trava a versão final (os testes do app rodam à parte)
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
     }`);
+  if (!g.includes('signingConfig signingConfigs.release')) throw new Error('Não achei buildTypes.release no build.gradle');
 }
 // plugins próprios: "Energia" (bateria e início automático), "Cofre" (chave no Android Keystore), "Elo" (família) e "Receita" (ler a receita)
 const javaDir = path.join(res, 'java', 'br', 'com', 'remediofalado', 'app');

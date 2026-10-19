@@ -1,5 +1,6 @@
 package br.com.remediofalado.app;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -34,7 +35,8 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * Conexão com a família, com o app fechado.
  * A cada 15 minutos (JobScheduler do Android):
- *  - no celular de quem toma o remédio: se uma dose passou 30 minutos sem ser marcada, manda o aviso para a família;
+ *  - no celular de quem toma o remédio: se uma dose passou 30 minutos sem ser marcada, manda o aviso para a família
+ *    (e um alarme exato, EloAlarme, acorda o celular 31 minutos depois de cada dose para o aviso não atrasar);
  *  - nos dois celulares: busca mensagens novas e mostra a notificação;
  *  - no celular de quem cuida dos remédios (modo gestor): reenvia, de 6 em 6 horas, a mudança que o outro celular ainda não confirmou.
  * Tudo que passa pelo servidor vai criptografado de ponta a ponta (AES-256-GCM). O servidor não consegue ler.
@@ -67,6 +69,7 @@ final class Elo {
     }
 
     static void agendar(Context ctx) {
+        try { agendarAtraso(ctx); } catch (Throwable t) { }
         JobScheduler js = (JobScheduler) ctx.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (js == null) return;
         if (!temCanais(config(ctx))) { js.cancel(JOB_PERIODICO); return; }
@@ -76,6 +79,58 @@ final class Elo {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPersisted(true)
                 .build());
+    }
+
+    /* alarme exato 31 minutos depois da próxima dose ainda não marcada (só no celular de quem toma) */
+    static void agendarAtraso(Context ctx) {
+        AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+        if (am == null) return;
+        Intent i = new Intent(ctx, EloAlarme.class);
+        i.setAction(EloAlarme.ACAO);
+        PendingIntent pi = PendingIntent.getBroadcast(ctx, 7103, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        long quando = proximaConferencia(config(ctx), System.currentTimeMillis());
+        if (quando <= 0) { am.cancel(pi); return; }
+        try {
+            if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, quando, pi);
+            else am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, quando, pi);
+        } catch (SecurityException e) {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, quando, pi);
+        }
+    }
+
+    static long proximaConferencia(JSONObject cfg, long agora) {
+        if (cfg == null) return 0;
+        JSONArray canais = cfg.optJSONArray("canais"), doses = cfg.optJSONArray("doses");
+        if (canais == null || doses == null || doses.length() == 0) return 0;
+        boolean meu = false;
+        for (int i = 0; i < canais.length(); i++) {
+            JSONObject c = canais.optJSONObject(i);
+            if (c != null && "idoso".equals(c.optString("papel", "idoso"))) meu = true;
+        }
+        if (!meu) return 0;
+        Set<String> tomados = new HashSet<>();
+        JSONArray t = cfg.optJSONArray("tomados");
+        boolean cfgHoje = hoje().equals(cfg.optString("dia"));
+        if (cfgHoje && t != null) for (int i = 0; i < t.length(); i++) tomados.add(t.optString(i));
+        long melhor = 0;
+        for (int i = 0; i < doses.length(); i++) {
+            JSONObject d = doses.optJSONObject(i);
+            if (d == null) continue;
+            String h = d.optString("h");
+            int m = toMin(h);
+            if (m < 0) continue;
+            for (int dia = 0; dia <= 1; dia++) {
+                if (dia == 0 && cfgHoje && tomados.contains(h)) continue;
+                Calendar c = Calendar.getInstance();
+                c.setTimeInMillis(agora);
+                c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
+                c.add(Calendar.DAY_OF_MONTH, dia);
+                c.add(Calendar.MINUTE, m + 31);
+                long q = c.getTimeInMillis();
+                if (q > agora + 5000) { if (melhor == 0 || q < melhor) melhor = q; break; }
+            }
+        }
+        return melhor;
     }
 
     static void agora(Context ctx) {
