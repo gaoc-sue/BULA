@@ -821,7 +821,7 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--a
     <div class="block"><p class="label">Lista dos postos de saúde</p><p>Com internet, o app baixa uma vez por dia a lista pública de estoque dos postos (dados abertos da Prefeitura do Recife, licença ODbL). Nesse download o app não envia nenhum dado seu.</p></div>
     <div class="block"><p class="label">7. Como apagar seus dados</p><p>Em Ajustes, toque em "Retirar consentimento e apagar tudo". Isso também desliga a conexão com a família e avisa o outro celular. Desinstalar o app também apaga tudo.</p></div>
     <div class="block"><p class="label">8. Quem fez</p><p>Protótipo acadêmico do Squad 4 · CESAR School (Recife/PE), 2026. Os dados são tratados conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).</p></div>
-    <button class="btn btn-main" id="termosOuvir" type="button">${IC.som}Ouvir o resumo</button>
+    <button class="btn btn-main" id="termosOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>Ouvir o resumo</button>
     <button class="btn btn-pill" id="termosFechar" type="button">Entendi</button></div></div>
 <div class="bv" id="voz" hidden role="dialog" aria-modal="true" aria-labelledby="vozT" style="z-index:15"><div class="bv-in-wrap" style="justify-content:flex-start" id="vozIn"></div></div>
 <button class="falar-fab" id="falarBtn" type="button" hidden aria-label="Falar com o app"></button>
@@ -2477,9 +2477,9 @@ function ligarSubAjustes(){
   on('#cfgCont','onclick',()=>escolherContato('#cfgFones',(n,f)=>{ if(n) $('#cfgFam').value=n; if(f) $('#cfgWa').value=f; falar(n?'Pronto. Agora toque em salvar.':'Pronto.'); }));
   on('#bCfg','onclick',()=>{ if(S.demo){ toast('Saia da demonstração para usar seus dados.'); return; }
     if(!temConsentimento()){ abrirConsentimento(()=>$('#bCfg').click()); return; }
-    S.pessoa=$('#cfgNome').value.trim(); S.familiar=$('#cfgFam').value.trim(); S.whats=$('#cfgWa').value.trim(); save(); agendarAlarmes(false);
+    S.pessoa=limparNome($('#cfgNome').value,false).trim(); S.familiar=limparNome($('#cfgFam').value,true).trim(); S.whats=$('#cfgWa').value.trim(); save(); agendarAlarmes(false);
     $('#cfgMsg').textContent='Salvo.'; toast('Salvo.'); falar('Salvo.'); });
-  on('#bCfgEu','onclick',()=>{ S.eu=$('#cfgEu').value.trim(); save(); $('#cfgMsg').textContent='Salvo.'; toast('Salvo.'); });
+  on('#bCfgEu','onclick',()=>{ S.eu=limparNome($('#cfgEu').value,true).trim(); save(); $('#cfgMsg').textContent='Salvo.'; toast('Salvo.'); });
   on('#bApagar','onclick',()=>{ if(confirma!=='apagar'){ confirma='apagar'; renderAjustes(); falar('Toque de novo para apagar.'); return; }
     confirma=''; apagarTudo('Consentimento retirado. Seus dados foram apagados deste celular.'); });
   on('#bPararGest','onclick',()=>{ if(confirma!=='gest'){ confirma='gest'; renderAjustes(); falar('Toque de novo para confirmar.'); return; }
@@ -2740,6 +2740,14 @@ function ean13svg(code){
   return `<svg viewBox="0 0 ${w} 62" role="img" aria-label="Código de barras ${code}"><rect width="${w}" height="62" fill="var(--bar-paper)"/><g fill="var(--bar-ink)">${rects}</g><text x="${w/2}" y="60" font-size="8" text-anchor="middle" fill="var(--bar-ink)" font-family="monospace">${code}</text></svg>`;
 }
 
+/* ---------- nomes: só letras (com acento), espaço, apóstrofo, hífen e ponto; no nome da família, também parênteses ("Ana (filha)").
+   Número e símbolo simplesmente não entram: sem mensagem de erro, que assusta quem tem pouca prática com celular. ---------- */
+const NOME_OK="A-Za-zÀ-ÖØ-öø-ÿĀ-ſ' ’.\\-";
+function limparNome(t,par){ return String(t||'').replace(new RegExp('[^'+NOME_OK+(par?'()':'')+']','g'),'').replace(/\s{2,}/g,' ').replace(/^\s+/,''); }
+const CAMPO_NOME={bvNome:false,cfgNome:false,bvFam:true,cfgFam:true,cfgEu:true,eloEu:true};
+document.addEventListener('input',e=>{ const el=e.target; if(!el||!el.id||!(el.id in CAMPO_NOME)) return;
+  const v=el.value, n=limparNome(v,CAMPO_NOME[el.id]); if(n===v) return;
+  const pos=Math.max(0,(el.selectionStart||n.length)-(v.length-n.length)); el.value=n; try{ el.setSelectionRange(pos,pos); }catch(x){} });
 /* ---------- boas-vindas (primeiro uso) ---------- */
 let passo=0, bvAberto=false, bvOutro=false;
 function abrirBoasVindas(){ passo=0; bvAberto=true; $('#bv').hidden=false; renderBV(); guiarBV(); }
@@ -2837,9 +2845,9 @@ function renderBV(){
     $('#bvComecar').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; save(); seg(); }); };
     const bvz=$('#bvVoz'); if(bvz) bvz.onclick=()=>{ AP.vozGuia=true; aplicarAparencia(); falarE('Pronto. Vou falar com você em cada tela e ouvir a sua resposta. Quando eu terminar de falar, responda.').then(()=>$('#bvComecar').click()); }; $('#bvDemo').onclick=()=>{ S=seed(); normalizar(); save(); agendarAlarmes(false); fecharBV(()=>falar('Esta é a demonstração, com a Dona Lúcia.')); };
     $('#bvSouFam').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; S.papel='familia'; save(); fecharBV(()=>abrirSeguir()); },'familia'); }; }
-  if(passo===1){ $('#bvOk').onclick=()=>{ S.pessoa=$('#bvNome').value.trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
+  if(passo===1){ $('#bvOk').onclick=()=>{ S.pessoa=limparNome($('#bvNome').value,false).trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
   if(passo===2 && $('#bvCont')) $('#bvCont').onclick=()=>escolherContato('#bvFones',(n,f)=>{ if(n) $('#bvFam').value=n; if(f) $('#bvWa').value=f; falar(n?'Pronto. '+n+' vai receber os avisos.':'Pronto.'); });
-  if(passo===2){ $('#bvOk').onclick=()=>{ S.familiar=$('#bvFam').value.trim(); S.whats=$('#bvWa').value.trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
+  if(passo===2){ $('#bvOk').onclick=()=>{ S.familiar=limparNome($('#bvFam').value,true).trim(); S.whats=$('#bvWa').value.trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
   if(passo===3){ $('#bvLer').onclick=()=>fecharBV(()=>{ go('ler'); if(SCAN) lerNativo(); }); $('#bvDepois').onclick=()=>fecharBV(); }
   const t=$('#bvT'); if(t) t.focus && t.setAttribute('tabindex','-1');
 }
@@ -3207,7 +3215,7 @@ function renderElo(erro){
   on('eloDeNovo',()=>{ if(c.modo==='conectar') abrirConectar(); else { conv={modo:'seguir',passo:'codigo'}; renderElo(); } });
   on('eloAceitar',()=>aceitarPedido());
   on('eloRecusar',async()=>{ try{ await relayPost(c.topico, await cifrarElo(c.chave,{t:'recusado',para:c.pedido.pub.slice(0,16)})); }catch(e){} fecharElo(); toast('Tudo bem. Ninguém foi conectado.'); });
-  on('eloSeg',()=>{ const n=$('#eloEu').value.trim(); if(!n){ toast('Escreva seu nome.'); return; } S.eu=n; save(); c.passo='codigo'; renderElo(); });
+  on('eloSeg',()=>{ const n=limparNome($('#eloEu').value,true).trim(); if(!n){ toast('Escreva seu nome.'); return; } S.eu=n; save(); c.passo='codigo'; renderElo(); });
   on('eloSoAcomp',()=>{ c.gestor=false; c.passo=S.eu?'codigo':'nome'; renderElo(); });
   on('eloGestor',()=>{ c.gestor=true; c.passo=S.eu?'codigo':'nome'; renderElo(); });
   on('eloAceitarSo',()=>aceitarPedido(false));
@@ -3517,7 +3525,7 @@ function confirmar(pergunta){
 /* ----- conversa por voz guiada: o app fala cada tela e ouve a resposta (para quem não lê) ----- */
 let vozSeq=0;
 function fabOuvindo(on){ const b=$('#falarBtn'); if(!b) return; b.classList.toggle('ouvindo',!!on); b.innerHTML=`<span class="fab-in">${IC.mic}<span>${on?'Ouvindo… pode falar':'Falar'}</span></span>`; }
-const nomeFalado = t => String(t||'').replace(/^(meu nome (e|é)|eu sou (a |o )?|me chamo|o nome (e|é)|ela se chama|ele se chama|é a|é o)\s*/i,'').replace(/[.,!?]/g,'').replace(/\s+/g,' ').trim()
+const nomeFalado = t => String(t||'').replace(/^(meu nome (e|é)|eu sou (a |o )?|me chamo|o nome (e|é)|ela se chama|ele se chama|é a|é o)\s*/i,'').replace(/[.,!?]/g,'').replace(/[0-9]/g,'').replace(/\s+/g,' ').trim()
   .split(' ').filter(Boolean).map((w,i)=>i&&/^(da|de|do|das|dos|e)$/i.test(w)?w.toLowerCase():cap(w.toLowerCase())).join(' ');
 const PARENTES=['filha','filho','neta','neto','irmã','irmão','mãe','pai','esposa','marido','sobrinha','sobrinho','nora','genro','cuidadora','cuidador','vizinha','vizinho'];
 function nomeFamFalado(t){ let rel=''; const n=String(t||'').replace(/\b(minha|meu|a|o)\s+(\S+)\b/gi,(m,a,w)=>{ const k=PARENTES.find(p=>sem(p)===sem(w)); if(k&&!rel){ rel=k; return ''; } return m; });
