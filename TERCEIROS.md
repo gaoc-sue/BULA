@@ -2,7 +2,8 @@
 
 - **pdf.js** 2.16.105 (Mozilla), licença Apache 2.0: leitura do PDF da bula.
 - **ZXing** (@zxing/library), licença Apache 2.0: leitura de código de barras no navegador e desenho do QR code da conexão com a família.
-- **Atkinson Hyperlegible** (Braille Institute), licença SIL Open Font.
+- **Inter** (Rasmus Andersson), licença SIL Open Font 1.1: fonte do app (subconjunto em `www/fonts/inter-*.woff2`).
+- **Atkinson Hyperlegible** (Braille Institute), licença SIL Open Font: fonte de reserva.
 - **Textos das bulas em `www/bulas.json`**: bulas do paciente oficiais do Bulário Eletrônico da Anvisa,
   extraídas com o projeto buladiff — Copyright (c) 2026 Vitor, licença MIT
   (https://github.com/vasfvitor/buladiff). Os dados do fabricante foram retirados.

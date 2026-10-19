@@ -48,6 +48,9 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   - os remédios;
   - um bloco "Vale olhar", com caixa errada e alarme que pode falhar.
 
+  **Mensagens grandes vão em partes:** o servidor de passagem gratuito só aceita 4 KB por mensagem; acima disso, a mensagem vira um anexo que o app não lê e que some em 3 horas (era por isso que o pareamento parava depois de algumas horas, com muitos remédios). Agora o resumo, já criptografado, vai em partes de 3.000 caracteres e é montado de novo no outro celular (no app e no Android com o app fechado). Se o servidor pedir para esperar (limite de mensagens), o app espera 5 minutos e tenta de novo, sem desfazer a conexão. Ao abrir o app, a família pede o resumo atualizado e quem toma o remédio reenvia o seu se estiver velho.
+  **Estado da conexão** (Família ou Ajustes): último envio, última notícia do outro celular, último erro em português e "Testar conexão agora" (o outro celular responde sozinho, até com o app fechado). Na família, depois de 3 horas sem notícia, aparece um aviso claro com o atalho para essa tela.
+
   Se uma dose passar 30 minutos sem ser marcada, a família recebe uma notificação sozinha, mesmo com os dois apps fechados. Isso roda numa tarefa do Android (JobScheduler) a cada 15 minutos; com o celular parado, o Android pode atrasar o aviso.
 - **Modo gestor (alguém capaz cuida dos remédios):** ao conectar, a pessoa da família escolhe "Acompanhar e cuidar dos remédios" (filho, mãe, cuidadora, farmacêutica). Quem toma o remédio vê o pedido e escolhe: aceitar, aceitar só para acompanhar ou não aceitar. Depois:
   - o gestor lê a caixa no celular dele, responde as 4 perguntas copiando da receita, e a mudança vai criptografada para o celular de quem toma;
@@ -77,9 +80,11 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 - **Sem gênero fixo:** os textos usam o nome da pessoa ("Ligar para Seu Antônio", "celular de Dona Lúcia") em vez de "ela/dela".
 - **Um caminho por vez:** a bula abre por "Ler a bula"; o QR code e o site da Anvisa só aparecem se a bula não abrir. "Testar sem caixa" e "Ver como a família vê" só existem no modo demonstração. O WhatsApp só aparece quando ninguém está conectado.
-- **Boas-vindas com 3 escolhas** (Começar, Usar falando, Sou da família); tamanho da letra e modo calmo em "Mais opções" ou por voz ("letra maior").
+- **Boas-vindas com uma pergunta só: "Quem vai usar este celular?"** Duas escolhas grandes: "Eu tomo os remédios" e "Cuido de alguém da família". Embaixo: "Estou arrumando o celular de outra pessoa" (a filha que instala no celular da mãe: a mãe aceita os termos, quem ajuda coloca o nome e os remédios dela, e no fim o app lembra de entregar o celular), "Prefiro usar falando", "Ver demonstração" e "Privacidade e termos". Sem cadastro e sem CPF.
+- **Caminho da família:** a primeira pergunta é "Como você vai ajudar?": "Só acompanhar" ou "Cuidar dos remédios" (modo gestor). Quem toma o remédio não vê nada sobre gestor no início: o pedido só aparece quando a família pede, e a pessoa aceita ou não.
+- **Sistema visual azul (outubro de 2026):** azul para seguir, verde para TOMEI, laranja (com texto escuro) para remédio de graça e atenção, roxo para ouvir, falar e receita, cinza para texto de apoio. Fonte Inter, dentro do app. Todas as cores conferidas pela WCAG 2.2 (texto 4,5:1, bordas 3:1); o verde e o cinza da proposta original foram escurecidos para passar.
 
-- Letra Atkinson Hyperlegible, feita para baixa visão, de Normal a Muito grande (130%).
+- Letra Inter (com Atkinson Hyperlegible de reserva), de Normal a Muito grande (130%).
 - Contraste alto, modo escuro e **Modo calmo** (sem animações e voz só quando a pessoa pede).
 - Tudo o que aparece na tela pode ser ouvido pelo botão "Ouvir".
 - Botão Voltar do Android funciona: fecha a janela aberta ou volta uma tela.

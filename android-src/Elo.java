@@ -111,12 +111,12 @@ final class Elo {
             String topic = c.optString("topic"), key = c.optString("key");
             if (topic.isEmpty() || key.isEmpty()) continue;
             JSONArray pend = c.optJSONArray("pend");
-            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0), pend); } catch (Exception e) { /* sem internet: tenta na próxima */ }
+            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0), pend, c.optString("estado", "")); } catch (Exception e) { /* sem internet: tenta na próxima */ }
             if ("familia".equals(papel) && pend != null && pend.length() > 0) reenviar(st, relay, topic, pend);
             // sinal de vida: reenvia o último resumo de 2 em 2 horas (já criptografado pelo app)
             String estado = c.optString("estado", "");
             if ("idoso".equals(papel) && !estado.isEmpty() && System.currentTimeMillis() - st.getLong("pulso:" + topic, 0) > PULSO_MS) {
-                try { publicar(relay, topic, estado); st.edit().putLong("pulso:" + topic, System.currentTimeMillis()).apply(); } catch (Exception e) { }
+                try { publicarTudo(relay, topic, estado); st.edit().putLong("pulso:" + topic, System.currentTimeMillis()).apply(); } catch (Exception e) { }
             }
         }
     }
@@ -222,7 +222,7 @@ final class Elo {
         st.edit().putStringSet("conf:" + topic, conf).apply();
     }
 
-    private static void buscar(Context ctx, SharedPreferences st, String relay, String topic, String key, String papel, long vistoApp, JSONArray pend) throws Exception {
+    private static void buscar(Context ctx, SharedPreferences st, String relay, String topic, String key, String papel, long vistoApp, JSONArray pend, String estado) throws Exception {
         long desde = Math.max(st.getLong("desde:" + topic, 0), vistoApp);
         if (desde == 0) desde = System.currentTimeMillis() / 1000 - 15 * 60;
         Set<String> vistos = new HashSet<>(st.getStringSet("ids:" + topic, new HashSet<String>()));
@@ -231,6 +231,7 @@ final class Elo {
         HttpURLConnection c = (HttpURLConnection) new URL(relay + "/" + topic + "/json?poll=1&since=" + desde).openConnection();
         c.setConnectTimeout(15000); c.setReadTimeout(20000);
         long maior = desde;
+        java.util.Map<String, String[]> partes = new java.util.HashMap<>();
         try (BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream(), StandardCharsets.UTF_8))) {
             String linha;
             while ((linha = r.readLine()) != null) {
@@ -242,11 +243,46 @@ final class Elo {
                 if (t > maior) maior = t;
                 if (vistos.contains(id) || t < vistoApp) continue;
                 vistos.add(id);
+                String corpo = ev.optString("message");
+                // mensagem grande chega em partes (rfp1.<id>.<i>.<n>.<pedaço>): junta antes de abrir
+                if (corpo.startsWith("rfp1.")) {
+                    String[] q = corpo.split("\\.", 5);
+                    if (q.length < 5) continue;
+                    int i, n;
+                    try { i = Integer.parseInt(q[2]); n = Integer.parseInt(q[3]); } catch (Exception e) { continue; }
+                    if (n < 1 || n > 20 || i < 0 || i >= n) continue;
+                    String[] ps = partes.get(q[1]);
+                    if (ps == null) { ps = new String[n]; partes.put(q[1], ps); }
+                    if (ps.length != n) continue;
+                    ps[i] = q[4];
+                    StringBuilder sb = new StringBuilder();
+                    boolean completo = true;
+                    for (String x : ps) { if (x == null) { completo = false; break; } sb.append(x); }
+                    if (!completo) continue;
+                    partes.remove(q[1]);
+                    corpo = sb.toString();
+                }
                 String txt;
-                try { txt = decifrar(key, ev.optString("message")); } catch (Exception e) { continue; }
+                try { txt = decifrar(key, corpo); } catch (Exception e) { continue; }
                 JSONObject msg = new JSONObject(txt);
                 if (papel.equals(msg.optString("de"))) continue;
                 if ("familia".equals(papel) && "estado".equals(msg.optString("t"))) { confirmar(st, topic, msg, pend); continue; }
+                boolean recente = System.currentTimeMillis() - t * 1000 < 30L * 60 * 1000;
+                // a família pediu o resumo atualizado (ao abrir o app): manda o último, com o app fechado
+                if ("idoso".equals(papel) && "pedirEstado".equals(msg.optString("t")) && recente && !estado.isEmpty()
+                        && System.currentTimeMillis() - st.getLong("respEstado:" + topic, 0) > 60 * 1000) {
+                    try { publicarTudo(relay, topic, estado); st.edit().putLong("respEstado:" + topic, System.currentTimeMillis()).apply(); } catch (Exception e) { }
+                    continue;
+                }
+                // teste de conexão: responde "estou aqui"
+                if ("ping".equals(msg.optString("t")) && recente) {
+                    try {
+                        JSONObject resp = new JSONObject();
+                        resp.put("de", papel); resp.put("t", "pong"); resp.put("pid", msg.optString("pid")); resp.put("ts", System.currentTimeMillis()); resp.put("via", "android");
+                        publicar(relay, topic, cifrar(key, resp.toString()));
+                    } catch (Exception e) { }
+                    continue;
+                }
                 // pedido de ajuda: responde "recebi" para o celular de quem pediu saber que o aviso chegou
                 if ("familia".equals(papel) && "socorro".equals(msg.optString("t")) && !msg.optString("sid").isEmpty()
                         && !acks.contains(msg.optString("sid")) && System.currentTimeMillis() - t * 1000 < 30L * 60 * 1000) {
@@ -271,6 +307,11 @@ final class Elo {
     }
 
     /* ---------------- servidor de passagem (ntfy) ---------------- */
+    /** o app guarda a mensagem grande já dividida em partes, uma por linha */
+    static void publicarTudo(String relay, String topic, String corpo) throws Exception {
+        for (String parte : corpo.split("\n")) if (!parte.isEmpty()) publicar(relay, topic, parte);
+    }
+
     static void publicar(String relay, String topic, String corpo) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(relay + "/" + topic).openConnection();
         c.setConnectTimeout(15000); c.setReadTimeout(20000);
