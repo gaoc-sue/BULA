@@ -90,6 +90,10 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 - Botão Voltar do Android funciona: fecha a janela aberta ou volta uma tela.
 - Cada remédio tem cor e inicial (ou a foto da caixa), para não depender só da cor.
 - **Sinais sem palavras:** um bipe que sobe quando o app começa a ouvir e um que desce quando para (desliga em Ajustes → Voz e velocidade, se o celular já fizer o próprio bipe). Ao ler a caixa, o QR code ou a receita, o celular vibra: uma vibração longa quando reconheceu, duas curtas quando não reconheceu (plugin `@capacitor/haptics`).
+- **Ajustes do teste com usuários (outubro de 2026):**
+  - **Tela de aceitar curta:** três frases grandes (os dados ficam só neste celular; a família só vê se você conectar; dá para apagar tudo), um botão "Concordo" e "Ouvir". O resto (o que é guardado, criptografia, base legal e os termos) fica em "Ver detalhes". Antes era uma caixinha e depois um botão, e a pessoa se perdia.
+  - **Fala curta depois de colocar um remédio:** "Pronto. Vou lembrar o remédio da pressão na hora certa." A tela "Para o alarme tocar sempre" só abre depois que a fala termina, para não cortar a frase. A velocidade normal da voz passou para 1,0 (Devagar 0,85, Rápida 1,12).
+  - **Voz mais tolerante:** o reconhecimento do Google erra com quem fala baixo, devagar ou com sotaque. Antes de entender, o app aproxima as palavras-chave com uma letra de diferença ("tumei", "to mei" = tomei; "socoro" = socorro) e aceita mais formas de sim e não ("aham", "é", "tá bom", "num"). Depois de uma tentativa sem entender, o app pede para tocar no botão e mostra os botões grandes, em vez de insistir na voz.
 - **Voz em português instalada:** o app confere se o celular tem a voz em português. Se faltar, avisa em Ajustes → Voz e velocidade, com o botão "Instalar a voz em português", e mostra no "Vale olhar" da família. As vozes que funcionam sem internet vêm primeiro, para o alarme falar mesmo sem sinal.
 
 ## Segurança e criptografia
@@ -104,7 +108,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 ## Conformidade (LGPD e Ato Médico)
 
-- **Consentimento específico e destacado** para dados de saúde (LGPD, art. 11, I), com versão nova quando os termos mudam. Há um consentimento próprio para quem acompanha.
+- **Consentimento específico e destacado** para dados de saúde (LGPD, art. 11, I), com versão nova quando os termos mudam. O aceite é um toque em "Concordo", depois de três frases curtas; os detalhes ficam a um toque, em "Ver detalhes". Há um consentimento próprio para quem acompanha.
 - **Medidas de segurança** (LGPD, art. 46): criptografia no aparelho e de ponta a ponta.
 - **Compartilhamento só com aceite** de quem toma o remédio, e qualquer um dos dois pode desligar a conexão.
 - **Reproduzir, não recomendar** (Lei 12.842/2013): os textos sobre remédios são trechos literais da bula oficial; quem define dose e horário é a receita.

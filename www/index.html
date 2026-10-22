@@ -106,7 +106,7 @@ button,input,select{font:inherit;color:inherit}
 [data-calmo] .rx-lendo{animation:none}
 #rx .btn[disabled]{opacity:.45;cursor:not-allowed}
 #rxIn{gap:14px}
-body.com-falar #rx .bv-in-wrap,body.com-falar #wiz .bv-in-wrap{padding-bottom:110px}
+body.com-falar #rx .bv-in-wrap,body.com-falar #wiz .bv-in-wrap,body.com-falar #consent .bv-in-wrap{padding-bottom:110px}
 .msg.info{background:var(--sunk)} .msg.ok{background:var(--ok-soft);color:var(--ok)}
 .msg.warn{background:var(--warn-soft);color:var(--warn)} .msg.bad{background:var(--bad-soft);color:var(--bad)}
 .manual{display:flex;gap:8px}
@@ -535,6 +535,13 @@ body.com-nav .wrap{padding-bottom:120px}
 .res-cab .foto{width:84px;height:84px}
 .res-cab .dot{width:52px;height:52px;font-size:24px;margin:0}
 details.mais{border:2.5px solid var(--line);border-radius:18px;background:var(--surface)}
+/* tela de aceitar: 3 frases grandes, uma por linha, com ícone */
+.cons-ls{display:flex;flex-direction:column;gap:12px;margin:4px 0 6px}
+.cons-l{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:center;background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:14px 16px}
+.cons-l svg{width:36px;height:36px;color:var(--accent);justify-self:center}
+.cons-l p{margin:0;font-size:1.2rem;line-height:1.4}
+.cons-sim{min-height:76px;font-size:1.35rem}
+.cons-mais .in p{font-size:1.05rem}
 details.mais > summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:68px;padding:12px 16px;font-weight:700;font-size:1.15rem}
 details.mais > summary::-webkit-details-marker{display:none}
 details.mais > summary::after{content:"+";font-size:1.6rem;color:var(--accent)}
@@ -1029,6 +1036,7 @@ const segCalmo = () => `<div class="seg" style="grid-template-columns:repeat(2,m
 function aplicarAparencia(){ const r=document.documentElement; r.style.setProperty('--escala',AP.escala); if(AP.contraste) r.setAttribute('data-contraste','1'); else r.removeAttribute('data-contraste');
   if(AP.calmo) r.setAttribute('data-calmo','1'); else r.removeAttribute('data-calmo');
   try{ localStorage.setItem(AP_KEY,JSON.stringify(AP)); }catch(e){} }
+{ const V={0.8:0.85,0.92:1,1.05:1.12}; if(AP.vel in V){ AP.vel=V[AP.vel]; aplicarAparencia(); } }
 aplicarAparencia();
 
 /* ---------- voz ---------- */
@@ -1074,7 +1082,7 @@ function vibrar(tipo){
 function falar(t){ if(AP.calmo) return; ouvir(t); }
 /* fala pedida pela pessoa: sempre fala */
 function ouvir(t){
-  const v=vozAtual(), rate=AP.vel||0.92;
+  const v=vozAtual(), rate=AP.vel||1;
   if(TTS){
     const opc={text:t,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'};
     if(v) opc.voice=v.i;
@@ -1267,7 +1275,7 @@ async function ouvirLongo(t){
   const partes=[]; let at='';
   (String(t).replace(/\n+/g,' ').match(/[^.;:!?]+[.;:!?]*\s*/g)||[]).map(f=>f.trim()).filter(Boolean).forEach(f=>{ if((at+' '+f).length>1100 && at){ partes.push(at); at=f; } else at=at?at+' '+f:f; });
   if(at) partes.push(at);
-  const id=++longoId, v=vozAtual(), rate=AP.vel||0.92;
+  const id=++longoId, v=vozAtual(), rate=AP.vel||1;
   if(TTS){ await TTS.stop().catch(()=>{}); for(const p of partes){ if(id!==longoId) return; const o={text:p,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'}; if(v) o.voice=v.i;
       try{ await TTS.speak(o); }catch(e){ try{ delete o.voice; await TTS.speak(o); }catch(x){ semVoz(); return; } } } return; }
   if(!('speechSynthesis' in window)){ toast('Este aparelho não tem voz. Leia o texto na tela.'); return; }
@@ -1330,34 +1338,41 @@ const CONSENT_VERSAO='2026-10b';
 let consDepois=null, consMarcado=false, consModo='novo', consVia='';
 function temConsentimento(){ return S.demo || (S.consentimento && S.consentimento.versao===CONSENT_VERSAO); }
 function abrirConsentimento(depois,modo){ consDepois=depois; consMarcado=false; consModo=modo||'novo'; $('#consent').hidden=false; $('#consent').scrollTop=0; renderConsentimento();
-  perguntarVoz((consModo==='familia'?FALA_CONS_FAM:FALA_CONS).replace('Para continuar, toque em concordo.','Para continuar, toque na caixinha, concordo, e depois no botão azul, com o sinal de certo, continuar.'), 'Você concorda? Diga: eu concordo. Ou diga não.', ms=>tratarContexto('consent',ms)); }
-const FALA_CONS='Seus dados de saúde. Para lembrar seus remédios, o app precisa guardar neste celular os remédios, as quantidades, os horários e o que você marcou como tomado. Se você quiser, também guarda fotos das caixas e o contato da família. Tudo fica neste celular, criptografado. Só vai para a família se você conectar o celular de alguém, e vai embaralhado. Você pode apagar quando quiser. Para continuar, toque em concordo.';
-const FALA_CONS_FAM='Dados de saúde de quem você acompanha. Depois que a pessoa aceitar, o app guarda neste celular os remédios, os horários e o que foi marcado como tomado. Fica criptografado e serve só para você acompanhar. Você pode apagar quando quiser. Para continuar, toque em concordo.';
+  perguntarVoz((consModo==='familia'?FALA_CONS_FAM:FALA_CONS).replace('Se concorda, toque em concordo.','Se concorda, toque no botão azul, concordo.'), 'Você concorda? Diga: sim. Ou diga: não.', ms=>tratarContexto('consent',ms)); }
+const FALA_CONS='Para lembrar seus remédios, o app guarda os remédios e os horários só neste celular. A família só vê se você conectar o celular dela. Você pode apagar tudo quando quiser. Se concorda, toque em concordo.';
+const FALA_CONS_FAM='Depois que a pessoa aceitar, o app guarda neste celular os remédios e os horários dela, só para você acompanhar. Você pode apagar quando quiser. Se concorda, toque em concordo.';
 function renderConsentimento(erro){
   const fam=consModo==='familia';
-  $('#consIn').innerHTML=(fam?`<h2 id="consT" tabindex="-1">Dados de quem você acompanha</h2>
-    <p>Depois que a pessoa <b>aceitar</b> no próprio celular, o app guarda <b>neste celular</b>:</p>
-    <ul class="stack" style="margin:0;padding-left:22px;font-size:1.1rem"><li>os remédios e os horários da pessoa;</li><li>o que foi marcado como tomado e os avisos.</li></ul>
-    <div class="passo-e"><p><b>Criptografado.</b> Fica embaralhado neste celular e chega embaralhado do outro celular (criptografia de ponta a ponta). Ninguém no caminho consegue ler.</p></div>
-    <div class="passo-e"><p><b>Só para acompanhar.</b> A pessoa pode desligar quando quiser, e você também: Ajustes → Família.</p></div>`
-   :`<h2 id="consT" tabindex="-1">Seus dados de saúde</h2>
-    <p>Para lembrar seus remédios, o app precisa guardar <b>neste celular</b>:</p>
-    <ul class="stack" style="margin:0;padding-left:22px;font-size:1.1rem">
-      <li>os remédios, as quantidades e os horários;</li><li>o que você marcou como tomado;</li>
-      <li>se você quiser: fotos das caixas e o contato da família.</li></ul>
-    <div class="passo-e"><p><b>Fica neste celular, criptografado.</b> O Squad 4 e a prefeitura não recebem nada. Não tem cadastro.</p></div>
-    <div class="passo-e"><p><b>Família, só se você quiser.</b> Se você conectar o celular de alguém da família, essa pessoa vê seus remédios e o que você marcou. Vai embaralhado (criptografia de ponta a ponta).</p></div>
-    <div class="passo-e"><p><b>Você manda em tudo.</b> Pode apagar quando quiser, em Ajustes → Retirar consentimento e apagar tudo.</p></div>`)+`
-    <p class="small muted">Base legal: consentimento para dados de saúde (Lei Geral de Proteção de Dados, Lei 13.709/2018, art. 11, I).</p>
-    <button type="button" class="conferi" id="consCk" aria-pressed="${consMarcado}"><span class="caixa" aria-hidden="true">${consMarcado?'✓':''}</span>${fam?'Concordo em guardar neste celular os dados que a pessoa compartilhar comigo':'Concordo que o app guarde meus dados de saúde neste celular'}</button>
+  /* frente: 3 frases curtas e um botão (feedback do teste: a tela cheia confundia). O resto fica em "Ver detalhes". */
+  const linha=(svg,txt)=>`<div class="cons-l">${svg}<p>${txt}</p></div>`;
+  const LIXO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
+  const frente = fam
+    ? linha(IC.cadeado,'Depois que a pessoa <b>aceitar</b>, o app guarda os remédios e os horários dela <b>neste celular</b>.')
+      +linha(IC.meus,'Serve <b>só para você acompanhar</b>.')
+      +linha(LIXO,'Você pode <b>apagar</b> quando quiser.')
+    : linha(IC.cadeado,'Seus remédios e horários ficam <b>só neste celular</b>.')
+      +linha(IC.fam,'A família só vê <b>se você conectar</b> o celular dela.')
+      +linha(LIXO,'Você pode <b>apagar tudo</b> quando quiser.');
+  const detalhes = fam
+    ? `<p>O app guarda neste celular os remédios e os horários da pessoa, o que foi marcado como tomado e os avisos.</p>
+      <p><b>Criptografado.</b> Fica embaralhado neste celular e chega embaralhado do outro celular (criptografia de ponta a ponta). Ninguém no caminho consegue ler.</p>
+      <p><b>Só para acompanhar.</b> A pessoa pode desligar quando quiser, e você também: Ajustes → Família.</p>`
+    : `<p>O app guarda neste celular os remédios, as quantidades, os horários e o que você marcou como tomado. Se você quiser, também fotos das caixas e o contato da família.</p>
+      <p><b>Criptografado.</b> O Squad 4 e a prefeitura não recebem nada. Não tem cadastro.</p>
+      <p><b>Família, só se você quiser.</b> Se você conectar o celular de alguém da família, essa pessoa vê seus remédios e o que você marcou. Vai embaralhado (criptografia de ponta a ponta).</p>
+      <p><b>Para apagar:</b> Ajustes → Retirar consentimento e apagar tudo.</p>`;
+  $('#consIn').innerHTML=`<h2 id="consT" tabindex="-1">${fam?'Dados de quem você acompanha':'Seus dados ficam com você'}</h2>
+    <div class="cons-ls">${frente}</div>
     ${erro?`<div class="msg warn" role="alert">${esc(erro)}</div>`:''}
-    <button class="btn btn-pill" id="consOk" type="button">${CHECK}Continuar</button>
+    <button class="btn btn-pill cons-sim" id="consOk" type="button">${CHECK}Concordo</button>
     <button class="btn btn-main" id="consOuvir" type="button">${IC.som}Ouvir</button>
-    <button class="linkbtn" type="button" data-termos="1" style="text-align:center">Ler a privacidade e os termos de uso</button>
+    <details class="mais cons-mais"><summary>Ver detalhes</summary><div class="in">${detalhes}
+      <p class="small muted">Base legal: consentimento para dados de saúde (Lei Geral de Proteção de Dados, Lei 13.709/2018, art. 11, I).</p>
+      <button class="linkbtn" type="button" data-termos="1" style="text-align:left;padding:0">Ler a privacidade e os termos de uso</button></div></details>
     <button class="linkbtn wz-voltar" id="consNao" type="button">${consModo==='existente'?'Não concordo: apagar meus dados':'Agora não'}</button>`;
-  $('#consCk').onclick=()=>{ consMarcado=!consMarcado; renderConsentimento(); };
   $('#consOuvir').onclick=()=>ouvir(fam?FALA_CONS_FAM:FALA_CONS);
-  $('#consOk').onclick=()=>{ if(!consMarcado){ const e='Para continuar, toque em “Concordo”.'; renderConsentimento(e); falar(e); return; }
+  /* tocar em "Concordo" é o aceite (ato claro da pessoa, LGPD art. 8º e 11, I) */
+  $('#consOk').onclick=()=>{
     S.consentimento={versao:CONSENT_VERSAO,em:new Date().toISOString(),tipo:fam?'familia':'pessoa',via:consVia||'toque'}; consVia=''; save(); $('#consent').hidden=true; const f=consDepois; consDepois=null; if(f) f(); };
   $('#consNao').onclick=()=>{ $('#consent').hidden=true; calar();
     if(consModo==='existente'){ apagarTudo('Seus dados foram apagados deste celular.'); }
@@ -1936,9 +1951,11 @@ function salvarWizard(it){
   const novo=S.agenda[S.agenda.length-1];
   save(); agendarAlarmes(true); $('#wiz').hidden=true; addSel=null; resultado=null;
   if(quieto){ rxDepoisCorrigir(); if(it.registro && httpPlug() && navigator.onLine) bulaDe(it.registro).then(b=>{ if(!b) baixarBulaOficial(it.registro).catch(()=>{}); }); return; }
-  falar(`Pronto. Vou lembrar o ${i.apelido}, ${comoFala(novo)}, como está na receita.`);
+  /* fala curta: os detalhes já foram conferidos na tela anterior e ficam escritos no aviso */
+  const pronta=AP.calmo?Promise.resolve():falarE(`Pronto. Vou lembrar o ${i.apelido} na hora certa.`);
   toast(`Pronto. Salvo nos seus remédios: ${comoTxt(novo)}.`); go('hoje');
-  if(S.agenda.length===1) setTimeout(()=>checarEnergia().then(()=>{ if(energiaFalta()) abrirEnergia(); }),1500);
+  /* a tela "para o alarme tocar sempre" só abre depois que a fala termina, para não cortar a frase */
+  if(S.agenda.length===1) pronta.then(()=>espera(600)).then(()=>checarEnergia()).then(()=>{ if(energiaFalta()) abrirEnergia(); });
   // guarda a bula oficial no celular, sem atrapalhar
   if(it.registro && httpPlug() && navigator.onLine) bulaDe(it.registro).then(b=>{ if(!b) baixarBulaOficial(it.registro).catch(()=>{}); });
 }
@@ -2431,7 +2448,7 @@ function subAjustes(){
         <p class="hint">Toque numa voz para ouvir e escolher.</p>` : (VOZ_PT===false?'':`<p class="hint">Nenhuma voz em português encontrada neste celular.</p>`)}
       ${VOZ_PT===false?`<div class="msg warn" style="margin:0">A voz em português não está instalada. Sem ela, o app pode ficar mudo sem internet.</div><button class="btn btn-ghost" id="bInstVoz" type="button">Instalar a voz em português</button>`:''}
       <p class="label">Velocidade da fala</p>
-      <div class="seg">${[[0.8,'Devagar'],[0.92,'Normal'],[1.05,'Rápida']].map(([v,tx])=>`<button type="button" data-vel="${v}" aria-pressed="${(AP.vel||0.92)===v}">${tx}</button>`).join('')}</div>
+      <div class="seg">${[[0.85,'Devagar'],[1,'Normal'],[1.12,'Rápida']].map(([v,tx])=>`<button type="button" data-vel="${v}" aria-pressed="${(AP.vel||1)===v}">${tx}</button>`).join('')}</div>
       <p class="label">Bipe do microfone</p>
       <div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-bipe="0" aria-pressed="${AP.bipe===false}">Desligado</button><button type="button" data-bipe="1" aria-pressed="${AP.bipe!==false}">Ligado</button></div>
       <p class="hint">Um bipe que sobe quando o app começa a ouvir e um que desce quando para. Se o celular já fizer o próprio bipe, pode desligar este.</p>
@@ -3465,7 +3482,7 @@ let ultimaFala='';
 function falarE(t){
   ultimaFala=t;
   return new Promise(ok=>{
-    const v=vozAtual(), rate=AP.vel||0.92;
+    const v=vozAtual(), rate=AP.vel||1;
     if(TTS){ const o={text:t,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'}; if(v) o.voice=v.i;
       TTS.stop().catch(()=>{}).finally(()=>TTS.speak(o).then(ok,()=>{ delete o.voice; TTS.speak(o).then(ok,ok); })); return; }
     if(!('speechSynthesis' in window)){ ok(); return; }
@@ -3495,8 +3512,25 @@ async function escutarJa(){
     r.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed') erro(new Error('permissao')); else ok([]); };
     r.onend=()=>ok(res||[]); try{ r.start(); }catch(x){ ok([]); } });
 }
-/* entendendo o que a pessoa falou */
-function simOuNao(ms){ for(const t of ms.map(sem)){ if(/\b(nao|cancela|errado|negativo|nada disso)\b/.test(t)) return false; if(/\b(sim|isso|pode|confirmo|certo|claro|quero|ok|okay|uhum|aceito|positivo|exato|isso mesmo|correto)\b/.test(t)) return true; } return null; }
+/* entendendo o que a pessoa falou.
+   O reconhecimento do Google erra letras com quem fala baixo, devagar ou com sotaque ("tumei", "to mei", "socoro").
+   Antes de entender, o app aproxima as palavras-chave (uma letra de diferença) e junta o que veio separado. */
+const CHAVES=['tomei','socorro','remedio','remedios','concordo','familia'];
+function dist1(a,b){ if(a===b) return 0; if(Math.abs(a.length-b.length)>1) return 2; let i=0,j=0,d=0;
+  while(i<a.length&&j<b.length){ if(a[i]===b[j]){ i++; j++; continue; } if(++d>1) return 2;
+    if(a.length>b.length) i++; else if(b.length>a.length) j++; else { i++; j++; } }
+  return d+(a.length-i)+(b.length-j); }
+function ouvido(t){
+  let x=' '+sem(t)+' ';
+  x=x.replace(/ (to|tu|tô) mei /g,' tomei ').replace(/ (tumei|tomey|tomeu|tomi|tomêi) /g,' tomei ').replace(/ so corro /g,' socorro ');
+  x=x.split(' ').map(w=>{ if(w.length<5) return w; const k=CHAVES.find(c=>dist1(w,c)<=1); return k||w; }).join(' ');
+  return x.replace(/\s+/g,' ').trim();
+}
+function simOuNao(ms){ for(const t of ms.map(ouvido)){
+    if(/\b(nao|num|nada disso|cancela|errado|negativo|agora nao|de jeito nenhum)\b/.test(t)) return false;
+    if(/^(e|eh|e sim|si|sin|isso ai)$/.test(t)) return true;
+    if(/\b(sim|simm|isso|pode|pode ser|confirmo|certo|certinho|claro|quero|ok|okay|uhum|unhum|aham|ahan|aceito|positivo|exato|isso mesmo|correto|ta bom|ta certo|beleza|com certeza|concordo)\b/.test(t)) return true; }
+  return null; }
 const COMANDOS=[
   ['socorro',/\b(socorro|emergencia|me ajuda|preciso de ajuda|ajuda urgente|passando mal|to mal|estou mal|cai|ca[ií] no chao|nao estou bem)\b/],
   ['ajuda',/\b(o que (eu )?(posso|devo|consigo) (falar|dizer)|como (funciona|uso)|comandos|me ensina)\b/],
@@ -3506,11 +3540,11 @@ const COMANDOS=[
   ['bula',/\b(bula|para que serve)\b/],
   ['mudou',/\b(o que mudou|mudanca|mudancas|mudou|quem mudou|quem colocou)\b/],
   ['agora',/\b(qual (e o )?remedio( de)? agora|que remedio (eu )?tomo|tenho que tomar|qual o proximo|proximo remedio|que horas|horario|agora)\b/],
-  ['meus',/\b(meus remedios|quais (sao )?(os )?meus remedios|lista)\b/],
+  ['meus',/\b(meus remedios?|minhas? remedios?|quais (sao )?(os )?meus remedios?|lista)\b/],
   ['gratis',/\b(gratis|de graca|farmacia popular|posto de saude|sem pagar)\b/],
   ['repetir',/\b(repete|repetir|de novo|nao entendi|fala de novo|outra vez)\b/],
   ['familia',/\b(familia|filha|filho)\b/]];
-function entender(ms){ for(const t of ms.map(sem)) for(const [k,re] of COMANDOS) if(re.test(t)) return k; return ''; }
+function entender(ms){ for(const t of ms.map(ouvido)) for(const [k,re] of COMANDOS) if(re.test(t)) return k; return ''; }
 /* ----- janela de voz ----- */
 let vozResp=null;
 function abrirVoz(){ $('#voz').hidden=false; $('#voz').scrollTop=0; const f=$('#falarBtn'); if(f) f.hidden=true; }
@@ -3546,13 +3580,11 @@ function confirmar(pergunta){
   return new Promise(async ok=>{
     let feito=false; const fim=v=>{ if(feito) return; feito=true; vozResp=null; ok(v); };
     vozResp=fim; telaVoz('confirmar',pergunta);
-    await falarE(pergunta+' Diga sim ou não.');
-    for(let i=0;i<2 && !feito;i++){
-      let ms=[]; try{ ms=await escutar(); }catch(e){ break; }
-      if(feito) return; const v=simOuNao(ms);
-      if(v!==null){ fim(v); return; }
-      if(i===0 && !feito) await falarE('Não entendi. Diga sim ou não, ou toque no botão.');
-    }
+    await falarE(pergunta+' Diga: sim. Ou diga: não.');
+    let ms=[]; try{ ms=await escutar(); }catch(e){}
+    if(feito) return; const v=simOuNao(ms);
+    if(v!==null){ fim(v); return; }
+    if(!feito) falarE('Não entendi. Toque em sim ou em não, na tela.');
   });
 }
 /* ----- conversa por voz guiada: o app fala cada tela e ouve a resposta (para quem não lê) ----- */
@@ -3574,9 +3606,9 @@ async function perguntarVoz(texto,pergunta,tratar){
   if(seq!==vozSeq) return;
   fabOuvindo(true); let ms=[]; try{ ms=await escutar(); }catch(e){} fabOuvindo(false);
   if(seq!==vozSeq) return;
-  if(!ms.length){ falarE('Não ouvi. Quando quiser responder, toque no botão roxo, falar.'); return; }
+  if(!ms.length){ falarE('Não ouvi. Toque no botão da tela.'); return; }
   const r=await tratar(ms);
-  if(r===false && seq===vozSeq) falarE('Não entendi. Toque no botão roxo, falar, e tente de novo. Ou toque no botão da tela.');
+  if(r===false && seq===vozSeq) falarE('Não entendi. Toque no botão da tela.');
 }
 function ctxAtual(){
   const v=id=>!$('#'+id).hidden;
@@ -3587,11 +3619,11 @@ function ctxAtual(){
   return '';
 }
 async function tratarContexto(ctx,ms){
-  const t=ms.map(sem).join(' | '), yn=simOuNao(ms);
+  const t=ms.map(ouvido).join(' | '), yn=simOuNao(ms);
   const clica=id=>{ const b=$('#'+id); if(b){ b.click(); return true; } return false; };
   if(/\b(socorro|emergencia|me ajuda|passando mal|preciso de ajuda)\b/.test(t)){ pedirSocorro(true); return true; }
   if(ctx!=='bv1' && ctx!=='bv2' && /\b(repete|repetir|de novo|nao entendi|fala de novo)\b/.test(t)){ ouvir(ultimaFala||falaTela()); return true; }
-  if(ctx==='consent'){ if(/concordo|aceito/.test(t)||yn===true){ consMarcado=true; consVia='voz'; renderConsentimento(); return clica('consOk'); } if(yn===false) return clica('consNao'); return false; }
+  if(ctx==='consent'){ if(/concordo|aceito/.test(t)||yn===true){ consVia='voz'; return clica('consOk'); } if(yn===false) return clica('consNao'); return false; }
   if(ctx==='bv0'){ if(/arrumando|outra pessoa|celular d[ae] (minha|meu|outra)/.test(t)) return clica('bvOutro'); if(/\b(eu tomo|tomo os remedios|sou eu|comecar|vamos|bora)\b/.test(t)||yn===true) return clica('bvComecar'); if(/\bcuido\b/.test(t)) return clica('bvSouFam'); if(/demonstra|exemplo/.test(t)) return clica('bvDemo'); if(/familia|acompanhar/.test(t)) return clica('bvSouFam'); if(/letra|maior|grande|nao (estou )?enxerg/.test(t)){ const i=ESCALAS.findIndex(e=>e[0]===AP.escala); AP.escala=ESCALAS[Math.min(ESCALAS.length-1,i+1)][0]; aplicarAparencia(); renderBV(); setTimeout(()=>perguntarVoz('Pronto. Aumentei a letra.',PERG_BV[0],ms=>tratarContexto('bv0',ms)),0); return true; } return false; }
   if(ctx==='bv1'){ if(/\bpular\b/.test(t)) return clica('bvPular'); const n=nomeFalado(ms[0]); if(!n) return false; $('#bvNome').value=n;
     const ok=await simNaoFalado(`Seu nome é ${n}?`); if(ok) return clica('bvOk');
@@ -3629,19 +3661,19 @@ async function conversar(){
     conversando=true; vozSeq++; fabOuvindo(true); let ms=[];
     try{ ms=await escutar(); }catch(e){ toast(String(e&&e.message)==='permissao'?'Preciso da permissão do microfone.':'Não consegui usar o microfone.'); }
     fabOuvindo(false); conversando=false;
-    if(!ms.length){ falarE('Não ouvi. Toque no botão roxo, falar, e fale perto do celular.'); return; }
+    if(!ms.length){ falarE('Não ouvi. Toque no botão da tela.'); return; }
     if(await tratarContexto(ctx,ms)) return;
     if(ctx==='resultado'||ctx==='conferir'){ const k=entender(ms); if(k){ abrirVoz(); executar(k,'voz',ms[0]); return; } }
-    falarE('Não entendi. Diga sim ou não, ou toque no botão da tela.'); return;
+    falarE('Não entendi. Toque no botão da tela.'); return;
   }
   conversando=true; abrirVoz(); telaVoz('ouvindo');
   try{
     let ms; try{ ms=await escutar(); }catch(e){ const m=String(e&&e.message||e);
       const t = m==='permissao' ? 'Preciso da permissão do microfone. Toque em permitir quando o celular perguntar.' : 'Não consegui usar o microfone agora. Toque no que você quer.';
       telaVoz('menu',t); falarE(t); return; }
-    if(!ms.length){ const t='Não ouvi. Toque no microfone e fale perto do celular, ou toque no que você quer.'; telaVoz('menu',t); await falarE(t); return; }
+    if(!ms.length){ const t='Não ouvi. Toque no que você quer.'; telaVoz('menu',t); await falarE(t); return; }
     const k=entender(ms);
-    if(!k){ const t='Não entendi. Você pode falar: já tomei; qual o remédio agora; que remédio é esse; ligar para a família; ou socorro.'; telaVoz('menu',t,ms[0]); await falarE(t); return; }
+    if(!k){ const t='Não entendi. Toque no que você quer.'; telaVoz('menu',t,ms[0]); await falarE(t); return; }
     await executar(k,'voz',ms[0]);
   } finally { conversando=false; }
 }
