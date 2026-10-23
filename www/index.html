@@ -1867,7 +1867,7 @@ function erroPasso(it){
   const p=addSel.passo, hs=horasSel();
   if(p===1 && !hs.length) return 'Marque pelo menos um momento.';
   if(p===2 && hs.some(h=>!addSel.q[h] || (addSel.q[h]==='outra' && !String(addSel.outroQ[h]||'').trim()))) return 'Marque quanto tomar em cada momento.';
-  if(p===3 && totalSel(it).alertas.length && !addSel.ciente) return 'Leia o aviso e confirme, se é isso mesmo que está na receita.';
+  if(p===3 && totalSel(it).alertas.length && !(addSel.conferi&&addSel.ciente)) return 'Leia o aviso e toque em “Conferi: é isso mesmo que está na receita”.';
   if(p===3 && !addSel.conferi) return 'Toque em "Conferi com a receita do médico".';
   return '';
 }
@@ -1893,8 +1893,10 @@ function renderWizard(erro){
     ${t.alertas.length?`<div class="msg warn alerta" role="alert"><b>Atenção:</b> ${t.alertas.map(esc).join(' ')}
       ${t.txt&&t.acima?`<span class="alerta-txt small">Segundo a bula: “${esc(t.txt)}”</span>`:''}
       <span class="alerta-txt">Pode estar certo, se o médico receitou assim. Vale conferir a receita; em caso de dúvida, o farmacêutico ou o médico podem confirmar.</span></div>
-      <button type="button" class="conferi" id="bCiente" aria-pressed="${addSel.ciente}"><span class="caixa" aria-hidden="true">${addSel.ciente?'✓':''}</span>Conferi: é isso mesmo que está na receita</button>`:''}
-    <button type="button" class="conferi" id="bConferi" aria-pressed="${addSel.conferi}"><span class="caixa" aria-hidden="true">${addSel.conferi?'✓':''}</span>Conferi com a receita do médico</button>`;
+`:''}
+    ${(()=>{ /* uma confirmação só (teste com usuários: duas caixinhas seguidas confundiam). Com aviso, ela vale também para o aviso. */
+      const on=t.alertas.length ? (addSel.conferi&&addSel.ciente) : addSel.conferi;
+      return `<button type="button" class="conferi" id="bConferi" aria-pressed="${on}"><span class="caixa" aria-hidden="true">${on?'✓':''}</span>${t.alertas.length?'Conferi: é isso mesmo que está na receita':'Conferi com a receita do médico'}</button>`; })()}`;
   if(p===4) corpo=`<p>Ajuda a reconhecer o remédio pela imagem. Não é obrigatório.</p>
     ${addSel.foto?`<img class="foto-g" src="${addSel.foto}" alt="Foto da caixa">`:''}
     <button type="button" class="btn btn-ghost" id="bFotoAg">${CAM_SVG}${addSel.foto?'Tirar outra foto':'Tirar foto da caixa'}</button>`;
@@ -1920,8 +1922,8 @@ function renderWizard(erro){
   document.querySelectorAll('#wiz [data-qmenos]').forEach(x=>x.onclick=()=>passoQ(x.dataset.qmenos,-1));
   document.querySelectorAll('#wiz [data-qescrever]').forEach(x=>x.onclick=()=>{ const h=x.dataset.qescrever; addSel.escrever=addSel.escrever||{}; addSel.escrever[h]=true; redesenha(); const q=document.querySelector(`#wiz [data-qo="${h}"]`); if(q) q.focus(); });
   document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ x.oninput=e=>{ addSel.outroQ[x.dataset.qo]=e.target.value; }; });
-  const bc=$('#bCiente'); if(bc) bc.onclick=()=>{ addSel.ciente=!addSel.ciente; redesenha(); };
-  const bf=$('#bConferi'); if(bf) bf.onclick=()=>{ addSel.conferi=!addSel.conferi; redesenha(); };
+  const bf=$('#bConferi'); if(bf) bf.onclick=()=>{ const comAviso=totalSel(it).alertas.length>0, on=comAviso?(addSel.conferi&&addSel.ciente):addSel.conferi;
+    addSel.conferi=!on; addSel.ciente=comAviso?!on:addSel.ciente; redesenha(); };
   const bfo=$('#bFotoAg'); if(bfo) bfo.onclick=()=>tirarFoto(f=>{ addSel.foto=f; redesenha(); });
   $('#wzVoltar').onclick=()=>{ if(addSel.passo===1){ fecharWizard(); return; } addSel.passo--; renderWizard(); $('#wiz').scrollTop=0; };
   const seg=$('#wzSeg'); if(seg) seg.onclick=()=>{ document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ addSel.outroQ[x.dataset.qo]=x.value; });
