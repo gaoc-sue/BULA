@@ -27,7 +27,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 ## O que o app faz
 
-- **Que remédio é este?** Lê o código de barras da caixa e consulta a lista oficial de preços da CMED/Anvisa, com mais de 27 mil códigos, sem internet. Fala o tipo de remédio e, quando há bula, o trecho literal de "para que serve".
+- **Que remédio é este?** O mesmo botão lê o código de barras, o QR code e o código quadradinho de rastreio (GS1 DataMatrix, que traz o mesmo número do código de barras). Se for o QR da bula digital, mostra o site e o botão para abrir; se for o QR de uma receita digital, vai para a leitura da receita; se o link não deixar claro, pergunta numa tela só se o QR está na caixa ou na receita; se não for de remédio, diz para apontar para as listras. Lê o código de barras da caixa e consulta a lista oficial de preços da CMED/Anvisa, com mais de 27 mil códigos, sem internet. Fala o tipo de remédio e, quando há bula, o trecho literal de "para que serve".
 - **Colocar nos meus remédios:** 3 perguntas, uma por tela: em que momento a receita manda tomar, quanto em cada momento e conferir com a receita (com o total do dia). Na terceira, o botão já é "Salvar", e a foto da caixa é um link opcional. A pessoa copia da receita do médico; o app não sugere dose. Quantidade diferente de 1, 2 ou meio se escolhe com os botões − e + (sem digitar); "Escrever" fica para receita fora do padrão.
 - **Avisos de dose (só avisam, nunca bloqueiam):** o app soma o total do dia e avisa quando:
   - passa da maior dose por dia citada na bula (`www/doses.json`: valor + frase literal da bula + registro; e os 10 remédios da pressão e diabetes);

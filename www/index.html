@@ -1621,7 +1621,7 @@ function renderLer(){
     <h2>Que remédio é este?</h2>${conf}
     <div id="resBox"></div>
     <div class="scan-zone">
-      ${SCAN?`<button class="btn btn-pill" id="bScan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler código de barras</button>`:''}
+      ${SCAN?`<button class="btn btn-pill" id="bScan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler código de barras</button><p class="hint" style="margin:-4px 0 0;text-align:center">Também lê o QR code da bula ou da receita.</p>`:''}
       <label class="btn btn-pill" for="photo" id="bFoto" ${SCAN?'hidden':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Fotografar o código de barras</label>
       <button class="btn btn-ghost" id="bVivo" ${SCAN?'hidden':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Usar câmera ao vivo</button>
       <div class="video-box" id="vBox" hidden><video id="video" playsinline muted></video><div class="aim"></div></div>
@@ -1666,9 +1666,10 @@ async function lerNativo(){
     const av=await SCAN.isGoogleBarcodeScannerModuleAvailable();
     if(!av.available){ msgScan('Preparando o leitor pela primeira vez. Precisa de internet só agora, um momento...'); await instalarLeitor(); }
     msgScan('');
-    const r=await SCAN.scan({formats:['EAN_13','EAN_8','UPC_A','UPC_E'],autoZoom:true});
+    /* aceita o código de barras, o QR code (bula digital ou receita) e o código quadradinho de rastreio da caixa */
+    const r=await SCAN.scan({formats:['EAN_13','EAN_8','UPC_A','UPC_E','QR_CODE','DATA_MATRIX'],autoZoom:true});
     const b=r.barcodes&&r.barcodes[0];
-    if(b) achou(b.rawValue||b.displayValue); else msgScan('Nenhum código lido. Tente de novo.','warn');
+    if(b) tratarCodigoLido(b.rawValue||b.displayValue); else msgScan('Nenhum código lido. Tente de novo.','warn');
   }catch(e){
     const m=String((e&&e.message)||e);
     if(/cancel/i.test(m)){ msgScan(''); return; }
@@ -1676,10 +1677,40 @@ async function lerNativo(){
     msgScan('Não consegui abrir o leitor. Digite o número que fica embaixo das barras.','bad'); console.warn(e);
   }
 }
+/* o que o leitor principal leu: a pessoa aponta para o que vê na caixa ou na receita, e o app decide o que fazer */
+function gtinDoGS1(t){ const x=String(t).replace(/^\]d2|^\]Q3|^\]C1/,'').replace(/[\x1d]/g,'|'); const m=x.match(/^01(\d{14})/); return m ? m[1].replace(/^0/,'') : null; }
+function tratarCodigoLido(raw){
+  const t=String(raw||'').trim(), res=$('#resBox');
+  if(/^\d{8,14}$/.test(t)){ achou(t); return; }
+  const g=gtinDoGS1(t); if(g){ achou(g); return; }   /* código quadradinho de rastreio (GS1): traz o mesmo número do código de barras */
+  const naoE=m=>{ vibrar('erro'); resultado=null; if(res) res.innerHTML=''; msgScan(m,'warn'); falar(m); };
+  if(alvo){ naoE('Para conferir a caixa, aponte para o código de barras, as listras.'); return; }
+  if(/RF1:\d{6}/.test(t)){ naoE('Este é o quadrado de conectar a família. Ele é lido no celular de quem acompanha, em Família.'); return; }
+  let url=null; try{ const u=new URL(t); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
+  const ehReceita=x=>/receit|prescri|memed|iti\.gov\.br|validar/i.test(x), ehBula=x=>/bula|anvisa\.gov\.br/i.test(x);
+  msgScan(''); resultado=null;
+  if(url){
+    if(ehBula(url.href) && !ehReceita(url.href)){ if(res) mostrarQR(url.href,res); return; }
+    if(ehReceita(url.href) && rxLigado()){ vibrar('ok'); rxDoQR(url.href); return; }
+    /* não dá para saber pelo link: pergunta, em uma tela, de onde é o QR */
+    vibrar('ok');
+    if(!res) return;
+    res.innerHTML=`<div class="stack"><div class="msg info">Este QR code abre o site <b>${esc(url.hostname)}</b>. Onde ele está?</div>
+      <button class="btn btn-pill" id="bQrCaixa" type="button">${QR_SVG}Na caixa do remédio (bula)</button>
+      ${rxLigado()?`<button class="btn btn-ghost" id="bQrReceita" type="button">${RX_SVG}Na receita do médico</button>`:''}</div>`;
+    $('#bQrCaixa').onclick=()=>mostrarQR(url.href,res);
+    const br=$('#bQrReceita'); if(br) br.onclick=()=>rxDoQR(url.href);
+    falar('Achei um QR code. Ele está na caixa do remédio, ou na receita do médico? Toque na resposta.');
+    return;
+  }
+  /* QR com o texto da receita escrito dentro */
+  if(rxLigado() && RFReceita.ler(t.split(/\r?\n/),BASE).some(o=>!o.desconhecido)){ vibrar('ok'); rxDoQR(t); return; }
+  naoE('Este QR code não é de remédio. Aponte para o código de barras, as listras.');
+}
 /* bula digital oficial: QR code impresso na caixa (Lei 14.338/2022). Mostra o site antes de abrir. */
 const QR_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-4M14 18v3"/></svg>';
-function mostrarQR(txt){
-  const box=$('#qrBox'); if(!box) return;
+function mostrarQR(txt,caixa){
+  const box=caixa||$('#qrBox'); if(!box) return;
   let url=null; try{ const u=new URL(String(txt).trim()); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
   if(!url){ box.innerHTML='<div class="msg warn">Este QR code não é um link de bula. Procure o QR com a palavra "bula" na caixa, ou use o botão da Anvisa.</div>'; return; }
   vibrar('ok');
@@ -2253,6 +2284,16 @@ async function rxLerCaixa(x){
   rxTela('item'); toast('Li a caixa: '+rxNomeIt(it)+'.');
 }
 /* receita digital: o QR code pode ter o texto da receita ou um link para o PDF */
+/* receita digital vinda do leitor principal (QR code apontado direto na tela Ler a caixa) */
+async function rxDoQR(txt){
+  if(!rxLigado()) return;
+  if(!temConsentimento()){ abrirConsentimento(()=>rxDoQR(txt)); return; }
+  await baseOk;
+  RX={tela:'digital',itens:[],i:0,destino:gestorAlvo||null,fonte:'qr',canvas:null};
+  let url=null; try{ const u=new URL(String(txt).trim()); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
+  if(!url){ rxTela('lendo'); rxMontar(String(txt).split(/\r?\n/)); return; }
+  rxTela('digital'); await rxAbrirLink(url.href);
+}
 async function rxQR(){
   const msg=t=>{ const m=$('#rxDigMsg'); if(m) m.innerHTML=t; };
   const txt=await lerQRTexto(); if(!txt||!RX) return;
