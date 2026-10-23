@@ -1714,9 +1714,11 @@ function mostrarQR(txt,caixa){
   let url=null; try{ const u=new URL(String(txt).trim()); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
   if(!url){ box.innerHTML='<div class="msg warn">Este QR code não é um link de bula. Procure o QR com a palavra "bula" na caixa, ou use o botão da Anvisa.</div>'; return; }
   vibrar('ok');
-  box.innerHTML=`<div class="msg info">Este QR code abre o site <b>${esc(url.hostname)}</b>. A bula oficial fica no site do fabricante ou da Anvisa.</div><button class="btn btn-pill" id="bAbrirQR" type="button">Abrir a bula digital</button>`;
+  /* lido pelo botão principal (caixa): o QR da bula não diz qual é a caixa, então avisa como colocar o remédio */
+  const dica=caixa?`<div class="msg ok" style="margin-top:10px"><b>Para colocar este remédio nos seus remédios</b>, aponte para o código de barras, as listras.</div>`:'';
+  box.innerHTML=`<div class="stack"><div class="msg info">Este QR code abre o site <b>${esc(url.hostname)}</b>. A bula oficial fica no site do fabricante ou da Anvisa.</div><button class="btn btn-pill" id="bAbrirQR" type="button">Abrir a bula digital</button>${dica}</div>`;
   $('#bAbrirQR').onclick=()=>abrirLink(url.href);
-  falar('Achei o QR code. Toque em abrir a bula digital.');
+  falar('Achei o QR code da bula. Toque em abrir a bula digital.'+(caixa?' Para colocar este remédio nos seus remédios, aponte para o código de barras, as listras.':''));
 }
 /* lê um QR code: leitor do Google no APK; no navegador, uma foto */
 function lerQRTexto(){
