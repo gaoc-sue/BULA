@@ -542,6 +542,11 @@ details.mais{border:2.5px solid var(--line);border-radius:18px;background:var(--
 .cons-l p{margin:0;font-size:1.2rem;line-height:1.4}
 .cons-sim{min-height:76px;font-size:1.35rem}
 .cons-mais .in p{font-size:1.05rem}
+/* foto da caixa, opcional, dentro da pergunta 3 */
+.foto-op{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.foto-op .linkbtn{display:inline-flex;align-items:center;gap:10px;min-height:48px;font-weight:700;color:var(--accent);text-decoration:underline}
+.foto-op .linkbtn svg{width:26px;height:26px;flex:none}
+.foto-op .foto-g{max-width:160px}
 details.mais > summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:68px;padding:12px 16px;font-weight:700;font-size:1.15rem}
 details.mais > summary::-webkit-details-marker{display:none}
 details.mais > summary::after{content:"+";font-size:1.6rem;color:var(--accent)}
@@ -1550,6 +1555,7 @@ function partesHoje(){
   const ativo=gs.find(x=>x.st==='late')||gs.find(x=>x.st==='next')||null;
   return {gs,ativo,feitos:gs.filter(x=>x.st==='ok'),depois:gs.filter(x=>x!==ativo&&x.st!=='ok')};
 }
+const famPergunta = () => S.agenda.length>0 && !S.demo && !S.familiar && !S.whats && !S.pareados.length && !S.famDispensa && !gestorAtivo();
 function renderHoje(){
   const {gs,ativo,feitos,depois}=partesHoje(), hoje=new Date();
   const nome=S.pessoa?`, <b>${esc(S.pessoa)}!</b>`:'!';
@@ -1561,13 +1567,15 @@ function renderHoje(){
       <div class="btn-row"><button class="btn btn-pill btn-s" type="button" data-energia="1">Arrumar agora</button><button class="btn btn-ghost btn-s" type="button" id="bEnerDepois">Depois</button></div></div>`:''}
     ${feitos.map(x=>`<p class="feito">${CHECK}<span>${esc(x.m.nome)}: tomado às ${esc(x.em)}</span></p>`).join('')}
     ${!S.agenda.length&&gestorAtivo()?`<section class="agora"><h2>Nenhum remédio ainda</h2><p>${esc(nomeGestor())} vai colocar seus remédios pelo próprio celular. Quando colocar, eu te aviso.</p></section>`
-     : !S.agenda.length?`<section class="agora"><h2>Nenhum remédio ainda</h2><p>Leia a caixa do remédio e responda 4 perguntas fáceis, copiando da receita.</p>
+     : !S.agenda.length?`<section class="agora"><h2>Nenhum remédio ainda</h2><p>Leia a caixa do remédio e responda 3 perguntas fáceis, copiando da receita.</p>
        <button class="btn btn-ok btn-tomei" data-go="ler" data-scan="1" style="font-size:1.35rem">${IC.ler}Colocar o primeiro remédio</button>
        ${rxLigado()?`<button class="btn btn-ghost" type="button" data-go="ler">${RX_SVG}Tenho a receita: ler os remédios dela</button>`:''}</section>`
      : ativo ? cardAgora(ativo)
      : gs.length && !depois.length ? `<div class="msg ok">${CHECK.replace('<svg','<svg width="22" height="22" style="vertical-align:-4px"')} Todos os remédios de hoje foram tomados.</div>` : ''}
     ${mudNova?`<section class="al-card info" role="status"><h3>Mudança nos seus remédios</h3><p style="margin:0">${esc(mudNova.txt)}</p><p class="small muted" style="margin:0">${esc(haQuanto(mudNova.ts))}</p>
        <div class="btn-row"><button class="btn btn-ghost btn-s" type="button" id="bMudOuvir">${IC.som}Ouvir</button><button class="btn btn-pill btn-s" type="button" id="bMudOk">Entendi</button></div></section>`:''}
+    ${famPergunta()?`<section class="al-card info" id="famCard"><h3>Quem da família recebe os avisos?</h3><p style="margin:0">Assim, no socorro, o app sabe para quem ligar.</p>
+       <div class="btn-row"><button class="btn btn-pill btn-s" type="button" id="bFamPor">${CHECK}Colocar agora</button><button class="btn btn-ghost btn-s" type="button" id="bFamNao">Agora não</button></div></section>`:''}
     ${depois.length?`<section class="depois"><h3>${ativo?'Depois':'Próximo'}</h3>${depois.map(x=>`<div class="dep-l">${ICO[x.m.k]}<span><b>${esc(x.m.nome)}</b><span>${x.h} · ${x.ds.length} ${x.ds.length>1?'remédios':'remédio'}</span></span></div>`).join('')}</section>`:''}
     ${ativo&&(S.dicaNome||0)<3?`<p class="hint" style="margin-top:-6px">Toque no nome de um remédio para ouvir para que serve.</p>`:''}
     <div class="atalhos">
@@ -1581,6 +1589,8 @@ function renderHoje(){
   const bed=$('#bEnerDepois'); if(bed) bed.onclick=()=>{ S.energiaAdiar=dayKey(new Date()); save(); renderHoje(); };
   const bmo=$('#bMudOuvir'); if(bmo) bmo.onclick=()=>ouvir(mudNova.txt);
   const bmk=$('#bMudOk'); if(bmk) bmk.onclick=()=>{ S.mudVisto=mudNova.ts; save(); renderHoje(); };
+  const bfp=$('#bFamPor'); if(bfp) bfp.onclick=()=>{ go('ajustes'); abrirAj('dados'); const f=$('#cfgFam'); if(f) setTimeout(()=>{ f.scrollIntoView({block:'center'}); f.focus(); },200); falar('Diga ou escreva o nome de quem da família recebe os avisos, e o telefone. Depois, toque em salvar.'); };
+  const bfn=$('#bFamNao'); if(bfn) bfn.onclick=()=>{ S.famDispensa=true; save(); renderHoje(); toast('Tudo bem. Dá para colocar depois em Ajustes → Meus dados e contato da família.'); };
   const G = h => gs.find(x=>x.h===h);
   document.querySelectorAll('#view-hoje [data-tomarg]').forEach(b=>b.onclick=()=>{ const x=G(b.dataset.tomarg); if(x) tomarVarios(x.pend,'botao'); });
   document.querySelectorAll('#view-hoje [data-tomar1]').forEach(b=>b.onclick=()=>{ const [id,h]=b.dataset.tomar1.split('|'); const a=S.agenda.find(q=>q.id===id); if(a) tomar(a,h,'botao'); });
@@ -1845,9 +1855,9 @@ function formAgenda(it){
   return `<button class="btn btn-pill" id="bAddAg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Colocar na minha agenda</button>`;
 }
 function ligarFormAgenda(it){ const b=$('#bAddAg'); if(b) b.onclick=()=>abrirWizard(it); }
-/* assistente: 4 perguntas, uma por tela, com Voltar escrito (Grindrod et al. 2014; NIA: passo a passo) */
+/* assistente: 3 perguntas, uma por tela (a foto da caixa é opcional, dentro da 3ª), com Voltar escrito (Grindrod et al. 2014; NIA: passo a passo) */
 let wizIt=null, wizDestino=null, wizEditar=null;
-const PERGUNTAS=['Em que momento a receita manda tomar?','Quanto tomar em cada momento, pela receita?','Confira com a receita','Quer tirar uma foto da caixa?'];
+const PERGUNTAS=['Em que momento a receita manda tomar?','Quanto tomar em cada momento, pela receita?','Confira com a receita'];
 function abrirWizard(it,opc){ opc=opc||{};
   if(!temConsentimento()){ abrirConsentimento(()=>abrirWizard(it,opc)); return; }
   wizDestino=opc.destino||null; wizEditar=opc.editar||null;
@@ -1858,8 +1868,8 @@ function abrirWizard(it,opc){ opc=opc||{};
       if(!addSel.h.includes(h)) addSel.outro=h;
       addSel.q[h] = q==='1 '+u[0]?'1' : q==='2 '+u[1]?'2' : q==='meio '+u[0]?'meio' : 'outra'; if(addSel.q[h]==='outra') addSel.outroQ[h]=q; }); }
   const w=$('#wiz'); w.hidden=false; renderWizard();
-  if(AP.vozGuia && vozDisponivel()){ vozSeq++; falarE('Pegue a receita do médico. São 4 perguntas.').then(wizVoz); }
-  else falar('Pegue a receita do médico. São 4 perguntas. '+PERGUNTAS[0]+' Toque no que está na receita e depois no botão azul, com o sinal de certo, continuar. Ou toque no botão azul, responder falando.'); }
+  if(AP.vozGuia && vozDisponivel()){ vozSeq++; falarE('Pegue a receita do médico. São 3 perguntas.').then(wizVoz); }
+  else falar('Pegue a receita do médico. São 3 perguntas. '+PERGUNTAS[0]+' Toque no que está na receita e depois no botão azul, com o sinal de certo, continuar. Ou toque no botão azul, responder falando.'); }
 function fecharWizard(){ $('#wiz').hidden=true; addSel=null; calar(); if(RX&&RX.corrigindo){ RX.corrigindo=null; rxTela('item'); } }
 function horasDoMom(){ addSel.h=[...new Set(addSel.mom.map(rot))]; Object.keys(addSel.q).forEach(h=>{ if(!horasSel().includes(h)){ delete addSel.q[h]; delete addSel.outroQ[h]; } }); }
 const nomeHora = h => { const k=addSel&&addSel.mom.find(k=>rot(k)===h); return k? MOM[k].nome : 'Outro horário'; };
@@ -1896,17 +1906,16 @@ function renderWizard(erro){
 `:''}
     ${(()=>{ /* uma confirmação só (teste com usuários: duas caixinhas seguidas confundiam). Com aviso, ela vale também para o aviso. */
       const on=t.alertas.length ? (addSel.conferi&&addSel.ciente) : addSel.conferi;
-      return `<button type="button" class="conferi" id="bConferi" aria-pressed="${on}"><span class="caixa" aria-hidden="true">${on?'✓':''}</span>${t.alertas.length?'Conferi: é isso mesmo que está na receita':'Conferi com a receita do médico'}</button>`; })()}`;
-  if(p===4) corpo=`<p>Ajuda a reconhecer o remédio pela imagem. Não é obrigatório.</p>
-    ${addSel.foto?`<img class="foto-g" src="${addSel.foto}" alt="Foto da caixa">`:''}
-    <button type="button" class="btn btn-ghost" id="bFotoAg">${CAM_SVG}${addSel.foto?'Tirar outra foto':'Tirar foto da caixa'}</button>`;
-  $('#wizIn').innerHTML=`<div class="wz-top"><p class="small">${wizDestino?(wizEditar?'Mudar':'Colocar')+' remédio para '+esc(wizDestino.nome):'Colocar remédio'} · pergunta ${p} de 4</p><div class="barra" aria-hidden="true"><i style="width:${p*25}%"></i></div>
+      return `<button type="button" class="conferi" id="bConferi" aria-pressed="${on}"><span class="caixa" aria-hidden="true">${on?'✓':''}</span>${t.alertas.length?'Conferi: é isso mesmo que está na receita':'Conferi com a receita do médico'}</button>`; })()}
+    <div class="foto-op">${addSel.foto?`<img class="foto-g" src="${addSel.foto}" alt="Foto da caixa">`:''}
+      <button type="button" class="linkbtn" id="bFotoAg">${CAM_SVG}${addSel.foto?'Tirar outra foto da caixa':'Tirar foto da caixa (se quiser)'}</button></div>`;
+  $('#wizIn').innerHTML=`<div class="wz-top"><p class="small">${wizDestino?(wizEditar?'Mudar':'Colocar')+' remédio para '+esc(wizDestino.nome):'Colocar remédio'} · pergunta ${p} de 3</p><div class="barra" aria-hidden="true"><i style="width:${Math.round(p*100/3)}%"></i></div>
       <p class="wz-med">${bolinha(i.cor,i.nome)}<b>${esc(i.nome)}${it.dose?' '+esc(it.dose):''}</b></p></div>
     <h2 id="wizT" tabindex="-1">${PERGUNTAS[p-1]}</h2>
     ${vozDisponivel()?`<button class="btn btn-main" id="wzFalar" type="button">${IC.mic}Responder falando</button><p class="falando" id="wzStatus" ${wzVozOn?'':'hidden'}>${IC.mic}<span>Ouvindo…</span></p>`:''}
     ${corpo}
     ${erro?`<div class="msg warn" role="alert">${esc(erro)}</div>`:''}
-    ${p<4?`<button class="btn btn-pill" id="wzSeg" type="button">${CHECK}Continuar</button>`:`<button class="btn btn-ok" id="wzSalvar" type="button">${CHECK}Salvar nos meus remédios</button>`}
+    ${p<3?`<button class="btn btn-pill" id="wzSeg" type="button">${CHECK}Continuar</button>`:`<button class="btn btn-ok" id="wzSalvar" type="button">${CHECK}Salvar nos meus remédios</button>`}
     <button class="linkbtn wz-voltar" id="wzVoltar" type="button">${p===1?'Cancelar':'Voltar'}</button>`;
   const redesenha=()=>{ const w=$('#wiz'), y=w.scrollTop; renderWizard(); w.scrollTop=y; };
   const avisar=()=>{ const t2=totalSel(it); if(t2.alertas.length && !addSel.ciente) falar(`Atenção. ${t2.alertas.join(' ').replace(/(\d+) mg/g,'$1 miligramas')} Vale conferir a receita.`); };
@@ -1930,7 +1939,7 @@ function renderWizard(erro){
     const e=erroPasso(it); if(e){ renderWizard(e); falar(e); return; }
     addSel.passo++; renderWizard(); $('#wiz').scrollTop=0; const tt=$('#wizT'); if(tt) tt.focus();
     falar(PERGUNTAS[addSel.passo-1]+'.'); if(addSel.passo===3) avisar(); };
-  const sv=$('#wzSalvar'); if(sv) sv.onclick=()=>salvarWizard(it);
+  const sv=$('#wzSalvar'); if(sv) sv.onclick=()=>{ const e=erroPasso(it); if(e){ renderWizard(e); falar(e); return; } salvarWizard(it); };
   const wf=$('#wzFalar'); if(wf) wf.onclick=wizVoz;
 }
 function salvarWizard(it){
@@ -2216,7 +2225,7 @@ function rxSalvar(x){
   RX.salvando=true; salvarWizard(s.it); RX.salvando=false;
   x.status='ok'; rxProximo();
 }
-/* "Corrigir": abre as 4 perguntas de sempre já preenchidas com o que foi lido */
+/* "Corrigir": abre as 3 perguntas de sempre já preenchidas com o que foi lido */
 function rxCorrigir(x){
   const s=rxSel(x); if(!s) return;
   const mom={}, qtd={}; s.hs.forEach(y=>{ if(y.k) mom[y.h]=y.k; qtd[y.h]=qtdRotulo(y.q,s.u); });
@@ -2297,10 +2306,10 @@ function mostrarResultado(it,code,falarAgora){
     <div class="res-cab">${fotoAg}<div><p class="small muted" style="margin:0">Este é o</p><div class="big-name">${esc(cap(i.apelido))}</div>
       <p class="prod" style="margin:0">${esc(i.nome)}${it.dose?' '+esc(it.dose):''}</p></div></div>
     <button class="opn o-main" id="bOuvir" type="button"><span class="n">1</span><span>Ouvir de novo</span></button>
-    ${alvo?bulaBtn(2):gA?(agG?`<div class="msg ok">Já está nos remédios de ${esc(gA.nome)}: ${esc(comoTxt(agG))}.</div>${bulaBtn(2)}`:`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos remédios de ${esc(gA.nome)}<small>4 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)
+    ${alvo?bulaBtn(2):gA?(agG?`<div class="msg ok">Já está nos remédios de ${esc(gA.nome)}: ${esc(comoTxt(agG))}.</div>${bulaBtn(2)}`:`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos remédios de ${esc(gA.nome)}<small>3 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)
       :(ag?`<div class="msg ok">Já está nos seus remédios: ${esc(comoTxt(ag))}.</div>${bulaBtn(2)}`
       :gestorAtivo()?`<button class="opn o-pill" id="bPedirAg" type="button"><span class="n">2</span><span>Pedir para ${esc(nomeGestor())} colocar<small>${esc(nomeGestor())} cuida dos seus remédios</small></span></button>${bulaBtn(3)}`
-      :`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos meus remédios<small>4 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)}
+      :`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos meus remédios<small>3 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)}
     <details class="mais"><summary>Mais informações</summary><div class="in">
       ${txServe(it)?`<div class="block"><p class="label">Para que serve, segundo a bula</p><p>“${esc(txServe(it))}”</p><p class="fine">${esc(fonteTx(it))}</p></div>`
         :`<div class="block"><p class="label">Para que serve</p><p>A indicação está na bula oficial, no botão “Ler a bula”, e no <b>QR code da caixa</b>.</p></div>`}
@@ -2822,7 +2831,19 @@ async function tourBotoes(){
   const t=$('#bv'); if(t) t.scrollTop=0;
 }
 function fecharBV(depois){ bvAberto=false; bvOutro=false; $('#bv').hidden=true; topo(); go('hoje'); if(depois) depois();
-  if(S.arrumando){ S.arrumando=false; save(); const t=`Pronto. Quando terminar de colocar os remédios, entregue o celular para ${curto(S.pessoa)||'a pessoa'}. O botão Ouvir, lá em cima, lê cada tela.`; setTimeout(()=>{ toast(t); falar(t); },600); } }
+  if(S.arrumando){ S.arrumando=false; save(); const t=`Pronto. Agora toque em colocar o primeiro remédio. Quando terminar de colocar os remédios, entregue o celular para ${curto(S.pessoa)||'a pessoa'}. O botão Ouvir, lá em cima, lê cada tela.`; setTimeout(()=>{ toast(t); falar(t); },600); } }
+/* fim das boas-vindas: a tela Hoje vazia já tem o botão grande "Colocar o primeiro remédio" */
+function fimBV(){
+  const arrumando=S.arrumando;
+  fecharBV(()=>{
+    if(arrumando || S.agenda.length || gestorAtivo()) return;
+    const t='Vamos colocar o primeiro remédio? Pegue a caixa e a receita, e toque no botão verde: colocar o primeiro remédio.';
+    if(AP.vozGuia && vozDisponivel()) perguntarVoz(t,'Quer colocar agora? Diga sim, ou diga depois.', ms=>{
+      const yn=simOuNao(ms); if(yn===true){ const b=document.querySelector('#view-hoje [data-scan]'); if(b){ b.click(); return true; } }
+      return yn===false || /depois/.test(ms.map(ouvido).join(' ')); });
+    else setTimeout(()=>falar(t),300);
+  });
+}
 const COR_FALA='O botão azul, com o sinal de certo, é para seguir. O verde, escrito tomei, marca o remédio. O roxo, com o alto-falante ou o microfone, é para ouvir e falar. O branco é para voltar. O vermelho, com o sinal de alerta, é para pedir socorro.';
 const FALA_BV=['Olá! Eu sou o Remédio Falado. Eu leio a caixa do remédio, falo para que serve e lembro a hora de tomar. Eu não indico dose: a dose é sempre a da receita do médico.',
   'Qual é o seu nome? Toque no botão roxo, falar, e diga seu nome. Depois, toque no botão azul, com o sinal de certo, continuar.',
@@ -2841,7 +2862,8 @@ const legendaCores = () => `<div class="legenda" aria-label="O que cada botão f
   <p><span class="amostra" style="background:var(--bad);color:#FFFFFF">${IC.socorro}</span>Vermelho com alerta: socorro</p></div>`;
 let bvMais=false;
 function renderBV(){
-  const el=$('#bv'), dots=`<p class="passo" style="text-align:center;margin:0">Passo ${passo} de 3</p><div class="bv-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=passo?'on':''}"></i>`).join('')}</div>`;
+  /* teste com usuários: menos telas. As boas-vindas pedem só o nome; a família fica para depois (cartão na tela Hoje) */
+  const el=$('#bv'), dots='';
   const btnOuvir=`<button class="btn btn-main" id="bvOuvir" type="button">${IC.som}Ouvir</button>`;
   let h='';
   if(passo===0 && bvOutro) h=`<div class="bv-cab"><button class="tbtn ouvir" id="bvOuvir" type="button" aria-label="Ouvir de novo">${IC.som}Ouvir</button></div>
@@ -2871,15 +2893,6 @@ function renderBV(){
   if(passo===1) h=`${dots}<h2 id="bvT">${S.arrumando?'Qual é o nome de quem vai usar este celular?':'Qual é o seu nome?'}</h2>
     <div class="campo-voz"><input class="bv-in" id="bvNome" placeholder="${S.arrumando?'Nome da pessoa. Ex.: Dona Lúcia':'Seu nome'}" autocomplete="${S.arrumando?'off':'given-name'}" value="${esc(S.pessoa)}">${micCampo('bvNome')}</div>
     <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${btnOuvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
-  if(passo===2) h=`${dots}<h2 id="bvT">Quem da família recebe os avisos?</h2>${S.arrumando?'<p class="small muted" style="margin:0">Pode ser você.</p>':''}
-    <div class="campo-voz"><input class="bv-in" id="bvFam" placeholder="Nome. Ex.: Ana (filha)" value="${esc(S.familiar)}">${micCampo('bvFam')}</div>
-    ${botaoContato('bvCont')}<div id="bvFones" class="stack" hidden></div>
-    <div class="campo-voz"><input class="bv-in" id="bvWa" inputmode="tel" placeholder="Telefone ou WhatsApp com DDD (opcional)" value="${esc(S.whats||'')}">${micCampo('bvWa','numero')}</div>
-    <button class="btn btn-pill" id="bvOk" type="button">Continuar</button>${btnOuvir}<button class="linkbtn bv-pular" id="bvPular" type="button">Pular</button>`;
-  if(passo===3) h=`${dots}<h2 id="bvT">${S.arrumando?'Vamos colocar o primeiro remédio de '+esc(curto(S.pessoa)||'quem vai usar')+'?':'Vamos colocar o primeiro remédio?'}</h2>
-    <p>Pegue a <b>caixa</b> e a <b>receita</b>. Eu leio o código de barras e você marca o que está na receita.</p>
-    <button class="btn btn-pill" id="bvLer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M8 8v8M12 8v8M16 8v8"/></svg>Ler a caixa do remédio</button>${btnOuvir}
-    <button class="linkbtn bv-pular" id="bvDepois" type="button">Fazer isso depois</button>`;
   el.classList.toggle('aq0',passo===0);
   el.innerHTML=`<div class="bv-in-wrap">${h}</div>`;
   $('#bvOuvir').onclick=()=>{ if(passo===0 && bvOutro) ouvir('Arrumando o celular de outra pessoa. Chame a pessoa que vai usar o celular: ela precisa concordar com os termos. Depois, toque em: a pessoa está aqui comigo.'); else if(passo===0) tourBotoes(); else ouvir((S.arrumando?FALA_BV_OUTRO:FALA_BV)[passo]); };
@@ -2892,10 +2905,7 @@ function renderBV(){
     $('#bvComecar').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; save(); seg(); }); };
     const bvz=$('#bvVoz'); if(bvz) bvz.onclick=()=>{ AP.vozGuia=true; aplicarAparencia(); falarE('Pronto. Vou falar com você em cada tela e ouvir a sua resposta. Quando eu terminar de falar, responda.').then(()=>$('#bvComecar').click()); }; $('#bvDemo').onclick=()=>{ S=seed(); normalizar(); save(); agendarAlarmes(false); fecharBV(()=>falar('Esta é a demonstração, com a Dona Lúcia.')); };
     $('#bvSouFam').onclick=()=>{ abrirConsentimento(()=>{ const c=S.consentimento; S=novo(); S.consentimento=c; S.papel='familia'; save(); fecharBV(()=>abrirSeguir()); },'familia'); }; }
-  if(passo===1){ $('#bvOk').onclick=()=>{ S.pessoa=limparNome($('#bvNome').value,false).trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
-  if(passo===2 && $('#bvCont')) $('#bvCont').onclick=()=>escolherContato('#bvFones',(n,f)=>{ if(n) $('#bvFam').value=n; if(f) $('#bvWa').value=f; falar(n?'Pronto. '+n+' vai receber os avisos.':'Pronto.'); });
-  if(passo===2){ $('#bvOk').onclick=()=>{ S.familiar=limparNome($('#bvFam').value,true).trim(); S.whats=$('#bvWa').value.trim(); save(); seg(); }; $('#bvPular').onclick=seg; }
-  if(passo===3){ $('#bvLer').onclick=()=>fecharBV(()=>{ go('ler'); if(SCAN) lerNativo(); }); $('#bvDepois').onclick=()=>fecharBV(); }
+  if(passo===1){ $('#bvOk').onclick=()=>{ S.pessoa=limparNome($('#bvNome').value,false).trim(); save(); fimBV(); }; $('#bvPular').onclick=fimBV; }
   const t=$('#bvT'); if(t) t.focus && t.setAttribute('tabindex','-1');
 }
 
@@ -3787,12 +3797,8 @@ async function wizVoz(){
         const resumo=hs.map(h=>`${nomeHora(h).toLowerCase()}: ${rotuloQ(addSel.q[h],addSel.outroQ[h],u)}`).join('; ');
         await falarE(`Confira com a receita. ${resumo}.${t.alertas.length?' Atenção: '+t.alertas.join(' ').replace(/(\d+) mg/g,'$1 miligramas')+' Pode estar certo, se o médico receitou assim.':''} Está igual à receita? Diga sim ou não.`); st('Ouvindo…');
         const ok=simOuNao(await escutar());
-        if(ok!==true){ st('Confira e toque nas caixinhas.'); await falarE('Tudo bem. Confira com calma e toque nas caixinhas da tela.'); break; }
-        addSel.conferi=true; if(t.alertas.length) addSel.ciente=true; addSel.passo=4; renderWizard(); continue; }
-      if(p===4){ await falarE('Quer tirar uma foto da caixa? Diga sim ou não.'); st('Ouvindo…');
-        const ok=simOuNao(await escutar());
-        if(ok===true){ tirarFoto(f=>{ addSel.foto=f; renderWizard(); falarE('Pronto. Agora toque em salvar.'); }); break; }
-        salvarWizard(it); break; }
+        if(ok!==true){ st('Confira e toque em conferi.'); await falarE('Tudo bem. Confira com calma e toque em conferi, na tela.'); break; }
+        addSel.conferi=true; if(t.alertas.length) addSel.ciente=true; renderWizard(); salvarWizard(it); break; }
       break;
     }
   } catch(e){ st('Não consegui usar o microfone. Use os botões.'); }
