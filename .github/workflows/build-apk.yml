@@ -29,17 +29,34 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Estoque dos postos do dia (dados abertos da Prefeitura do Recife)
+        continue-on-error: true
+        run: |
+          curl -fsSL -m 30 https://raw.githubusercontent.com/gaoc-sue/remedio-falado-dados/main/estoque.json -o /tmp/estoque.json
+          python3 -c "import json,sys; j=json.load(open('/tmp/estoque.json')); assert len(j['postos'])>=20 and j['data_estoque']; print('estoque de', j['data_estoque'], '-', len(j['postos']), 'postos')"
+          cp /tmp/estoque.json www/postos.json
+
       - name: Preparar o projeto Android
         run: npm run android:prepare
 
-      - name: Compilar o APK
+      - name: Notificação instantânea (Firebase), se configurada
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then echo "Sem GOOGLE_SERVICES_JSON: o APK sai sem notificação instantânea (funciona como antes)."; exit 0; fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          python3 -c "import json; j=json.load(open('android/app/google-services.json')); ids=[c['client_info']['android_client_info']['package_name'] for c in j['client']]; assert 'br.com.remediofalado.app' in ids, ids; print('Firebase ligado para', j['project_info']['project_id'])" \
+            || { echo "::error::GOOGLE_SERVICES_JSON precisa ser o google-services.json do app br.com.remediofalado.app"; exit 1; }
+          if [ -f www/carteiro.json ]; then echo "Carteiro: $(cat www/carteiro.json)"; else echo "::warning::Ainda sem www/carteiro.json: rode o fluxo 'Publicar o carteiro' primeiro."; fi
+
+      - name: Compilar o APK (versão final, assinada)
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
       - name: Renomear o APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk remedio-falado.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk remedio-falado.apk
 
       - name: Guardar o APK nesta execução
         uses: actions/upload-artifact@v4
@@ -53,5 +70,5 @@ jobs:
         run: |
           gh release delete apk --yes --cleanup-tag || true
           gh release create apk remedio-falado.apk \
-            --title "Remédio Falado (APK de teste)" \
-            --notes "Versão gerada automaticamente a partir do commit ${GITHUB_SHA::7}. Para instalar, permita apps de fontes desconhecidas no Android."
+            --title "Remédio Falado (APK)" \
+            --notes "Versão final (release), gerada automaticamente a partir do commit ${GITHUB_SHA::7}. Instala por cima da versão anterior sem apagar os remédios. Para instalar, permita apps de fontes desconhecidas no Android."
