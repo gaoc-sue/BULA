@@ -2915,7 +2915,7 @@ function renderBV(){
     <button class="bv-esc um" id="bvOutroOk" type="button">${CHECK}<span>A pessoa está aqui comigo</span></button>
     <button class="bv-link" id="bvOutroVolta" type="button">Voltar</button>`;
   else if(passo===0) h=`<div class="bv-cab"><button class="tbtn ouvir" id="bvOuvir" type="button" aria-label="Ouvir de novo">${IC.som}Ouvir</button></div>
-    <div class="bv-logo"><span class="lg"><svg class="bv-logo-svg" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--accent)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--accent-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+    <div class="bv-logo"><span class="lg"><svg class="bv-logo-svg" viewBox="4 4 56 56" aria-hidden="true"><path d="M16.4 22H23.4V42H16.4A10 10 0 0 1 16.4 22Z" fill="#1E4FD0"/><path d="M23.4 22H30.4A10 10 0 0 1 30.4 42H23.4Z" fill="#8FB0FF"/><path d="M12.399999999999999 28.5h5" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/><g fill="none" stroke="#EA580C" stroke-width="4.2" stroke-linecap="round"><path d="M44.36 23.64A13 13 0 0 1 44.36 40.36"/><path d="M50.49 18.50A21 21 0 0 1 50.49 45.50"/></g></svg></span></div>
     <h2 id="bvT">Remédio Falado</h2>
     <p class="bv-sub">Eu leio a caixa do remédio, <b>falo para que serve</b> e <b>lembro a hora de tomar</b>.</p>
     <p class="bv-q">Quem vai usar este celular?</p>
@@ -2953,7 +2953,7 @@ function renderBV(){
 }
 
 /* ---------- navegação: tela inicial + telas com "Voltar" escrito (Grindrod et al. 2014; Gomez-Hernandez et al. 2023: saída segura em toda tela) ---------- */
-const LOGO_SVG='<svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="5" width="34" height="30" rx="8" fill="var(--surface)" stroke="var(--fg)" stroke-width="2.5"/><path d="M20 5v30M3 20h34" stroke="var(--fg)" stroke-width="2.5"/><rect x="5.6" y="7.6" width="12.2" height="10.2" rx="4" fill="var(--pill)"/><path d="M8.6 12.9l2.5 2.5 4.6-5" stroke="var(--pill-ink)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const LOGO_SVG='<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1E4FD0"/><g transform="translate(32 32) scale(1.12) translate(-32 -32)"><path d="M16.4 22H23.4V42H16.4A10 10 0 0 1 16.4 22Z" fill="#FFFFFF"/><path d="M23.4 22H30.4A10 10 0 0 1 30.4 42H23.4Z" fill="#A9C0F5"/><g fill="none" stroke="#F59E1B" stroke-width="4.2" stroke-linecap="round"><path d="M44.36 23.64A13 13 0 0 1 44.36 40.36"/><path d="M50.49 18.50A21 21 0 0 1 50.49 45.50"/></g></g></svg>';
 const TITULOS={ler:'Ler a caixa',agenda:'Meus remédios',familia:'Família',gratis:'Remédio de graça',ajustes:'Ajustes',acomp:'Família'};
 function modoFamilia(){ return S.papel==='familia' && S.seguindo.length>0; }
 const raiz = () => modoFamilia() ? 'acomp' : 'hoje';

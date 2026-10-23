@@ -1,5 +1,5 @@
 // Ajusta o projeto Android gerado pelo Capacitor:
-// permissões, leitor de código de barras, ícone da notificação, motor de voz,
+// permissões, leitor de código de barras, ícone do app e da notificação, motor de voz,
 // cofre (Android Keystore) e a conexão com a família que roda com o app fechado (JobScheduler + alarme exato do atraso).
 const fs = require('fs'), path = require('path');
 const res = path.join(__dirname, '..', 'android', 'app', 'src', 'main');
@@ -55,14 +55,43 @@ if (!m.includes('android.intent.action.SEND')) {
 m = m.replace(/android:allowBackup="true"/, 'android:allowBackup="false"');
 if (!m.includes('android:allowBackup')) m = m.replace('<application', '<application android:allowBackup="false"');
 fs.writeFileSync(manifestPath, m);
-// ícone simples (pílula) para a barra de notificação
+// ícone da barra de notificação: a marca (cápsula + duas ondas de som), em branco
 const draw = path.join(res, 'res', 'drawable');
 fs.mkdirSync(draw, { recursive: true });
 fs.writeFileSync(path.join(draw, 'ic_stat_icon.xml'),
-`<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-  <path android:fillColor="#FFFFFFFF" android:pathData="M8,6h8a6,6 0,0 1,0 12h-8a6,6 0,0 1,0 -12zM8,8a4,4 0,0 0,0 8h3v-8z"/>
+`<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="64" android:viewportHeight="64">
+  <path android:fillColor="#FFFFFFFF" android:pathData="M16.4,22H22.6V42H16.4A10,10 0,0 1 16.4,22ZM24.2,22H30.4A10,10 0,0 1 30.4,42H24.2Z"/>
+  <path android:strokeColor="#FFFFFFFF" android:strokeWidth="4.6" android:strokeLineCap="round" android:pathData="M44.36,23.64A13,13 0,0 1 44.36,40.36"/>
+  <path android:strokeColor="#FFFFFFFF" android:strokeWidth="4.6" android:strokeLineCap="round" android:pathData="M50.49,18.50A21,21 0,0 1 50.49,45.50"/>
 </vector>
 `);
+// ícone do app (a marca nova): adaptativo (Android 8+), com versão monocromática (Android 13+) e PNGs para celulares antigos
+(function copiar(de, para) {
+  for (const n of fs.readdirSync(de)) {
+    const a = path.join(de, n), b = path.join(para, n);
+    if (fs.statSync(a).isDirectory()) { fs.mkdirSync(b, { recursive: true }); copiar(a, b); }
+    else fs.copyFileSync(a, b);
+  }
+})(path.join(__dirname, '..', 'android-src', 'res'), path.join(res, 'res'));
+// abertura do app: fundo azul com a marca no centro (sem a imagem padrão do Capacitor, que esticava)
+for (const d of fs.readdirSync(path.join(res, 'res')).filter(n => n.startsWith('drawable'))) {
+  const f = path.join(res, 'res', d, 'splash.png');
+  if (fs.existsSync(f)) fs.unlinkSync(f);
+}
+fs.writeFileSync(path.join(draw, 'splash.xml'),
+`<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background"/>
+    <item><bitmap android:gravity="center" android:src="@mipmap/ic_launcher_foreground"/></item>
+</layer-list>
+`);
+const stylesPath = path.join(res, 'res', 'values', 'styles.xml');
+let st = fs.readFileSync(stylesPath, 'utf8');
+if (!st.includes('windowSplashScreenBackground')) {
+  st = st.replace('<item name="android:background">@drawable/splash</item>',
+    '<item name="android:background">@drawable/splash</item>\n        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>');
+  fs.writeFileSync(stylesPath, st);
+}
 // assinatura fixa: assim cada APK novo instala por cima do anterior, sem apagar os dados.
 // A versão "release" (a que vai para as pessoas) usa a mesma chave da antiga versão de teste,
 // então quem já tem o app instalado só atualiza, sem perder os remédios.
@@ -103,4 +132,4 @@ if (!g.includes('com.google.mlkit:text-recognition')) {
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 g = g.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
 fs.writeFileSync(gradlePath, g);
-console.log('Android ajustado: permissões, ícone de notificação, voz, bateria, cofre, conexão com a família, leitura e compartilhar da receita.');
+console.log('Android ajustado: permissões, ícone do app e da notificação, abertura, voz, bateria, cofre, conexão com a família, leitura e compartilhar da receita.');
