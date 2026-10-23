@@ -46,6 +46,15 @@ if (!m.includes('br.com.remediofalado.app.EloAlarme')) {
         </receiver>
     </application>`);
 }
+// notificação instantânea: recebe o "acorde" do carteiro (Firebase) e busca as mensagens na hora
+if (!m.includes('br.com.remediofalado.app.Carteiro')) {
+  m = m.replace('</application>', `        <service android:name="br.com.remediofalado.app.Carteiro" android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+    </application>`);
+}
 // receita pelo "Compartilhar" do Android: PDF, foto ou texto (ex.: receita digital que chegou no WhatsApp)
 if (!m.includes('android.intent.action.SEND')) {
   const filtro = mime => `\n            <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="${mime}" />\n            </intent-filter>`;
@@ -127,6 +136,10 @@ for (const f of fs.readdirSync(path.join(__dirname, '..', 'android-src')).filter
 // leitura da receita pela foto (teste): reconhecimento de texto do Google (ML Kit), modelo dentro do app, sem internet
 if (!g.includes('com.google.mlkit:text-recognition')) {
   g = g.replace(/dependencies \{/, "dependencies {\n    implementation 'com.google.mlkit:text-recognition:16.0.1'");
+}
+// notificação instantânea: Firebase Cloud Messaging (só funciona se o build tiver o google-services.json; sem ele, o app segue como antes)
+if (!g.includes('firebase-messaging')) {
+  g = g.replace(/dependencies \{/, "dependencies {\n    implementation 'com.google.firebase:firebase-messaging:24.1.0'");
 }
 // número da versão sobe a cada compilação no GitHub
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);

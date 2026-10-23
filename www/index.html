@@ -1378,7 +1378,8 @@ function renderConsentimento(erro){
   $('#consOuvir').onclick=()=>ouvir(fam?FALA_CONS_FAM:FALA_CONS);
   /* tocar em "Concordo" é o aceite (ato claro da pessoa, LGPD art. 8º e 11, I) */
   $('#consOk').onclick=()=>{
-    S.consentimento={versao:CONSENT_VERSAO,em:new Date().toISOString(),tipo:fam?'familia':'pessoa',via:consVia||'toque'}; consVia=''; save(); $('#consent').hidden=true; const f=consDepois; consDepois=null; if(f) f(); };
+    const tAnt=S.consentimento&&S.consentimento.versao===CONSENT_VERSAO?S.consentimento.tipo:'';
+    S.consentimento={versao:CONSENT_VERSAO,em:new Date().toISOString(),tipo:(tAnt&&tAnt!==(fam?'familia':'pessoa'))?'ambos':(fam?'familia':'pessoa'),via:consVia||'toque'}; consVia=''; save(); $('#consent').hidden=true; const f=consDepois; consDepois=null; if(f) f(); };
   $('#consNao').onclick=()=>{ $('#consent').hidden=true; calar();
     if(consModo==='existente'){ apagarTudo('Seus dados foram apagados deste celular.'); }
     else toast('Tudo bem. Sem a sua permissão, o app não guarda dados de saúde. Você pode ver a demonstração.'); };
@@ -2442,7 +2443,7 @@ function renderAjustes(){
   if(!fam) linhasFam.push(linhaAj('conectar','Conectar o celular da família',S.pareados.length?listaFala(S.pareados.map(p=>p.nome))+' '+(S.pareados.length>1?'acompanham':'acompanha'):'A família vê se você tomou o remédio'));
   S.seguindo.forEach(f=>linhasFam.push(linhaAj('seg:'+f.id,'Acompanho: '+f.nome,'Ver ou parar de acompanhar')));
   linhasFam.push(linhaAj('seguir','Acompanhar alguém da família','Pelo código que aparece no outro celular'));
-  if(fam) linhasFam.push(linhaAj('eu-remedios','Também tomo remédios','Usar a caixinha neste celular'));
+  if(fam) linhasFam.push(linhaAj('eu-remedios','Também tomo remédios','Colocar os meus remédios neste celular'));
   if(S.pareados.length||S.seguindo.length) linhasFam.push(linhaAj('conexao','Estado da conexão','Último envio, última notícia e teste'));
   v.innerHTML=`<div class="stack" style="gap:18px">
     <div><h2>Ajustes</h2><p class="small muted" style="margin:4px 0 0">Para a família ou quem ajuda a configurar.</p></div>
@@ -2465,7 +2466,7 @@ function abrirAj(id){
   if(id==='conexao') return abrirConexao();
   if(id==='seguir') return abrirSeguir();
   if(id==='teste'){ const {gs,ativo,depois}=partesHoje(); const x=ativo||depois[0]||gs[0]; if(x) abrirAlarmeGrupo(x.h,true); else toast('Coloque um remédio primeiro.'); return; }
-  if(id==='eu-remedios'){ S.papel='idoso'; save(); go('hoje'); toast('Pronto. A família continua no botão Família.'); return; }
+  if(id==='eu-remedios') return comecarMeus();
   if(id==='demo'){ if(confirma!=='demo'){ confirma='demo'; $('#zerarMsg').textContent=(S.demo?'Vai apagar os dados de exemplo.':'Vai trocar seus dados pelos de exemplo.')+' Toque de novo para confirmar.'; return; }
     confirma=''; eloDespedir(); S = S.demo ? novo() : seed(); normalizar(); save(); agendarAlarmes(false); configurarNativo(); alvo=null; resultado=null;
     if(!S.demo) abrirBoasVindas(); else go('hoje'); toast(S.demo?'Demonstração aberta.':'Pronto para começar.'); return; }
@@ -2955,6 +2956,13 @@ function renderBV(){
 /* ---------- navegação: tela inicial + telas com "Voltar" escrito (Grindrod et al. 2014; Gomez-Hernandez et al. 2023: saída segura em toda tela) ---------- */
 const LOGO_SVG='<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1E4FD0"/><g transform="translate(32 32) scale(1.12) translate(-32 -32)"><path d="M16.4 22H23.4V42H16.4A10 10 0 0 1 16.4 22Z" fill="#FFFFFF"/><path d="M23.4 22H30.4A10 10 0 0 1 30.4 42H23.4Z" fill="#A9C0F5"/><g fill="none" stroke="#F59E1B" stroke-width="4.2" stroke-linecap="round"><path d="M44.36 23.64A13 13 0 0 1 44.36 40.36"/><path d="M50.49 18.50A21 21 0 0 1 50.49 45.50"/></g></g></svg>';
 const TITULOS={ler:'Ler a caixa',agenda:'Meus remédios',familia:'Família',gratis:'Remédio de graça',ajustes:'Ajustes',acomp:'Família'};
+/* quem acompanha passa a usar a caixinha para os próprios remédios: aceite próprio, nome e, depois, o primeiro remédio */
+function comecarMeus(){
+  const seguir=()=>{ S.papel='idoso'; if(!S.pessoa) S.pessoa=limparNome(String(S.eu||'').replace(/\(.*?\)/g,''),false).trim(); save(); configurarNativo();
+    passo=1; bvAberto=true; bvOutro=false; $('#bv').hidden=false; renderBV(); guiarBV(); };
+  if(!S.demo && (!S.consentimento || S.consentimento.versao!==CONSENT_VERSAO || S.consentimento.tipo==='familia')){ abrirConsentimento(seguir); return; }
+  seguir();
+}
 function modoFamilia(){ return S.papel==='familia' && S.seguindo.length>0; }
 const raiz = () => modoFamilia() ? 'acomp' : 'hoje';
 function renderTopo(){
@@ -3032,7 +3040,10 @@ const utf8 = t => new TextEncoder().encode(t);
 async function sha(){ const partes=[].slice.call(arguments), tot=partes.reduce((n,p)=>n+p.length,0), all=new Uint8Array(tot); let o=0; partes.forEach(p=>{ all.set(p,o); o+=p.length; }); return new Uint8Array(await SUB.digest('SHA-256',all)); }
 const chavesElo={};
 async function chaveElo(k64){ if(!chavesElo[k64]) chavesElo[k64]=await SUB.importKey('raw',deB64u(k64),{name:'AES-GCM'},false,['encrypt','decrypt']); return chavesElo[k64]; }
-async function cifrarElo(k64,obj){ const iv=crypto.getRandomValues(new Uint8Array(12)); const ct=await SUB.encrypt({name:'AES-GCM',iv},await chaveElo(k64),utf8(JSON.stringify(obj))); return 'rfe1.'+b64u(iv)+'.'+b64u(ct); }
+/* notificação instantânea: cada mensagem leva, criptografado, o código de notificação deste celular (pt);
+   o outro celular guarda e, ao mandar algo, pede ao carteiro para acordar este (ver carteiro/carteiro.js) */
+let MEU_PT='', CARTEIRO='';
+async function cifrarElo(k64,obj){ if(MEU_PT && obj && obj.de && !obj.pt) obj=Object.assign({},obj,{pt:MEU_PT}); const iv=crypto.getRandomValues(new Uint8Array(12)); const ct=await SUB.encrypt({name:'AES-GCM',iv},await chaveElo(k64),utf8(JSON.stringify(obj))); return 'rfe1.'+b64u(iv)+'.'+b64u(ct); }
 async function decifrarElo(k64,env){ const p=String(env||'').split('.'); if(p.length!==3||p[0]!=='rfe1') throw new Error('formato');
   const pt=await SUB.decrypt({name:'AES-GCM',iv:deB64u(p[1])},await chaveElo(k64),deB64u(p[2])); return JSON.parse(new TextDecoder().decode(pt)); }
 async function parECDH(){ const kp=await SUB.generateKey({name:'ECDH',namedCurve:'P-256'},false,['deriveBits']); return {priv:kp.privateKey, pub:b64u(await SUB.exportKey('raw',kp.publicKey))}; }
@@ -3052,10 +3063,39 @@ async function relayGet(topic,since){
   else { const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('relay '+r.status); txt=await r.text(); }
   return txt.split('\n').map(l=>{ try{ return JSON.parse(l); }catch(e){ return null; } }).filter(m=>m && m.event==='message');
 }
-async function relayPost(topic,corpo){
+async function relayPost(topic,corpo,semAcordar){
   const url=`${RELAY}/${topic}`, H=httpPlug();
-  if(H){ const r=await H.request({method:'POST',url,data:corpo,headers:{'Content-Type':'text/plain; charset=utf-8'},connectTimeout:15000,readTimeout:20000}); if(r.status>=300) throw new Error('relay '+r.status); return; }
-  const r=await fetch(url,{method:'POST',body:corpo,headers:{'Content-Type':'text/plain; charset=utf-8'}}); if(!r.ok) throw new Error('relay '+r.status);
+  if(H){ const r=await H.request({method:'POST',url,data:corpo,headers:{'Content-Type':'text/plain; charset=utf-8'},connectTimeout:15000,readTimeout:20000}); if(r.status>=300) throw new Error('relay '+r.status); }
+  else { const r=await fetch(url,{method:'POST',body:corpo,headers:{'Content-Type':'text/plain; charset=utf-8'}}); if(!r.ok) throw new Error('relay '+r.status); }
+  if(!semAcordar) acordarCanal(topic);
+}
+/* pede ao carteiro para acordar o outro celular deste canal (sem conteúdo). Sem carteiro ou sem o código, o outro busca sozinho a cada 10-15 minutos. */
+const acordadoEm={};
+const CARTEIRO_OK = u => /^https:\/\/[^\s]+$/.test(u) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(u); // http só no computador, para teste
+async function acordarCanal(topic){
+  const c=(S.pareados||[]).concat(S.seguindo||[]).find(x=>x.topic===topic);
+  if(!c || !c.pt || !CARTEIRO_OK(CARTEIRO) || Date.now()-(acordadoEm[topic]||0)<3000) return;
+  acordadoEm[topic]=Date.now();
+  const url=CARTEIRO+'/acordar', corpo=JSON.stringify({token:c.pt}), H=httpPlug();
+  try{ let st, j={};
+    if(H){ const r=await H.request({method:'POST',url,data:corpo,headers:{'Content-Type':'application/json'},connectTimeout:8000,readTimeout:8000}); st=r.status; j=typeof r.data==='string'?JSON.parse(r.data||'{}'):(r.data||{}); }
+    else { const r=await fetch(url,{method:'POST',body:corpo,headers:{'Content-Type':'application/json'}}); st=r.status; try{ j=await r.json(); }catch(e){} }
+    c.acordou={em:Date.now(),ok:st<300};
+    if(j && j.invalido){ c.pt=''; save(); configurarNativo(); }
+  }catch(e){ c.acordou={em:Date.now(),ok:false}; }
+}
+/* manda o código deste celular para cada conexão que ainda não tem o código atual */
+async function anunciarPt(){
+  if(!MEU_PT) return;
+  for(const c of (S.pareados||[]).concat(S.seguindo||[])){
+    if(c.ptEnv===MEU_PT || esperando(c)) continue;
+    try{ await relayPost(c.topic, await cifrarElo(c.key,{de:S.pareados.indexOf(c)>=0?'idoso':'familia',t:'pt',ts:Date.now()}), true); c.ptEnv=MEU_PT; save(); }catch(e){ anotarErro(c,e); }
+  }
+}
+async function iniciarCarteiro(){
+  try{ const r=await fetch('carteiro.json',{cache:'no-store'}); if(r.ok){ const j=await r.json(); if(CARTEIRO_OK(j.url||'')) CARTEIRO=String(j.url).replace(/\/+$/,''); } }catch(e){}
+  try{ if(ELO && ELO.tokenPush){ const r=await ELO.tokenPush(); MEU_PT=(r&&r.token)||''; } }catch(e){}
+  if(CARTEIRO || MEU_PT){ configurarNativo(); if(eloAtivo()) anunciarPt(); }
 }
 /* O servidor de passagem aceita até 4 KB por mensagem: acima disso ela vira anexo, que o app não lê e que some em 3 horas.
    A mensagem grande (muitos remédios e a semana inteira) vai em partes de 3.000 caracteres, já criptografada. */
@@ -3091,7 +3131,7 @@ async function enviarEstado(forcar){
   while(utf8(JSON.stringify(e)).length>9000 && e.log.length) e.log=e.log.slice(Math.ceil(e.log.length/4)); // no máximo 4 partes
   for(const p of S.pareados){
     if(esperando(p)){ p.estadoPend=true; continue; }
-    try{ const ps=partir(await cifrarElo(p.key,e)); p.estadoEnv=ps.join('\n'); for(const x of ps) await relayPost(p.topic,x); p.envEm=Date.now(); p.erro=''; p.estadoPend=false; }
+    try{ const ps=partir(await cifrarElo(p.key,e)); p.estadoEnv=ps.join('\n'); for(const x of ps) await relayPost(p.topic,x,true); p.envEm=Date.now(); p.erro=''; p.estadoPend=false; }
     catch(x){ anotarErro(p,x); p.estadoPend=true; } }
   configurarNativo();
 }
@@ -3106,12 +3146,12 @@ function avisoAtraso(x){ const um=x.ds.length===1, a0=x.ds[0].a;
 function configurarNativo(){
   if(!ELO) return;
   const k=dayKey(new Date()), gs=gruposHoje();
-  const cfg={relay:RELAY,
-    canais:S.pareados.map(p=>({topic:p.topic,key:p.key,nome:p.nome,papel:'idoso',visto:p.visto||0,estado:p.estadoEnv||''}))
-      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0,
+  const cfg={relay:RELAY, carteiro:CARTEIRO,
+    canais:S.pareados.map(p=>({topic:p.topic,key:p.key,nome:p.nome,papel:'idoso',visto:p.visto||0,estado:p.estadoEnv||'',pt:p.pt||''}))
+      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0,pt:f.pt||'',
         pend:f.gestor?(f.pend||[]).filter(p=>p.cif).map(p=>({uid:p.uid,id:p.item.id,op:p.op,ts:p.ts,cif:p.cif})):[]}))),
     doses:S.pareados.length?gs.map(x=>Object.assign({h:x.h},avisoAtraso(x))):[], dia:k,
-    tomados:gs.filter(x=>!x.pend.length).map(x=>x.h), avisados:Object.keys(S.eloAvisados).filter(x=>x.indexOf(k)===0)};
+    tomados:gs.filter(x=>!x.pend.length).map(x=>x.h), eu:S.pessoa||'', avisados:Object.keys(S.eloAvisados).filter(x=>x.indexOf(k)===0)};
   ELO.configurar({json:JSON.stringify(cfg)}).catch(()=>{});
 }
 const verificados={};
@@ -3130,7 +3170,8 @@ async function eloRodada(){
   eloOcupado=true; let mudou=false;
   try{ if(S.pareados.some(p=>p.estadoPend && !esperando(p))){ ultimoEstado=''; await enviarEstado(true); }
        for(const p of S.pareados.slice()) mudou=(await lerCanal(p,'idoso'))||mudou;
-       for(const f of S.seguindo.slice()){ mudou=(await lerCanal(f,'familia'))||mudou; const n=(f.pend||[]).length; await reenviarPend(f); if(n) mudou=true; } }
+       for(const f of S.seguindo.slice()){ mudou=(await lerCanal(f,'familia'))||mudou; const n=(f.pend||[]).length; await reenviarPend(f); if(n) mudou=true; }
+       await anunciarPt(); }
   finally{ eloOcupado=false; }
   if(mudou){ save(); if(atual==='acomp'||atual==='familia') render(); }
 }
@@ -3152,7 +3193,9 @@ async function lerCanal(c,papel){
 }
 function tratarMsg(c,papel,o,m){
   const t=(m.time||Math.floor(Date.now()/1000))*1000;
-  if(o.t==='ping'){ if(Date.now()-t<30*60000) cifrarElo(c.key,{de:papel,t:'pong',pid:o.pid,ts:Date.now(),via:'app'}).then(env=>relayPost(c.topic,env)).catch(()=>{}); return; }
+  if(typeof o.pt==='string' && o.pt && o.pt.length<4096 && o.pt!==c.pt){ c.pt=o.pt; save(); configurarNativo(); }
+  if(o.t==='pt') return;
+  if(o.t==='ping'){ if(Date.now()-t<30*60000) cifrarElo(c.key,{de:papel,t:'pong',pid:o.pid,ts:Date.now(),via:'app'}).then(env=>relayPost(c.topic,env,true)).catch(()=>{}); return; }
   if(o.t==='pong'){ if(papel==='familia') c.ultima=Math.max(c.ultima||0,t); if(pingAtual && pingAtual.c===c && o.pid===pingAtual.pid && !pingAtual.ok){ pingAtual.ok=Date.now(); pingAtual.via=o.via||'app'; if(conv&&conv.modo==='estado') renderElo(); } return; }
   if(o.t==='pedirEstado'){ if(papel==='idoso' && Date.now()-(c.respEstado||0)>60000){ c.respEstado=Date.now(); ultimoEstado=''; enviarEstado(true); } return; }
   if(o.t==='tchau'){ if(papel==='idoso') S.pareados=S.pareados.filter(x=>x!==c); else S.seguindo=S.seguindo.filter(x=>x!==c);
@@ -3160,17 +3203,24 @@ function tratarMsg(c,papel,o,m){
   if(papel==='familia'){
     c.ultima=Math.max(c.ultima||0,t);
     if(o.t==='estado'){ if(!c.estado || (o.ts||0)>=(c.estado.ts||0)){ c.estado=o; c.estadoEm=t; if(o.n) c.nome=o.n; confirmarPend(c); } }
+    else if(o.t==='lembrete-ok' && (!c.lembrete || c.lembrete.lid!==o.lid || c.lembrete.ok)){ /* resposta repetida (app e Android) ou antiga */ }
     else if(o.aviso){ c.alertas=(c.alertas||[]).concat([{ts:t,t:o.t,h:o.h||'',tit:o.aviso.titulo||'',txt:o.aviso.texto||''}]).slice(-20);
       if(!document.hidden && Date.now()-t<15*60000) toast(o.aviso.titulo||'Aviso da família'); }
     if(o.t==='socorro' && o.sid && Date.now()-t<30*60000){ c.acks=c.acks||[]; if(c.acks.indexOf(o.sid)<0){ c.acks=c.acks.concat([o.sid]).slice(-20);
         cifrarElo(c.key,{de:'familia',t:'recebi',sid:o.sid,ts:Date.now(),por:S.eu||''}).then(env=>relayPost(c.topic,env)).catch(()=>{}); } }
+    if(o.t==='lembrete-ok' && c.lembrete && o.lid===c.lembrete.lid && !c.lembrete.ok){ c.lembrete.ok=t; c.lembrete.tomou=!!o.tomou; }
     if(o.t==='pedir'){ c.pedidos=(c.pedidos||[]).concat([{ts:t,code:o.code||'',nome:o.nome||'',dose:o.dose||''}]).slice(-10); }
     if(o.t==='gestor-off'){ c.gestor=false; c.pend=[]; c.pedidos=[]; }
   } else {
     if(o.t==='agenda'){ aplicarAgenda(c,o); return; }
     if(o.t==='recebi'){ socorroRecebido(c,o); return; }
     if(o.t==='lembrar' && Date.now()-t<60*60000){ const h=o.h; const pend=h && dosesHoje().some(d=>d.h===h&&!d.reg);
-      if(pend && $('#alarm').hidden) abrirAlarmeGrupo(h); toast(`${c.nome} pediu para lembrar do remédio.`); }
+      if(o.lid){ S.lembAcks=S.lembAcks||[]; if(S.lembAcks.indexOf(o.lid)>=0) return; S.lembAcks=S.lembAcks.concat([o.lid]).slice(-30); save();
+        const quem=S.pessoa||"", hm=hhmm(Date.now());
+        const av=pend?{titulo:quem?`O lembrete chegou para ${quem}`:'O lembrete chegou',texto:`O celular mostrou o lembrete dos remédios das ${h} às ${hm}.`}
+                     :{titulo:quem?`${quem} já tinha marcado os remédios`:'Os remédios já estavam marcados',texto:`Os remédios das ${h} já estavam marcados como tomados.`};
+        cifrarElo(c.key,{de:'idoso',t:'lembrete-ok',lid:o.lid,uid:'ack-'+o.lid,h,tomou:!pend,ts:Date.now(),via:'app',aviso:av}).then(env=>relayPost(c.topic,env)).catch(()=>{}); }
+      if(pend && $('#alarm').hidden) abrirAlarmeGrupo(h); if(pend) toast(`${c.nome} pediu para lembrar do remédio.`); }
   }
 }
 /* ao abrir o app: a família pede o resumo atualizado; quem toma o remédio reenvia o seu se estiver velho */
@@ -3202,6 +3252,7 @@ function htmlConexao(){
       <p class="small">Último envio: <b>${esc(quando(c.envEm))}</b></p>
       <p class="small">Última notícia do outro celular: <b>${esc(quando(rec))}</b></p>
       <p class="small">Último erro: <b>${c.erro?esc(traduzErro(c.erro))+(c.erroEm?' · '+esc(haQuanto(c.erroEm)):''):'nenhum'}</b></p>
+      <p class="small">Aviso na hora: <b>${!CARTEIRO?'não configurado neste app':!c.pt?'esperando o outro celular (precisa do app novo)':c.acordou&&!c.acordou.ok?'falhou da última vez':'ligado'}</b></p>
       ${esperando(c)?`<p class="small">O servidor pediu para esperar um pouco. Eu tento de novo sozinho.</p>`:''}
       ${st}
       <button class="btn btn-pill btn-s" type="button" data-ping="${i}">Testar conexão agora</button>
@@ -3220,11 +3271,17 @@ async function testarConexao(c,papel){
     if(pingAtual.ok){ clearInterval(iv); save(); return; }
     if(Date.now()-t0>60000){ clearInterval(iv); pingAtual.falhou=true; if(conv&&conv.modo==='estado') renderElo(); } },3000);
 }
+/* "Lembrar no celular": não existe envio instantâneo (sem servidor próprio). O celular de quem toma busca as mensagens
+   de 10 em 10 minutos enquanto o remédio está atrasado, mostra o lembrete e responde "chegou" (lembrete-ok). */
 async function enviarLembrar(f,h){
-  try{ await relayPost(f.topic, await cifrarElo(f.key,{de:'familia',t:'lembrar',h,ts:Date.now(),aviso:{titulo:`${S.eu||'Sua família'} pediu para lembrar`,texto:`Remédios ${momentoDe(h).de} (${h}). Abra o Remédio Falado para marcar.`}}));
-    toast(`Pronto. O celular de ${curto(f.nome)} vai mostrar o lembrete.`); falar(`Pronto. O celular de ${curto(f.nome)} vai mostrar o lembrete.`); }
+  const lid='l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  try{ await relayPost(f.topic, await cifrarElo(f.key,{de:'familia',t:'lembrar',h,lid,ts:Date.now(),aviso:{titulo:`${S.eu||'Sua família'} pediu para lembrar`,texto:`Remédios ${momentoDe(h).de} (${h}). Abra o Remédio Falado para marcar.`}}));
+    f.lembrete={h,lid,dia:dayKey(new Date()),env:Date.now(),ok:0,tomou:false}; f.envEm=Date.now(); save(); renderAcomp();
+    const t=`Pedido enviado. O celular de ${curto(f.nome)} confere as mensagens a cada 10 minutos, mais ou menos. Eu aviso quando o lembrete chegar.`;
+    toast(t); falar(t); }
   catch(e){ toast('Não consegui enviar. Confira a internet.'); }
 }
+function lembreteDe(f,h){ const l=f.lembrete; return l && l.h===h && l.dia===dayKey(new Date()) ? l : null; }
 async function despedir(c){ try{ await relayPost(c.topic, await cifrarElo(c.key,{de:S.pareados.indexOf(c)>=0?'idoso':'familia',t:'tchau',ts:Date.now()})); }catch(e){} }
 function eloDespedir(){ (S.pareados||[]).concat(S.seguindo||[]).forEach(c=>despedir(c)); }
 function pararCompartilhar(p){ despedir(p); S.pareados=S.pareados.filter(x=>x!==p); save(); configurarNativo(); toast(`${p.nome} não acompanha mais.`); }
@@ -3471,7 +3528,7 @@ function renderAcomp(){
     h+=late.map(x=>{ const min=toMin(nowHM())-toMin(x.h);
       return `<section class="al-card" aria-label="${esc(x.m.nome)} atrasado"><h3>${esc(x.m.nome)} · ${x.h}</h3><p class="q" style="margin:0">Ainda não marcou · faz ${min>=60?Math.floor(min/60)+' h '+pad(min%60):min+' min'}</p>
         <p style="margin:0">${esc(x.pend.map(d=>med(d.a).nome+' '+d.a.dose).join(' · '))}</p>
-        <button class="btn btn-pill" type="button" data-ligar="1">${IC.tel}Ligar para ${esc(curto(nome))}</button><button class="btn btn-ghost" type="button" data-lembrar="${x.h}">${IC.sino}Lembrar no celular</button>
+        <button class="btn btn-pill" type="button" data-ligar="1">${IC.tel}Ligar para ${esc(curto(nome))}</button>${(()=>{ const l=lembreteDe(f,x.h); return l?`<p class="small lemb ${l.ok?'ok':''}" role="status" style="margin:0">${l.ok?(l.tomou?`${esc(curto(nome))} já tinha marcado.`:`${CHECK.replace('<svg','<svg width="18" height="18" style="vertical-align:-3px"')} O lembrete chegou no celular de ${esc(curto(nome))} às ${hhmm(l.ok)}.`):`Lembrete enviado às ${hhmm(l.env)}. Esperando o celular de ${esc(curto(nome))} conferir as mensagens (até uns 10 minutos).`}</p>`:''; })()}<button class="btn btn-ghost" type="button" data-lembrar="${x.h}">${IC.sino}${lembreteDe(f,x.h)?'Lembrar de novo':'Lembrar no celular'}</button>
         ${ligarAberto&&!f.fone?`<div class="field"><label class="label" for="acFone">Telefone de ${esc(nome)}</label>${botaoContato('acCont')}<div id="acFones" class="stack" hidden></div><div class="manual"><input id="acFone" inputmode="tel" placeholder="DDD + número"><button class="btn btn-pill" id="acFoneOk" type="button">Ligar</button></div></div>`:''}
       </section>`; }).join('');
     h+=outros.map(x=>`<div class="mo ${x.st==='ok'?'ok':''}"><div><h3>${esc(x.m.nome)}</h3><p class="s" style="margin:0">${x.st==='ok'?'Tomou às '+esc(x.em):(x.st==='next'?'Agora':x.h)+' · '+x.ds.length+' '+(x.ds.length>1?'remédios':'remédio')}</p></div>${ICO[x.m.k]}</div>`).join('');
@@ -3499,10 +3556,13 @@ function renderAcomp(){
     if(g && mud.length) h+=`<div class="form"><h3>Últimas mudanças</h3>${listaMudancas(mud,5)}</div>`;
     if(!g) h+=`<p class="hint">Só ${esc(curto(nome))} muda esta lista, pela receita.</p>`;
   }
+  /* quem acompanha também pode tomar remédios: o convite fica na tela principal dele */
+  if(!acompPrevia && S.papel==='familia' && !S.agenda.length && (!e || acompTab==='hoje'))
+    h+=`<div class="form eu-tb"><h3>Você também toma remédios?</h3><p class="small" style="margin:0">O app lembra os seus também, neste mesmo celular. ${esc(curto(nome))} continua aqui, no botão Família.</p><button class="btn btn-ghost" id="bEuTb" type="button">${IC.ler}Colocar os meus remédios</button></div>`;
   v.innerHTML=`<div class="stack" style="gap:14px">${h}</div>`;
   document.querySelectorAll('#view-acomp [data-sel]').forEach(b=>b.onclick=()=>{ acompSel=b.dataset.sel; renderAcomp(); });
   const on=(id,fn)=>{ const b=$('#'+id); if(b) b.onclick=fn; };
-  on('bMaisSeg',abrirSeguir); on('bSamuAc',()=>abrirLink('tel:192')); on('bAtuAc',()=>{ f.pedidoEm=0; pedirEstados(); eloRodada(); toast('Procurando notícias...'); }); on('bConexaoAc',abrirConexao);
+  on('bMaisSeg',abrirSeguir); on('bEuTb',comecarMeus); on('bSamuAc',()=>abrirLink('tel:192')); on('bAtuAc',()=>{ f.pedidoEm=0; pedirEstados(); eloRodada(); toast('Procurando notícias...'); }); on('bConexaoAc',abrirConexao);
   on('bWaAc',()=>enviarWhats(textoSemana(semana(st),nome)));
   on('bGestAdd',()=>{ gestorAlvo=f; resultado=null; go('ler'); falar(`Vamos colocar um remédio para ${f.nome}. Leia a caixa do remédio. Depois, copie da receita.`); if(SCAN) lerNativo(); });
   document.querySelectorAll('#view-acomp [data-pedido]').forEach(b=>b.onclick=()=>{ const p=(f.pedidos||[])[+b.dataset.pedido]; if(!p) return;
@@ -3866,6 +3926,7 @@ if(primeiroUso) abrirBoasVindas();
 else { agendarAlarmes(true); if(!temConsentimento() && (S.agenda.length || S.pessoa)) abrirConsentimento(()=>toast('Obrigado. Seus dados continuam neste celular, criptografados.'),'existente');
   if(modoFamilia()) go('acomp'); }
 if(eloAtivo()){ eloRodada(); configurarNativo(); }
+iniciarCarteiro();
 };
 /* abre o cofre (descriptografa os dados) e só então inicia o app */
 RFCofre.abrir(['remedio-falado-demo-v1']).then(function(){ window.__rfMain(); }, function(){ window.__rfMain(); });

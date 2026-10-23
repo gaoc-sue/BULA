@@ -36,10 +36,13 @@ import javax.crypto.spec.SecretKeySpec;
  * Conexão com a família, com o app fechado.
  * A cada 15 minutos (JobScheduler do Android):
  *  - no celular de quem toma o remédio: se uma dose passou 30 minutos sem ser marcada, manda o aviso para a família
- *    (e um alarme exato, EloAlarme, acorda o celular 31 minutos depois de cada dose para o aviso não atrasar);
+ *    (e um alarme exato, EloAlarme, acorda o celular 31 minutos depois de cada dose para o aviso não atrasar e,
+ *    enquanto a dose não for marcada, de 10 em 10 minutos por até 3 horas: assim o "Lembrar no celular" da família chega rápido);
  *  - nos dois celulares: busca mensagens novas e mostra a notificação;
  *  - no celular de quem cuida dos remédios (modo gestor): reenvia, de 6 em 6 horas, a mudança que o outro celular ainda não confirmou.
  * Tudo que passa pelo servidor vai criptografado de ponta a ponta (AES-256-GCM). O servidor não consegue ler.
+ * Notificação instantânea (se o carteiro estiver configurado): depois de mandar um aviso, pede ao carteiro para acordar
+ * o outro celular pelo Firebase, sem conteúdo; ele busca a mensagem na hora (ver Carteiro.java).
  */
 final class Elo {
     static final int JOB_PERIODICO = 7101;
@@ -49,8 +52,45 @@ final class Elo {
     private static final long PULSO_MS = 2L * 60 * 60 * 1000;
     private static final long REENVIO_MS = 6L * 60 * 60 * 1000;
     private static final long DESISTE_MS = 3L * 24 * 60 * 60 * 1000;
+    static final int CONFERE_CADA_MIN = 10;
+    static final int CONFERE_ATE_MIN = 181;
 
     private Elo() {}
+
+    /* carteiro: endereço e o código de notificação (token do Firebase) do outro celular em cada canal */
+    private static String carteiro = "";
+    private static final java.util.Map<String, String> ptPorCanal = new java.util.HashMap<>();
+
+    static void lerCarteiro(JSONObject cfg) {
+        carteiro = cfg == null ? "" : cfg.optString("carteiro", "").replaceAll("/+$", "");
+        ptPorCanal.clear();
+        JSONArray c = cfg == null ? null : cfg.optJSONArray("canais");
+        if (c != null) for (int i = 0; i < c.length(); i++) {
+            JSONObject x = c.optJSONObject(i);
+            if (x != null && !x.optString("pt").isEmpty()) ptPorCanal.put(x.optString("topic"), x.optString("pt"));
+        }
+    }
+
+    /** pede ao carteiro para acordar o outro celular deste canal (sem conteúdo; falha em silêncio) */
+    static void acordar(String topic) {
+        String pt = ptPorCanal.get(topic);
+        if (carteiro.isEmpty() || !carteiro.startsWith("https://") || pt == null || pt.isEmpty()) return;
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL(carteiro + "/acordar").openConnection();
+            c.setConnectTimeout(8000); c.setReadTimeout(8000);
+            c.setRequestMethod("POST"); c.setDoOutput(true);
+            c.setRequestProperty("Content-Type", "application/json");
+            JSONObject b = new JSONObject(); b.put("token", pt);
+            try (OutputStream o = c.getOutputStream()) { o.write(b.toString().getBytes(StandardCharsets.UTF_8)); }
+            c.getResponseCode();
+            c.disconnect();
+        } catch (Exception e) { /* sem carteiro: o outro celular busca na rodada normal */ }
+    }
+
+    static void publicarEAcordar(String relay, String topic, String corpo) throws Exception {
+        publicar(relay, topic, corpo);
+        acordar(topic);
+    }
 
     static void salvarConfig(Context ctx, String json) throws Exception {
         Cofre.guardar(ctx, "elo", json);
@@ -81,7 +121,8 @@ final class Elo {
                 .build());
     }
 
-    /* alarme exato 31 minutos depois da próxima dose ainda não marcada (só no celular de quem toma) */
+    /* alarme exato 31 minutos depois da próxima dose ainda não marcada e, enquanto ela continuar sem marcar,
+       de 10 em 10 minutos até 3 horas depois (só no celular de quem toma). O Android aceita um alarme assim a cada ~9 minutos. */
     static void agendarAtraso(Context ctx) {
         AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
@@ -119,15 +160,19 @@ final class Elo {
             String h = d.optString("h");
             int m = toMin(h);
             if (m < 0) continue;
+            achou:
             for (int dia = 0; dia <= 1; dia++) {
                 if (dia == 0 && cfgHoje && tomados.contains(h)) continue;
-                Calendar c = Calendar.getInstance();
-                c.setTimeInMillis(agora);
-                c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
-                c.add(Calendar.DAY_OF_MONTH, dia);
-                c.add(Calendar.MINUTE, m + 31);
-                long q = c.getTimeInMillis();
-                if (q > agora + 5000) { if (melhor == 0 || q < melhor) melhor = q; break; }
+                // hoje: 31, 41, 51... até 181 minutos depois da dose; amanhã: só o primeiro (31 minutos)
+                for (int k = 31; k <= (dia == 0 ? CONFERE_ATE_MIN : 31); k += CONFERE_CADA_MIN) {
+                    Calendar c = Calendar.getInstance();
+                    c.setTimeInMillis(agora);
+                    c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
+                    c.add(Calendar.DAY_OF_MONTH, dia);
+                    c.add(Calendar.MINUTE, m + k);
+                    long q = c.getTimeInMillis();
+                    if (q > agora + 5000) { if (melhor == 0 || q < melhor) melhor = q; break achou; }
+                }
             }
         }
         return melhor;
@@ -150,6 +195,7 @@ final class Elo {
         SharedPreferences st = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String relay = cfg.optString("relay", "https://ntfy.sh");
         JSONArray canais = cfg.optJSONArray("canais");
+        lerCarteiro(cfg);
 
         // canais em que este celular é de quem toma o remédio (os outros: este celular acompanha alguém)
         JSONArray meus = new JSONArray();
@@ -158,6 +204,10 @@ final class Elo {
             if (c != null && "idoso".equals(c.optString("papel", "idoso"))) meus.put(c);
         }
         if (meus.length() > 0) avisarAtrasos(ctx, cfg, st, relay, meus);
+        Set<String> tomadosHoje = new HashSet<>();
+        JSONArray tj = cfg.optJSONArray("tomados");
+        if (hoje().equals(cfg.optString("dia")) && tj != null) for (int i = 0; i < tj.length(); i++) tomadosHoje.add(tj.optString(i));
+        String eu = cfg.optString("eu", "");
 
         for (int i = 0; i < canais.length(); i++) {
             JSONObject c = canais.optJSONObject(i);
@@ -166,7 +216,7 @@ final class Elo {
             String topic = c.optString("topic"), key = c.optString("key");
             if (topic.isEmpty() || key.isEmpty()) continue;
             JSONArray pend = c.optJSONArray("pend");
-            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0), pend, c.optString("estado", "")); } catch (Exception e) { /* sem internet: tenta na próxima */ }
+            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0), pend, c.optString("estado", ""), tomadosHoje, eu); } catch (Exception e) { /* sem internet: tenta na próxima */ }
             if ("familia".equals(papel) && pend != null && pend.length() > 0) reenviar(st, relay, topic, pend);
             // sinal de vida: reenvia o último resumo de 2 em 2 horas (já criptografado pelo app)
             String estado = c.optString("estado", "");
@@ -222,7 +272,7 @@ final class Elo {
                 for (int j = 0; j < canais.length(); j++) {
                     JSONObject c = canais.optJSONObject(j);
                     if (c == null) continue;
-                    publicar(relay, c.optString("topic"), cifrar(c.optString("key"), msg.toString()));
+                    publicarEAcordar(relay, c.optString("topic"), cifrar(c.optString("key"), msg.toString()));
                 }
                 avisados.add(k); mudou = true;
             } catch (Exception e) { /* sem internet: tenta na próxima rodada */ }
@@ -254,7 +304,7 @@ final class Elo {
             if (uid.isEmpty() || cif.isEmpty() || conf.contains(uid) || agora - ts > DESISTE_MS) continue;
             long ultimo = st.getLong("reenv:" + uid, ts);
             if (agora - ultimo < REENVIO_MS) continue;
-            try { publicar(relay, topic, cif); ed.putLong("reenv:" + uid, agora); } catch (Exception e) { break; }
+            try { publicarEAcordar(relay, topic, cif); ed.putLong("reenv:" + uid, agora); } catch (Exception e) { break; }
         }
         ed.apply();
     }
@@ -277,7 +327,8 @@ final class Elo {
         st.edit().putStringSet("conf:" + topic, conf).apply();
     }
 
-    private static void buscar(Context ctx, SharedPreferences st, String relay, String topic, String key, String papel, long vistoApp, JSONArray pend, String estado) throws Exception {
+    private static void buscar(Context ctx, SharedPreferences st, String relay, String topic, String key, String papel, long vistoApp, JSONArray pend, String estado,
+                               Set<String> tomadosHoje, String eu) throws Exception {
         long desde = Math.max(st.getLong("desde:" + topic, 0), vistoApp);
         if (desde == 0) desde = System.currentTimeMillis() / 1000 - 15 * 60;
         Set<String> vistos = new HashSet<>(st.getStringSet("ids:" + topic, new HashSet<String>()));
@@ -344,9 +395,26 @@ final class Elo {
                     try {
                         JSONObject resp = new JSONObject();
                         resp.put("de", "familia"); resp.put("t", "recebi"); resp.put("sid", msg.optString("sid")); resp.put("ts", System.currentTimeMillis());
-                        publicar(relay, topic, cifrar(key, resp.toString()));
+                        publicarEAcordar(relay, topic, cifrar(key, resp.toString()));
                         acks.add(msg.optString("sid"));
                     } catch (Exception e) { /* tenta na próxima rodada */ }
+                }
+                // a família pediu para lembrar: mostra o lembrete (se a dose ainda não foi marcada) e conta para a família que chegou
+                if ("idoso".equals(papel) && "lembrar".equals(msg.optString("t"))) {
+                    if (System.currentTimeMillis() - t * 1000 > 60L * 60 * 1000) continue;
+                    String lid = msg.optString("lid", "");
+                    if (!lid.isEmpty() && acks.contains("l:" + lid)) continue;
+                    String h = msg.optString("h");
+                    boolean tomou = tomadosHoje.contains(h);
+                    JSONObject av = msg.optJSONObject("aviso");
+                    if (!tomou && av != null) notificar(ctx, av.optString("titulo"), av.optString("texto"), id.hashCode());
+                    if (!lid.isEmpty()) {
+                        try {
+                            publicarEAcordar(relay, topic, cifrar(key, respostaLembrete(lid, h, tomou, eu, System.currentTimeMillis()).toString()));
+                            acks.add("l:" + lid);
+                        } catch (Exception e) { /* sem internet agora: a família continua vendo "esperando" */ }
+                    }
+                    continue;
                 }
                 String uid = msg.optString("uid", "");
                 if (!uid.isEmpty()) { if (uids.contains(uid)) continue; uids.add(uid); } // mudança reenviada: avisa uma vez só
@@ -359,6 +427,27 @@ final class Elo {
         if (acks.size() > 40) acks.clear();
         st.edit().putLong("desde:" + topic, maior).putStringSet("ids:" + topic, vistos).putStringSet("uids:" + topic, uids)
                 .putStringSet("acks:" + topic, acks).apply();
+    }
+
+    /* resposta para a família: o lembrete apareceu (ou a dose já estava marcada) */
+    static JSONObject respostaLembrete(String lid, String h, boolean tomou, String eu, long agora) throws Exception {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(agora);
+        String hm = String.format(java.util.Locale.ROOT, "%02d:%02d", c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE));
+        String quem = eu == null || eu.trim().isEmpty() ? "" : eu.trim();
+        JSONObject r = new JSONObject();
+        r.put("de", "idoso"); r.put("t", "lembrete-ok"); r.put("lid", lid); r.put("h", h); r.put("tomou", tomou); r.put("ts", agora); r.put("via", "android");
+        r.put("uid", "ack-" + lid); // o celular da família avisa uma vez só, mesmo que o app e o Android respondam
+        JSONObject av = new JSONObject();
+        if (tomou) {
+            av.put("titulo", quem.isEmpty() ? "Os remédios já estavam marcados" : quem + " já tinha marcado os remédios");
+            av.put("texto", "Os remédios das " + h + " já estavam marcados como tomados.");
+        } else {
+            av.put("titulo", quem.isEmpty() ? "O lembrete chegou" : "O lembrete chegou para " + quem);
+            av.put("texto", "O celular mostrou o lembrete dos remédios das " + h + " às " + hm + ".");
+        }
+        r.put("aviso", av);
+        return r;
     }
 
     /* ---------------- servidor de passagem (ntfy) ---------------- */

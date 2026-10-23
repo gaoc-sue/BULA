@@ -45,6 +45,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   - **Estoque dos postos atualizado todo dia:** o repositório público `remedio-falado-dados` tem uma tarefa do GitHub Actions que, todo dia às 05h17, baixa o estoque das farmácias da Rede Municipal de Saúde (8 distritos sanitários, Portal de Dados Abertos do Recife), junta com o endereço, telefone e horário das unidades e publica `estoque.json`. O app baixa esse arquivo com internet, uma vez por dia, e guarda para usar sem internet. O build do APK também copia o do dia para `www/postos.json`. Tira da lista SAMU, laboratório, depósitos dos distritos, CAPS e hospitais.
 - **Família, com o celular conectado:** em Família → "Conectar o celular da família", o app mostra um código de 6 números e um QR code. No celular da família, a pessoa toca em "Sou da família" e lê o código. Quem toma o remédio vê o nome e toca em Aceitar. A partir daí, a família vê:
   - o dia de hoje, com "Ligar para ela" e "Lembrar no celular dela";
+    "Lembrar no celular" não é instantâneo (não há servidor de push): enquanto a dose está atrasada, o celular de quem toma confere as mensagens de 10 em 10 minutos (alarme exato, até 3 horas depois da dose), mostra o lembrete e responde. A família vê "Lembrete enviado às…" e depois "O lembrete chegou às…" (ou "já tinha marcado");
   - a semana em grade;
   - os remédios;
   - um bloco "Vale olhar", com caixa errada e alarme que pode falhar.
@@ -53,6 +54,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   **Estado da conexão** (Família ou Ajustes): último envio, última notícia do outro celular, último erro em português e "Testar conexão agora" (o outro celular responde sozinho, até com o app fechado). Na família, depois de 3 horas sem notícia, aparece um aviso claro com o atalho para essa tela.
 
   Se uma dose passar 30 minutos sem ser marcada, a família recebe uma notificação sozinha, mesmo com os dois apps fechados. Um alarme exato do Android (`android-src/EloAlarme.java`, `setExactAndAllowWhileIdle`) acorda o celular de quem toma 31 minutos depois de cada dose, mesmo parado, confere e avisa na hora; ele é remarcado sozinho depois de cada aviso, quando o celular liga ou o app atualiza. A tarefa de 15 em 15 minutos (JobScheduler) continua como reserva, por exemplo se faltar internet na hora. Sem a permissão "Alarme na hora certa" (Android 12 ou mais novo pede para ligar), o Android pode atrasar alguns minutos; o passo para ligar está em Ajustes → Para o alarme tocar sempre.
+  - quem acompanha também pode tomar remédios: o cartão "Você também toma remédios?", na tela de quem acompanha (ou Ajustes → Também tomo remédios), pede o aceite próprio (o aceite de acompanhar cobre só os dados da outra pessoa), o nome e leva para colocar o primeiro remédio. Quem é acompanhado continua no botão Família.
 - **Modo gestor (alguém capaz cuida dos remédios):** ao conectar, a pessoa da família escolhe "Acompanhar e cuidar dos remédios" (filho, mãe, cuidadora, farmacêutica). Quem toma o remédio vê o pedido e escolhe: aceitar, aceitar só para acompanhar ou não aceitar. Depois:
   - o gestor lê a caixa no celular dele, responde as 3 perguntas copiando da receita, e a mudança vai criptografada para o celular de quem toma;
   - o celular de quem toma aplica a mudança, refaz os alarmes, **fala o que mudou** e anota com o nome de quem mudou ("Últimas mudanças");
@@ -105,6 +107,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 - **Na conexão com a família (ponta a ponta):**
   - Os dois celulares combinam uma chave com ECDH P-256; a chave nunca passa pela internet.
   - As mensagens vão em AES-256-GCM por um servidor de passagem (ntfy, código aberto), que só vê texto embaralhado e apaga em poucas horas.
+  - **Aviso na hora (notificação instantânea, opcional):** depois de mandar uma mensagem, o celular pede ao carteiro (`carteiro/carteiro.js`, Cloudflare Workers) para acordar o outro pelo Firebase Cloud Messaging, com um aviso **sem conteúdo**; o outro celular acorda (`android-src/Carteiro.java`) e busca a mensagem criptografada na hora. Vale para "Lembrar no celular", aviso de dose atrasada, socorro, resposta do lembrete e mudanças do gestor. O código de notificação de cada celular só vai para o outro, criptografado. Sem o Firebase configurado, tudo funciona como antes (busca a cada 10-15 minutos). Configuração: `docs/notificacao-instantanea.md`.
   - O código de 6 números serve só para os dois celulares se encontrarem. Ninguém é conectado sem o "Aceitar" de quem toma o remédio.
 - **A família vê:** nome, remédios, horários, o que foi marcado e os avisos. **Não vê:** fotos, contatos, localização.
 - Testado com dois celulares simulados e um servidor de passagem local: o servidor recebeu 7 mensagens, e nenhuma continha nome, remédio ou horário legível.
@@ -121,7 +124,7 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
 
 ## Tecnologias
 
-HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala e o reconhecimento de voz do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre, Elo (com EloJob e EloAlarme) e Receita (leitura do texto da receita com ML Kit Text Recognition 16.0.1, modelo dentro do app). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`, na versão final (release), assinado com a chave fixa de `keystore/`: instala por cima das versões anteriores sem apagar os remédios. Para publicar na Google Play, troque essa chave por uma guardada nos Secrets do GitHub e gere também o `.aab` (`bundleRelease`).
+HTML, CSS e JavaScript empacotados como app Android com [Capacitor](https://capacitorjs.com). Leitura com ML Kit (no celular) e ZXing (na web). Voz com o motor de texto em fala e o reconhecimento de voz do Android, alarmes com notificações locais e criptografia com Web Crypto e Android Keystore. Plugins Android próprios em Java: Energia, Cofre, Elo (com EloJob, EloAlarme e Carteiro, que recebe a notificação instantânea do Firebase Cloud Messaging) e Receita (leitura do texto da receita com ML Kit Text Recognition 16.0.1, modelo dentro do app). O APK é gerado pelo GitHub Actions a cada envio para a branch `main`, na versão final (release), assinado com a chave fixa de `keystore/`: instala por cima das versões anteriores sem apagar os remédios. O carteiro (Cloudflare Workers, JavaScript com Web Crypto para assinar o acesso ao Firebase) é publicado pelo GitHub Actions a cada mudança em `carteiro/`. Para publicar na Google Play, troque essa chave por uma guardada nos Secrets do GitHub e gere também o `.aab` (`bundleRelease`).
 
 ## Estrutura
 
@@ -134,9 +137,12 @@ www/bulas.json        69 bulas do paciente oficiais (Bulário Eletrônico da Anv
 www/farmacias.json    farmácias da Farmácia Popular no Recife
 www/postos.json       postos de saúde do Recife e remédios em estoque (dados abertos)
 www/privacidade.html  privacidade e termos (link para a Google Play)
-android-src/          plugins Android próprios: Energia, Cofre (Keystore), Elo, EloJob e EloAlarme (família com o app fechado), Receita (texto da foto)
+android-src/          plugins Android próprios: Energia, Cofre (Keystore), Elo, EloJob e EloAlarme (família com o app fechado), Carteiro (aviso na hora), Receita (texto da foto)
+android-src/res/      ícone do app (adaptativo e monocromático)
+carteiro/             carteiro (Cloudflare Workers): acorda o outro celular pelo Firebase, sem ver conteúdo
+docs/                 passo a passo da notificação instantânea
 scripts/              cópia de bibliotecas, ajustes do Android e conversão dos dados
-.github/workflows/    geração automática do APK
+.github/workflows/    geração automática do APK e publicação do carteiro
 ```
 
 ## Bulas que vêm dentro do app

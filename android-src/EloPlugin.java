@@ -1,5 +1,6 @@
 package br.com.remediofalado.app;
 
+import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -28,5 +29,21 @@ public class EloPlugin extends Plugin {
     public void verificar(PluginCall call) {
         try { Elo.agora(getContext()); } catch (Exception e) { }
         call.resolve();
+    }
+
+    /** Código de notificação deste celular (Firebase). Vazio se o APK foi gerado sem o Firebase. */
+    @PluginMethod
+    public void tokenPush(PluginCall call) {
+        try {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken().addOnCompleteListener(t -> {
+                JSObject r = new JSObject();
+                r.put("token", t.isSuccessful() && t.getResult() != null ? t.getResult() : "");
+                call.resolve(r);
+            });
+        } catch (Throwable e) {
+            JSObject r = new JSObject();
+            r.put("token", "");
+            call.resolve(r);
+        }
     }
 }
