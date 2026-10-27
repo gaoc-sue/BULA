@@ -13,7 +13,7 @@ São 3 contas gratuitas (Firebase, Cloudflare, GitHub, que já existe) e 4 segre
 1. Entre em **console.firebase.google.com** com uma conta Google do time e clique em **Criar um projeto**. Nome: `remedio-falado`. O Google Analytics pode ficar **desligado**.
 2. No projeto, clique no ícone do **Android** para adicionar um app.
    - Nome do pacote: **`br.com.remediofalado.app`** (exatamente assim).
-   - Apelido: `Remédio Falado`. O certificado SHA-1 pode ficar em branco.
+   - Apelido: `BULA`. O certificado SHA-1 pode ficar em branco.
    - Clique em **Registrar app** e **baixe o `google-services.json`**. Pule os outros passos do assistente: o projeto já está pronto para isso.
 3. Ainda no Firebase, clique na engrenagem → **Configurações do projeto** → aba **Contas de serviço** → **Gerar nova chave privada** → **Gerar chave**. Baixa um arquivo `.json` (o nome começa com `remedio-falado-`).
    - **Esse arquivo é uma senha.** Não mande no WhatsApp, não suba no repositório. Ele vai só para os Secrets do GitHub.

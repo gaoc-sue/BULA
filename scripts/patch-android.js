@@ -64,17 +64,17 @@ if (!m.includes('android.intent.action.SEND')) {
 m = m.replace(/android:allowBackup="true"/, 'android:allowBackup="false"');
 if (!m.includes('android:allowBackup')) m = m.replace('<application', '<application android:allowBackup="false"');
 fs.writeFileSync(manifestPath, m);
-// ícone da barra de notificação: a marca (cápsula + duas ondas de som), em branco
+// ícone da barra de notificação: a marca (o B em forma de balão de fala), em branco
 const draw = path.join(res, 'res', 'drawable');
 fs.mkdirSync(draw, { recursive: true });
 fs.writeFileSync(path.join(draw, 'ic_stat_icon.xml'),
 `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="64" android:viewportHeight="64">
-  <path android:fillColor="#FFFFFFFF" android:pathData="M16.4,22H22.6V42H16.4A10,10 0,0 1 16.4,22ZM24.2,22H30.4A10,10 0,0 1 30.4,42H24.2Z"/>
-  <path android:strokeColor="#FFFFFFFF" android:strokeWidth="4.6" android:strokeLineCap="round" android:pathData="M44.36,23.64A13,13 0,0 1 44.36,40.36"/>
-  <path android:strokeColor="#FFFFFFFF" android:strokeWidth="4.6" android:strokeLineCap="round" android:pathData="M50.49,18.50A21,21 0,0 1 50.49,45.50"/>
+  <group android:translateX="14" android:translateY="9">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M6 0H22C29.5 0 34 4.2 34 10C34 13.4 32.3 16.2 29.6 17.7C33.8 19.3 36 22.8 36 27C36 34.2 30.6 39 23 39H11.5L3.4 45.3C1.9 46.4 0 45.7 0 43.8V6C0 2.7 2.7 0 6 0ZM9.4 12.6H21.1A2.4 2.4 0 0 1 21.1 17.4H9.4A2.4 2.4 0 0 1 9.4 12.6ZM9.4 21.2H15.6A2.4 2.4 0 0 1 15.6 26.0H9.4A2.4 2.4 0 0 1 9.4 21.2Z"/>
+  </group>
 </vector>
 `);
-// ícone do app (a marca nova): adaptativo (Android 8+), com versão monocromática (Android 13+) e PNGs para celulares antigos
+// ícone do app (marca BULA): adaptativo (Android 8+), com versão monocromática (Android 13+) e PNGs para celulares antigos
 (function copiar(de, para) {
   for (const n of fs.readdirSync(de)) {
     const a = path.join(de, n), b = path.join(para, n);

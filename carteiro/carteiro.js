@@ -1,5 +1,5 @@
 /*
- * Carteiro do Remédio Falado (Cloudflare Workers).
+ * Carteiro do BULA (Cloudflare Workers).
  *
  * Só faz uma coisa: quando um celular manda uma mensagem para o outro (pelo servidor de passagem, criptografada),
  * ele pede aqui para o outro celular "acordar" na hora. O carteiro manda pelo Firebase Cloud Messaging um aviso

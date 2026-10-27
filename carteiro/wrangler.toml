@@ -1,4 +1,4 @@
-# Carteiro do Remédio Falado: acorda o outro celular na hora (Firebase Cloud Messaging), sem ver conteúdo.
+# Carteiro do BULA: acorda o outro celular na hora (Firebase Cloud Messaging), sem ver conteúdo.
 # Publicado sozinho pelo GitHub Actions (.github/workflows/carteiro.yml).
 name = "remedio-falado-carteiro"
 main = "carteiro.js"
