@@ -210,6 +210,17 @@ button.dose:first-child{border-top:0}
 .credito p{margin:0;line-height:1.3}
 .credito-nome{font-weight:700;font-size:.95rem;color:var(--fg)}
 .credito-sigla{font-size:.78rem;color:var(--muted);margin:0}
+/* conferir a caixa no alarme */
+.cf-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;margin-top:10px;border-radius:16px;border:2px solid var(--accent);background:var(--surface);color:var(--accent);font:inherit;font-weight:700;font-size:1.05rem;line-height:1.2;cursor:pointer;padding:8px 12px}
+.cf-btn svg{width:28px;height:28px;flex:none}
+.cf-ok{margin-top:10px;border-radius:16px;background:var(--ok-soft);color:var(--ok);padding:12px 14px;font-weight:700;font-size:1.02rem;line-height:1.35;display:flex;gap:10px;align-items:flex-start}
+.cf-ok svg{flex:none}
+.cf-bad{margin-top:10px;border-radius:16px;background:var(--warn-soft);color:var(--warn);padding:12px 14px;font-weight:600;font-size:1rem;line-height:1.4}
+.cf-bad b{display:block;font-weight:700;margin-bottom:4px}
+.cf-tag{display:inline-flex;gap:4px;align-items:center;margin-top:4px;font-size:.85rem;font-weight:700;color:var(--ok)}
+.cf-mini{font:inherit;font-size:.9rem;font-weight:700;color:var(--accent);border:2px solid var(--accent);border-radius:999px;padding:8px 12px;background:var(--surface);white-space:nowrap;min-height:44px;cursor:pointer}
+.cf-dig{margin-top:10px}
+.cf-dig input{min-height:52px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:1.1rem;flex:1;min-width:0}
 .credito-por{font-size:.85rem;color:var(--fg)}
 .credito-por b{color:var(--accent)}
 .credito-esc{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -2382,8 +2393,8 @@ function mostrarResultado(it,code,falarAgora){
   }
 }
 /* caixa errada na hora da dose: fica registrado e, se a família estiver conectada, ela recebe o aviso */
-function registrarCaixaErrada(it,lista){
-  const d=new Date(), m=momentoDe(alvo.h);
+function registrarCaixaErrada(it,lista,hora){
+  const d=new Date(), m=momentoDe(hora||alvo.h);
   const txt=`${DIAS_LONGO[d.getDay()]}, ${nowHM()}: leu ${it.info.nome} no horário ${m.de} (o certo era ${listaFala(lista.map(a=>med(a).nome))}).`;
   S.alertas.push({ts:Date.now(),t:'caixa',txt}); if(S.alertas.length>20) S.alertas=S.alertas.slice(-20); save();
   eloAvisar('caixa',{titulo:`${nomeP()}: caixa errada na hora do remédio`,texto:txt});
@@ -2822,10 +2833,11 @@ function abrirAlarmeGrupo(h,teste){
     <svg class="bell" viewBox="0 0 24 24" width="72" height="72" style="margin:0 auto" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
     <span class="hour">${h}</span><h2 id="alarmTitle">${esc(titulo)}</h2>
     ${um && pend[0].a.foto ? fotoDe(pend[0].a,'foto-g') : ''}
-    <div class="cx" style="text-align:left"><div class="cx-meds">${pend.map(d=>medLinha(d,false)).join('')}</div></div>
+    <div class="cx" style="text-align:left"><div class="cx-meds">${pend.map(d=>medLinha(d,false)).join('')}</div><div id="alConf"></div></div>
     <button class="btn btn-ok" id="alTomei">${CHECK}${um?'TOMEI':'Tomei todos'}</button>
     <div class="btn-row"><button class="btn btn-main" id="alOuvir">${IC.som}Ouvir de novo</button><button class="btn btn-ghost" id="alDepois">Daqui a 10 min</button></div></div>`;
   el.hidden=false;
+  alConf={h,pend,ok:{},msg:null,digitar:false}; desenharConferencia();
   const frase = um
     ? `${vocativo()}horário do ${i.apelido}: ${i.nome}, ${comoEm(pend[0].a,h)}, conforme a receita. O botão tomei registra a dose.`
     : `${vocativo()}horário dos remédios ${m.de}: ${listaFala(pend.map(d=>med(d.a).nome+', '+comoEm(d.a,d.h)))}, conforme a receita. O botão tomei registra as doses.`;
@@ -2838,6 +2850,68 @@ function abrirAlarmeGrupo(h,teste){
   $('#alTomei').focus();
 }
 function abrirAlarme(d){ abrirAlarmeGrupo(d.h,true); }
+/* ---------- conferir a caixa na própria tela do alarme (opcional: avisa, nunca bloqueia o TOMEI) ---------- */
+let alConf=null;
+const ICAM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/></svg>';
+function desenharConferencia(){
+  const box=$('#alConf'); if(!box||!alConf) return;
+  const c=alConf, um=c.pend.length===1, todos=c.pend.every(d=>c.ok[d.a.id]);
+  /* marca e botão em cada remédio quando a hora tem mais de um */
+  document.querySelectorAll('#alarm .cx-med-wrap').forEach((w,i)=>{ const d=c.pend[i]; if(!d) return;
+    w.querySelectorAll('.cf-tag,.cf-mini').forEach(x=>x.remove());
+    if(c.ok[d.a.id]) w.querySelector('.cx-med > span:last-of-type').insertAdjacentHTML('beforeend',`<span class="cf-tag">${CHECK.replace('<svg','<svg width="16" height="16"')}Caixa conferida</span>`);
+    else if(!um) w.insertAdjacentHTML('beforeend',`<button class="cf-mini" type="button" data-cfmed="${esc(d.a.id)}">Conferir</button>`); });
+  let h='';
+  if(c.msg) h+=c.msg.tipo==='ok'?`<div class="cf-ok" role="status">${CHECK.replace('<svg','<svg width="24" height="24"')}<span>${c.msg.html}</span></div>`:`<div class="cf-bad" role="alert">${c.msg.html}</div>`;
+  if(c.digitar) h+=`<div class="cf-dig"><label class="label" for="cfCod">Número embaixo das barras da caixa</label><div class="outro"><input id="cfCod" inputmode="numeric" autocomplete="off" placeholder="7891234567890"><button class="btn btn-pill btn-s" id="cfCodOk" type="button">Conferir</button></div></div>`;
+  else if(um ? !c.ok[c.pend[0].a.id] : (c.msg&&c.msg.tipo==='bad'))
+    h+=`<button class="cf-btn" type="button" id="cfBtn" data-cfmed="${esc(c.msg&&c.msg.tipo==='bad'&&c.msg.alvo?c.msg.alvo:'')}">${ICAM}${c.msg&&c.msg.tipo==='bad'?'Conferir outra caixa':'Conferir a caixa com a câmera'}</button>`;
+  else if(!um && todos && !c.msg) h+=`<div class="cf-ok" role="status">${CHECK.replace('<svg','<svg width="24" height="24"')}<span>Todas as caixas conferidas.</span></div>`;
+  box.innerHTML=h;
+  document.querySelectorAll('#alarm [data-cfmed]').forEach(b=>b.onclick=()=>conferirNoAlarme(b.dataset.cfmed||''));
+  const ok=$('#cfCodOk'); if(ok) ok.onclick=()=>{ const v=($('#cfCod').value||'').replace(/\D/g,''); if(v) conferirCodigoAlarme(v,c.alvoId||''); };
+}
+async function conferirNoAlarme(alvoId){
+  const c=alConf; if(!c) return; c.alvoId=alvoId; calar();
+  if(!SCAN){ c.digitar=true; c.msg=null; desenharConferencia(); const i=$('#cfCod'); if(i) i.focus(); return; }
+  try{
+    const av=await SCAN.isGoogleBarcodeScannerModuleAvailable(); if(!av.available) await instalarLeitor();
+    const r=await SCAN.scan({formats:['EAN_13','EAN_8','UPC_A','UPC_E','DATA_MATRIX','QR_CODE'],autoZoom:true});
+    const b=r.barcodes&&r.barcodes[0], raw=String(b?(b.rawValue||b.displayValue):'').trim();
+    if(!raw) return;
+    const cod=/^\d{8,14}$/.test(raw)?raw:gtinDoGS1(raw);
+    if(!cod){ c.msg={tipo:'bad',html:'<b>Este código não é o das listras.</b>Aponte para o código de barras da caixa: as listras, no lado ou embaixo.',alvo:alvoId}; desenharConferencia(); falar('Este código não é o das listras. Aponte para o código de barras da caixa.'); return; }
+    conferirCodigoAlarme(cod,alvoId);
+  }catch(e){
+    const m=String((e&&e.message)||e); if(/cancel/i.test(m)) return;
+    c.digitar=true; desenharConferencia(); toast('Não consegui abrir a câmera. Digite o número embaixo das barras.');
+  }
+}
+function conferirCodigoAlarme(cod,alvoId){
+  const c=alConf; if(!c) return; c.digitar=false;
+  const it=buscar(cod), lista=c.pend.map(d=>d.a), alvoA=lista.find(a=>a.id===alvoId)||(lista.length===1?lista[0]:null);
+  if(!it){ c.msg={tipo:'bad',html:`<b>Não achei este código.</b>Confira o nome escrito na caixa: ${esc(listaFala((alvoA?[alvoA]:lista).map(a=>med(a).nome+' '+a.dose)))}.`,alvo:alvoId}; desenharConferencia();
+    falar('Não achei este código. Confira o nome escrito na caixa.'); return; }
+  const certo=lista.find(a=>chaveAg(a)===chaveIt(it));
+  /* mesmo remédio, mas com outra dosagem na caixa (ex.: 500 mg em vez de 850 mg): avisa, sem marcar como conferida */
+  const num = t => { const m=String(t||'').replace(',','.').match(/(\d+(?:\.\d+)?)\s*(mg|mcg|g|ml|ui)/i); return m ? (+m[1])+m[2].toLowerCase() : ''; };
+  if(certo && num(it.dose) && num(certo.dose) && num(it.dose)!==num(certo.dose)){
+    const i=med(certo);
+    c.msg={tipo:'bad',alvo:alvoId,html:`<b>Atenção: é ${esc(i.nome)}, mas a dose da caixa é outra.</b>Na caixa: ${esc(it.dose)}. Nos seus remédios: ${esc(certo.dose)}. Confira com a receita antes de tomar.`};
+    desenharConferencia(); falar(`Atenção. É ${i.nome}, mas a caixa é de ${it.dose}, e nos seus remédios está ${certo.dose}. Confira com a receita antes de tomar.`); vibrar('erro'); return;
+  }
+  if(certo){
+    c.ok[certo.id]=true; const i=med(certo), faltam=lista.filter(a=>!c.ok[a.id]);
+    c.msg = lista.length===1||!faltam.length ? {tipo:'ok',html:`Caixa certa: é ${esc(i.nome)} ${esc(certo.dose)}.<br><span style="font-weight:400">${lista.length===1?'Pode tomar e tocar em TOMEI.':'Todas conferidas. Pode tomar e tocar em Tomei todos.'}</span>`} : null;
+    desenharConferencia();
+    const f = lista.length===1 ? `Caixa certa. É a ${i.nome}. Pode tomar e tocar em tomei.` : faltam.length ? `Caixa certa. É a ${i.nome}. Agora confira ${listaFala(faltam.map(a=>'a '+med(a).nome))}.` : `Caixa certa. É a ${i.nome}. Todas as caixas conferidas. Pode tomar e tocar em tomei todos.`;
+    falar(f); vibrar('ok'); return;
+  }
+  const esperado=alvoA?[alvoA]:lista.filter(a=>!c.ok[a.id]);
+  c.msg={tipo:'bad',alvo:alvoId,html:`<b>Atenção: esta caixa é de outro remédio.</b>É ${esc(it.info.nome)}${it.dose?' '+esc(it.dose):''}, ${esc(it.info.apelido)}. Agora é ${esc(listaFala(esperado.map(a=>med(a).nome)))}. Procure a caixa certa e confira de novo.`};
+  desenharConferencia(); registrarCaixaErrada(it,lista,c.h);
+  falar(`Atenção. Esta caixa é de outro remédio: ${it.info.nome}, ${it.info.apelido}. Agora é ${listaFala(esperado.map(a=>med(a).nome))}. Procure a caixa certa.`); vibrar('erro');
+}
 setInterval(()=>{
   const k=dayKey(new Date()), hm=nowHM();
   const id=k+'g'+hm; if(dosesHoje().some(d=>d.h===hm && !d.reg) && !S.tocados[id] && $('#alarm').hidden){ S.tocados[id]=1; save(); abrirAlarmeGrupo(hm); }
@@ -3029,6 +3103,23 @@ window.addEventListener('popstate',e=>{
   if(atual==='ajustes' && ajSub){ voltar(); reabre(); return; }
   go((e.state&&e.state.v)||raiz(),{pop:true});
 });
+/* Voltar do Android (botão ou gesto de arrastar da borda). Sem isto, o Android fechava o app em qualquer tela.
+   Ordem: fecha a janela aberta, volta um passo, volta uma tela; na tela inicial, só manda o app para trás (não fecha). */
+const APP = plug('App');
+function voltarAndroid(){
+  if(!$('#alarm').hidden){ toast('Toque em TOMEI ou em Daqui a 10 min.'); return; }
+  if(!$('#consent').hidden) return;
+  if(!$('#voz').hidden){ fecharVoz(); return; }
+  if(!$('#bv').hidden){ if(passo>0 && !bvOutro){ passo--; renderBV(); guiarBV(); return; } if(bvOutro){ const b=$('#bvOutroVolta'); if(b){ b.click(); return; } } if(APP&&APP.minimizeApp) APP.minimizeApp(); return; }
+  if(!$('#rx').hidden){ rxFechar(); return; }
+  if(!$('#wiz').hidden){ const b=$('#wzVoltar'); if(b) b.click(); else fecharWizard(); return; }
+  const fechar={bulaV:()=>{ const b=$('#bFecharBula'); if(b) b.click(); else $('#bulaV').hidden=true; }, energia:()=>{ $('#energia').hidden=true; calar(); render(); },
+    termos:fecharTermos, elo:fecharElo, pronto:()=>{ $('#pronto').hidden=true; calar(); }};
+  for(const id in fechar){ if(!$('#'+id).hidden){ fechar[id](); return; } }
+  if(atual!==raiz() || (atual==='ajustes'&&ajSub) || acompPrevia){ voltar(); return; }
+  if(APP&&APP.minimizeApp) APP.minimizeApp();
+}
+if(APP&&APP.addListener) try{ APP.addListener('backButton',()=>voltarAndroid()); }catch(e){}
 /* família: barra de abas embaixo (quem acompanha usa o celular com mais facilidade) */
 function renderNavFam(){
   const nav=$('#navFam'), mostra = modoFamilia() && (atual==='acomp'||atual==='ajustes') && !acompPrevia;
@@ -3773,7 +3864,7 @@ async function tratarContexto(ctx,ms){
     const ok=await simNaoFalado(`O telefone é ${d.split('').join(' ')}?`); if(ok) return clica('bvOk');
     $('#bvWa').value=''; perguntarVoz('','Diga o telefone de novo, devagar.',m2=>tratarContexto('bv2f',m2)); return true; }
   if(ctx==='bv3'){ if(yn===true||/\b(ler|caixa|camera|agora)\b/.test(t)) return clica('bvLer'); if(yn===false||/depois/.test(t)) return clica('bvDepois'); return false; }
-  if(ctx==='alarm'){ if(yn===true||/tomei|tomado/.test(t)) return clica('alTomei'); if(yn===false||/depois|dez minutos|10 minutos|mais tarde/.test(t)) return clica('alDepois'); return false; }
+  if(ctx==='alarm'){ if(/confer|caixa|camera|câmera/.test(t)){ const b=$('#cfBtn'); if(b){ b.click(); return true; } } if(yn===true||/tomei|tomado/.test(t)) return clica('alTomei'); if(yn===false||/depois|dez minutos|10 minutos|mais tarde/.test(t)) return clica('alDepois'); return false; }
   if(ctx==='pronto'){ if(/desfaz|sem querer|errei|nao tomei/.test(t)) return clica('prDesf'); if(yn===true||/\b(ok|okay|voltar|inicio|pronto|obrigad\w*|entendi)\b/.test(t)) return clica('prOk'); if(/whats|avisar/.test(t)) return clica('prWa'); return false; }
   if(ctx==='pedido'){ if(yn===true||/aceit/.test(t)) return clica('eloAceitar'); if(yn===false) return clica('eloRecusar'); return false; }
   if(ctx==='resultado'){ if(yn===true||/\b(colocar|guardar|pedir)\b/.test(t)) return clica('bAddAg')||clica('bPedirAg'); if(/\bbula\b/.test(t)){ const b=$('#resBox [data-bula]'); if(b){ b.click(); return true; } } if(yn===false){ falarE('Tudo bem. Não guardei.'); return true; } return false; }
