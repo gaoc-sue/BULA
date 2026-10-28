@@ -39,7 +39,8 @@ import javax.crypto.spec.SecretKeySpec;
  *    (e um alarme exato, EloAlarme, acorda o celular 31 minutos depois de cada dose para o aviso não atrasar e,
  *    enquanto a dose não for marcada, de 10 em 10 minutos por até 3 horas: assim o "Lembrar no celular" da família chega rápido);
  *  - nos dois celulares: busca mensagens novas e mostra a notificação;
- *  - no celular de quem cuida dos remédios (modo gestor): reenvia, de 6 em 6 horas, a mudança que o outro celular ainda não confirmou.
+ *  - no celular de quem cuida dos remédios (modo gestor): reenvia, de 6 em 6 horas, a mudança que o outro celular ainda não confirmou;
+ *  - no celular de quem acompanha, se a pessoa ligou o "resumo do dia": às 21h, mostra quantas doses foram marcadas no dia.
  * Tudo que passa pelo servidor vai criptografado de ponta a ponta (AES-256-GCM). O servidor não consegue ler.
  * Notificação instantânea (se o carteiro estiver configurado): depois de mandar um aviso, pede ao carteiro para acordar
  * o outro celular pelo Firebase, sem conteúdo; ele busca a mensagem na hora (ver Carteiro.java).
@@ -224,6 +225,96 @@ final class Elo {
                 try { publicarTudo(relay, topic, estado); st.edit().putLong("pulso:" + topic, System.currentTimeMillis()).apply(); } catch (Exception e) { }
             }
         }
+        try { resumoDoDia(ctx, cfg, st, canais); } catch (Exception e) { /* o resumo nunca atrapalha o resto */ }
+    }
+
+    /* ---------------- resumo do dia (celular de quem acompanha, só se a pessoa ligou) ---------------- */
+    static final long SEM_NOTICIA_MS = 6L * 60 * 60 * 1000;
+
+    /** o que interessa do resumo que chega do outro celular: as doses do dia ("id|hora") e as marcadas ("dia|id|hora") */
+    static JSONObject resumoDeEstado(JSONObject e, String hoje, String ontem) {
+        JSONObject r = new JSONObject();
+        try {
+            r.put("ts", e.optLong("ts", 0));
+            JSONArray d = new JSONArray(), ok = new JSONArray();
+            JSONArray ag = e.optJSONArray("ag");
+            if (ag != null) for (int i = 0; i < ag.length(); i++) {
+                JSONObject a = ag.optJSONObject(i);
+                JSONArray hs = a == null ? null : a.optJSONArray("h");
+                if (hs != null) for (int j = 0; j < hs.length(); j++) d.put(a.optString("id") + "|" + hs.optString(j));
+            }
+            JSONArray log = e.optJSONArray("log");
+            if (log != null) for (int i = 0; i < log.length(); i++) {
+                JSONArray l = log.optJSONArray(i);
+                if (l == null) continue;
+                String dia = l.optString(0);
+                if (dia.equals(hoje) || dia.equals(ontem)) ok.put(dia + "|" + l.optString(1) + "|" + l.optString(2));
+            }
+            r.put("d", d); r.put("ok", ok);
+        } catch (Exception x) { }
+        return r;
+    }
+
+    private static void guardarResumo(SharedPreferences st, String topic, JSONObject estado) {
+        JSONObject r = resumoDeEstado(estado, hoje(), diaAntes(1));
+        SharedPreferences.Editor ed = st.edit().putLong("ult:" + topic, System.currentTimeMillis());
+        try {
+            JSONObject velho = new JSONObject(st.getString("hj:" + topic, "{}"));
+            if (velho.optLong("ts", 0) <= r.optLong("ts", 0)) ed.putString("hj:" + topic, r.toString());
+        } catch (Exception e) { ed.putString("hj:" + topic, r.toString()); }
+        ed.apply();
+    }
+
+    /** {título, texto} do resumo; null quando não há dose até agora */
+    static String[] textoResumo(String nome, JSONObject r, long ultima, int agoraMin, String dia, long agoraMs) {
+        if (r == null) return null;
+        JSONArray d = r.optJSONArray("d"), okj = r.optJSONArray("ok");
+        if (d == null) return null;
+        Set<String> ok = new HashSet<>();
+        if (okj != null) for (int i = 0; i < okj.length(); i++) {
+            String x = okj.optString(i);
+            if (x.startsWith(dia + "|")) ok.add(x.substring(dia.length() + 1));
+        }
+        int tot = 0, feitos = 0;
+        for (int i = 0; i < d.length(); i++) {
+            String x = d.optString(i);
+            int bar = x.lastIndexOf('|');
+            if (bar < 0) continue;
+            int m = toMin(x.substring(bar + 1));
+            if (m < 0 || m > agoraMin) continue;
+            tot++;
+            if (ok.contains(x)) feitos++;
+        }
+        if (tot == 0) return null;
+        String quem = nome == null || nome.trim().isEmpty() ? "a pessoa" : nome.trim();
+        String texto = feitos == tot
+                ? "Hoje, " + quem + " marcou " + (tot == 1 ? "a dose do dia" : "as " + tot + " doses do dia") + " até agora."
+                : "Hoje, " + quem + " marcou " + feitos + " de " + tot + " doses. " + (tot - feitos == 1 ? "Faltou marcar 1." : "Faltou marcar " + (tot - feitos) + ".") + " Vale ligar.";
+        if (ultima > 0 && agoraMs - ultima > SEM_NOTICIA_MS) texto += " O celular de " + quem + " está sem dar notícia há mais de 6 horas.";
+        return new String[] { "Resumo do dia de " + quem, texto };
+    }
+
+    private static void resumoDoDia(Context ctx, JSONObject cfg, SharedPreferences st, JSONArray canais) {
+        int agora = minutosAgora();
+        if (agora < cfg.optInt("resumoMin", 21 * 60)) return;
+        String dia = hoje();
+        long ms = System.currentTimeMillis();
+        for (int i = 0; i < canais.length(); i++) {
+            JSONObject c = canais.optJSONObject(i);
+            if (c == null || !"familia".equals(c.optString("papel")) || !c.optBoolean("resumo", false)) continue;
+            String topic = c.optString("topic");
+            if (dia.equals(st.getString("resumoDia:" + topic, ""))) continue;
+            // o mais novo entre o que o app passou e o que chegou com o app fechado
+            JSONObject r = c.optJSONObject("hj");
+            try {
+                JSONObject g = new JSONObject(st.getString("hj:" + topic, "{}"));
+                if (r == null || g.optLong("ts", 0) > r.optLong("ts", 0)) r = g;
+            } catch (Exception e) { }
+            long ultima = Math.max(c.optLong("ult", 0), st.getLong("ult:" + topic, 0));
+            String[] t = textoResumo(c.optString("nome"), r, ultima, agora, dia, ms);
+            if (t != null) notificar(ctx, t[0], t[1], ("resumo:" + topic).hashCode());
+            st.edit().putString("resumoDia:" + topic, dia).apply();
+        }
     }
 
     private static int minutosAgora() {
@@ -372,7 +463,7 @@ final class Elo {
                 try { txt = decifrar(key, corpo); } catch (Exception e) { continue; }
                 JSONObject msg = new JSONObject(txt);
                 if (papel.equals(msg.optString("de"))) continue;
-                if ("familia".equals(papel) && "estado".equals(msg.optString("t"))) { confirmar(st, topic, msg, pend); continue; }
+                if ("familia".equals(papel) && "estado".equals(msg.optString("t"))) { guardarResumo(st, topic, msg); confirmar(st, topic, msg, pend); continue; }
                 boolean recente = System.currentTimeMillis() - t * 1000 < 30L * 60 * 1000;
                 // a família pediu o resumo atualizado (ao abrir o app): manda o último, com o app fechado
                 if ("idoso".equals(papel) && "pedirEstado".equals(msg.optString("t")) && recente && !estado.isEmpty()

@@ -60,6 +60,9 @@ button,input,select{font:inherit;color:inherit}
 .btn-ghost{background:var(--surface);border-color:var(--line);color:var(--fg)}
 .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btn:active{transform:translateY(1px)}
+/* toque visível: o botão escurece enquanto o dedo está nele (quem tem tremor ou enxerga pouco sabe que o toque pegou) */
+.btn:active,.opn:active,.atalho:active,.opt:active,.mom:active,.seg button:active,.aj-row:active,.conferi:active,.chips-f button:active,.med-l:active,.cx-med:active{filter:brightness(.8)}
+.linkbtn:active{text-decoration-thickness:4px}
 
 /* dose do momento */
 .now{background:var(--surface);border:2px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:14px}
@@ -309,7 +312,14 @@ nav.tabs button{font-size:14px}
 .total p{margin:0}
 .alerta{border:2px solid var(--warn);display:flex;flex-direction:column;gap:6px}
 .alerta-txt{font-weight:400;color:var(--fg)}
-.linkbtn[data-termos],.linkbtn[data-foto]{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.linkbtn[data-termos],.linkbtn[data-foto],.linkbtn[data-est],.linkbtn.lk-azul{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+/* quanto ainda tem do remédio */
+.est-l{display:flex;flex-direction:column;gap:2px;border-top:2px solid var(--soft-line);padding-top:10px}
+.est-l.baixo b{color:var(--warn)}
+.est-ed,.est-wz{display:flex;flex-direction:column;gap:10px;border:2px solid var(--line);border-radius:18px;padding:12px 14px;background:var(--bg)}
+.est-ed .btn-row .btn,.est-wz .btn-row .btn{flex:1}
+.hoje-cont{display:flex;flex-direction:column;gap:8px}
+.hoje-cont p{margin:0}
 .dose{grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px}
 .dose .dot{margin-right:0}
 
@@ -793,6 +803,8 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--a
 #rxT:focus,#bvT:focus,#vozT:focus{outline:none}
 /* ===== Modo calmo: sem animação, uma cor de destaque, voz só ao tocar em Ouvir ===== */
 :root[data-calmo="1"] *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+/* Android em Acessibilidade → Remover animações: o app também fica parado, sem a pessoa precisar achar o Modo calmo */
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important;scroll-behavior:auto!important} }
 :root[data-calmo="1"] .btn-pill{background:var(--accent);color:var(--accent-ink);box-shadow:none}
 :root[data-calmo="1"] .btn-wa{background:var(--accent)}
 :root[data-calmo="1"] .wa-bar,:root[data-calmo="1"] .free,:root[data-calmo="1"] .receita,:root[data-calmo="1"] .warnbox{background:var(--sunk)}
@@ -1032,12 +1044,14 @@ async function agendarAlarmes(pedir){
       lista.push({id:id++,title: um?'Hora do '+med(as[0]).apelido : 'Hora dos remédios '+m.de,
         body: as.map(a=>`${med(a).nome} ${a.dose} · ${comoEm(a,h)}`).join('; ')+'. Toque para confirmar.',
         schedule:{on:{hour:hh,minute:mm},allowWhileIdle:true},extra:{h}}); });
+    lista.push(...notifEstoque());
     if(lista.length) await NOTIF.schedule({notifications:lista});
   }catch(e){ console.warn('alarmes',e); }
 }
 if(NOTIF){
   NOTIF.addListener('localNotificationActionPerformed',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
-    if(x.h){ go('hoje'); abrirAlarmeGrupo(x.h); } });
+    if(x.h){ go('hoje'); abrirAlarmeGrupo(x.h); }
+    if(x.est){ gratisAba='popular'; go('gratis'); } });
   NOTIF.addListener('localNotificationReceived',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
     if(!x.h) return; const k=dayKey(new Date())+'g'+x.h; if($('#alarm').hidden && !S.tocados[k]){ S.tocados[k]=1; save(); abrirAlarmeGrupo(x.h); } });
 }
@@ -1048,7 +1062,8 @@ const AP_KEY='remedio-falado-aparencia';
 let AP={escala:1,contraste:false,calmo:false,rxTeste:true};
 try{ AP=Object.assign(AP, JSON.parse(localStorage.getItem(AP_KEY))||{}); }catch(e){}
 const ESCALAS=[[1,'Normal'],[1.15,'Grande'],[1.3,'Muito grande']];
-const rolar = el => el && el.scrollIntoView({behavior:AP.calmo?'auto':'smooth',block:'start'});
+const semMovimento = () => !!AP.calmo || !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const rolar = el => el && el.scrollIntoView({behavior:semMovimento()?'auto':'smooth',block:'start'});
 const segCalmo = () => `<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-mcalmo="0" aria-pressed="${!AP.calmo}">Desligado</button><button type="button" data-mcalmo="1" aria-pressed="${!!AP.calmo}">Ligado</button></div>`;
 function aplicarAparencia(){ const r=document.documentElement; r.style.setProperty('--escala',AP.escala); if(AP.contraste) r.setAttribute('data-contraste','1'); else r.removeAttribute('data-contraste');
   if(AP.calmo) r.setAttribute('data-calmo','1'); else r.removeAttribute('data-calmo');
@@ -1482,9 +1497,14 @@ function gruposHoje(st){
 }
 function falaGrupo(x){
   const pend=x.pend.length?x.pend:x.ds;
-  if(pend.length===1){ const d=pend[0]; return `${vocativo()}${x.st==='late'?'já passou o horário do':'é o horário do'} ${med(d.a).apelido}: ${med(d.a).nome}, ${comoEm(d.a,d.h)}, conforme a receita. O botão tomei registra a dose.`; }
-  return `${vocativo()}${x.st==='late'?'já passou o horário dos remédios':'é o horário dos remédios'} ${x.m.de}: ${listaFala(pend.map(d=>med(d.a).nome+', '+comoEm(d.a,d.h)))}, conforme a receita. O botão tomei registra as doses.`;
+  const daqui = x.st!=='late' && x.st!=='ok' && faltaMin(x.h)>0 ? `daqui a ${emQuantoFala(faltaMin(x.h))} ` : '';
+  if(pend.length===1){ const d=pend[0]; return `${vocativo()}${x.st==='late'?'já passou o horário do':daqui+'é o horário do'} ${med(d.a).apelido}: ${med(d.a).nome}, ${comoEm(d.a,d.h)}, conforme a receita. O botão tomei registra a dose.`; }
+  return `${vocativo()}${x.st==='late'?'já passou o horário dos remédios':daqui+'é o horário dos remédios'} ${x.m.de}: ${listaFala(pend.map(d=>med(d.a).nome+', '+comoEm(d.a,d.h)))}, conforme a receita. O botão tomei registra as doses.`;
 }
+/* "daqui a 25 min": a hora fica fixa e a contagem vem de apoio */
+const faltaMin = h => toMin(h)-toMin(nowHM());
+function emQuanto(m){ if(m<60) return m+' min'; const hh=Math.floor(m/60), mm=m%60; return hh+' h'+(mm?' '+pad(mm):''); }
+function emQuantoFala(m){ if(m<60) return m===1?'1 minuto':m+' minutos'; const hh=Math.floor(m/60), mm=m%60; return (hh===1?'1 hora':hh+' horas')+(mm?' e '+mm+(mm===1?' minuto':' minutos'):''); }
 function doseFoco(ds){ return ds.find(d=>d.st==='late') || ds.find(d=>d.st==='next') || ds.find(d=>d.st==='later') || null; }
 const STL={ok:['Tomou','st-ok'],late:['Atrasada','st-late'],next:['Agora','st-next'],later:['Mais tarde','st-next']};
 function dot(p){ return bolinha((INFO[p]||{cor:GENERICO_COR}).cor, INFO[p]?INFO[p].nome:'?'); }
@@ -1494,19 +1514,24 @@ function tomarVarios(ds,via){
   const novos=ds.filter(d=>!S.log.some(l=>l.dia===k&&l.ag===d.a.id&&l.h===d.h));
   if(!novos.length) return;
   novos.forEach(d=>S.log.push({dia:k,ag:d.a.id,h:d.h,em,ok:true}));
-  ultimoTomei={dia:k,itens:novos.map(d=>({ag:d.a.id,h:d.h})),feed:S.feed.length};
+  /* desconta da conta de comprimidos (se a pessoa pediu para avisar antes de acabar) */
+  const tirou=[]; novos.forEach(d=>{ if(d.a.est && contavel(d.a)){ const q=qtdDose(d.a,d.h); d.a.est.n=Math.max(0,d.a.est.n-q); tirou.push({ag:d.a.id,q}); } });
+  ultimoTomei={dia:k,itens:novos.map(d=>({ag:d.a.id,h:d.h})),feed:S.feed.length,tirou};
   const m=momentoDe(novos[0].h), um=novos.length===1, d0=novos[0];
   const txt = um
     ? `${nomeP()} tomou ${med(d0.a).nome} ${d0.a.dose} (${comoEm(d0.a,d0.h)}, dose das ${d0.h})${via==='caixa'?', conferido pela caixa':''}.`
     : `${nomeP()} tomou os remédios ${m.de} (${d0.h}): ${listaFala(novos.map(d=>`${med(d.a).nome} ${d.a.dose}, ${comoEm(d.a,d.h)}`))}.`;
   S.feed.push({t:'ok',em,txt}); if(S.feed.length>60) S.feed=S.feed.slice(-60); save();
+  if(tirou.length){ checarEstoque(); agendarEstoque(); }
   const frase = um ? `Registrei o ${med(d0.a).apelido} às ${em}.` : `Registrei os remédios ${m.de} às ${em}.`;
   render();
   mostrarPronto(frase, txt);
 }
 let ultimoTomei=null;
 function desfazerTomei(){ const u=ultimoTomei; if(!u) return;
-  S.log=S.log.filter(l=>!(l.dia===u.dia && u.itens.some(i=>i.ag===l.ag&&i.h===l.h))); S.feed=S.feed.slice(0,u.feed); ultimoTomei=null; save(); render();
+  S.log=S.log.filter(l=>!(l.dia===u.dia && u.itens.some(i=>i.ag===l.ag&&i.h===l.h))); S.feed=S.feed.slice(0,u.feed);
+  (u.tirou||[]).forEach(t=>{ const a=S.agenda.find(x=>x.id===t.ag); if(a&&a.est) a.est.n+=t.q; });
+  ultimoTomei=null; save(); render(); if((u.tirou||[]).length) agendarEstoque();
   $('#pronto').hidden=true; toast('Desfeito. A dose voltou a ficar para marcar.'); falar('Desfeito. A dose voltou a ficar para marcar.'); }
 /* "Pronto!": confirmação grande, escrita e falada. Só fecha quando a pessoa toca (Apple, WWDC 2025: sem tempo-limite). */
 function mostrarPronto(frase, aviso){
@@ -1525,6 +1550,66 @@ function mostrarPronto(frase, aviso){
   perguntarVoz('Muito bem. '+frase+' Para voltar ao início, toque no botão azul, com o sinal de certo.','Diga ok para voltar ao início.',ms=>tratarContexto('pronto',ms));
 }
 function tomar(a,h,via){ tomarVarios([{a,h}],via); }
+
+/* ---------- quanto ainda tem do remédio: avisa uns dias antes de acabar ----------
+   Só conta comprimido e cápsula (gota e xarope não dá para contar). A conta parte do número que a pessoa confirmou
+   (ou do tamanho da caixa registrado na Anvisa) e desconta a cada TOMEI. É uma estimativa: o app sempre diz "uns". */
+const EST_AVISO=5;
+const SEM_AB=['dom','seg','ter','qua','qui','sex','sáb'];
+const ehContavel = txt => /comprimid|c[áa]psul/i.test(String(txt||''));
+function contavel(a){ return !!(a && a.horarios && a.horarios.length && a.horarios.every(h=>ehContavel(comoEm(a,h)) && contaQ('outra',comoEm(a,h))>0)); }
+const qtdDose = (a,h) => contaQ('outra',comoEm(a,h))||0;
+const unEst = a => /c[áa]psul/i.test(a.como||'') ? ['cápsula','cápsulas'] : ['comprimido','comprimidos'];
+function restamTxt(a){ const n=Math.max(0,Math.floor((a.est&&a.est.n)||0)), u=unEst(a); return n+' '+(n===1?u[0]:u[1]); }
+/* o dia em que não vai ter remédio para uma dose, seguindo os horários (as doses de hoje já marcadas já foram descontadas) */
+function faltaEm(a){
+  if(!a || !a.est || !contavel(a)) return null;
+  let n=a.est.n; const hoje=new Date(), k=dayKey(hoje);
+  const feitas=new Set(S.log.filter(l=>l.dia===k&&l.ag===a.id).map(l=>l.h)), hs=a.horarios.slice().sort();
+  for(let dia=0; dia<400; dia++) for(const h of hs){
+    if(dia===0 && feitas.has(h)) continue;
+    const q=qtdDose(a,h);
+    if(n+1e-9<q){ const d=new Date(hoje); d.setHours(12,0,0,0); d.setDate(d.getDate()+dia); return {dias:dia,data:d,h}; }
+    n-=q; }
+  return {dias:400,data:null};
+}
+const dataCurta = d => `${SEM_AB[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}`;
+function quandoAcaba(f){ if(!f||!f.data) return ''; if(f.dias<=0) return 'acaba hoje'; if(f.dias===1) return 'acaba amanhã'; return `acaba em ${f.dias} dias (${dataCurta(f.data)})`; }
+const baixo = f => !!(f && f.data && f.dias<=EST_AVISO);
+function remediosAcabando(){ return S.agenda.map(a=>({a,f:faltaEm(a)})).filter(x=>baixo(x.f)); }
+function mudarEstoque(a,n){
+  n=Math.max(0,Math.round(n*4)/4);
+  const antes=a.est?a.est.n:null;
+  a.est={n, fam:(antes!=null && n<=antes && a.est.fam)?a.est.fam:{}};
+  save(); agendarEstoque(); checarEstoque();
+}
+/* notificações deste celular: 5 dias antes e na véspera, às 9h (ids 900 em diante) */
+function notifEstoque(){ const out=[], agora=Date.now(); let id=900;
+  S.agenda.forEach(a=>{ const f=faltaEm(a); if(!f||!f.data) return;
+    [[EST_AVISO,'acaba em '+EST_AVISO+' dias'],[1,'acaba amanhã']].forEach(([t,txt])=>{
+      const d=new Date(f.data); d.setDate(d.getDate()-t); d.setHours(9,0,0,0);
+      if(d.getTime()<=agora+60000 || id>=999) return;
+      out.push({id:id++,title:`O ${med(a).apelido} está acabando`,body:`${med(a).nome} ${a.dose} ${txt}. Toque para ver onde tem de graça.`,
+        schedule:{at:d,allowWhileIdle:true},extra:{est:a.id}}); }); });
+  return out; }
+async function agendarEstoque(){
+  if(!NOTIF) return;
+  try{ const p=await NOTIF.checkPermissions(); if(p.display!=='granted') return;
+    const pend=await NOTIF.getPending(), velhos=pend.notifications.filter(n=>n.id>=900&&n.id<1000).map(n=>({id:n.id}));
+    if(velhos.length) await NOTIF.cancel({notifications:velhos});
+    const l=notifEstoque(); if(l.length) await NOTIF.schedule({notifications:l});
+  }catch(e){ console.warn('estoque',e); }
+}
+/* a família recebe o aviso uma vez aos 5 dias e outra na véspera */
+function checarEstoque(){ const novos=[];
+  S.agenda.forEach(a=>{ const f=faltaEm(a); if(!baixo(f)) return; a.est.fam=a.est.fam||{};
+    const t=f.dias<=1?1:EST_AVISO; if(a.est.fam[t]) return;
+    a.est.fam[t]=dayKey(new Date()); if(t===1) a.est.fam[EST_AVISO]=a.est.fam[EST_AVISO]||a.est.fam[1]; novos.push({a,f}); });
+  if(!novos.length) return;
+  save();
+  if(S.pareados.length && !S.demo) novos.forEach(({a,f})=>eloAvisar('estoque',{titulo:`O ${med(a).apelido} de ${curto(nomeP())} está acabando`,
+    texto:`${med(a).nome} ${a.dose}: ${quandoAcaba(f)}. Restam uns ${restamTxt(a)}. No BULA, “Remédio de graça” mostra onde tem.`}));
+}
 
 /* ---------- tela INÍCIO (hoje) ----------
    Um momento em destaque (o de agora), o resto do dia num card "Depois" e 4 atalhos grandes com ícone e nome.
@@ -1559,7 +1644,7 @@ function medL(d,botao){
 function cardAgora(x){
   const alguns=!!algunsAbertos[x.h], late=x.st==='late';
   return `<section class="agora ${late?'late':''}" aria-label="${esc(x.m.nome)}, ${x.h}, ${late?'atrasado':'é agora'}">
-    <div class="agora-cab"><div><h2>${esc(x.m.nome)}</h2><span class="selo">${late?'Atrasado · era '+x.h:x.h+' · é agora'}</span></div>${ilustra(x.m.k)}</div>
+    <div class="agora-cab"><div><h2>${esc(x.m.nome)}</h2><span class="selo">${late?'Atrasado · era '+x.h:faltaMin(x.h)>0?x.h+' · em '+emQuanto(faltaMin(x.h)):x.h+' · é agora'}</span></div>${ilustra(x.m.k)}</div>
     ${x.ds.map(d=>medL(d,alguns)).join('')}
     ${!alguns?`<button class="btn btn-ok btn-tomei" data-tomarg="${x.h}" aria-label="Tomei os remédios ${esc(x.m.de)}">${CHECK}TOMEI</button>`:''}
     <button class="btn btn-ghost" data-conferirg="${x.h}">${IC.ler}Conferir a caixa</button>
@@ -1576,7 +1661,7 @@ function renderHoje(){
   const {gs,ativo,feitos,depois}=partesHoje(), hoje=new Date();
   const nome=S.pessoa?`, <b>${esc(S.pessoa)}!</b>`:'!';
   const energia = S.agenda.length && energiaFalta() && S.energiaAdiar!==dayKey(new Date());
-  const mudNova = mudancaNova();
+  const mudNova = mudancaNova(), acab = remediosAcabando();
   $('#view-hoje').innerHTML=`<div class="stack" style="gap:16px">
     <div><p class="hoje-data">${DIAS_LONGO[hoje.getDay()]}, ${hoje.getDate()} de ${MESES[hoje.getMonth()]}</p><h2 class="saud">${cumprimento()}${nome}</h2></div>
     ${energia?`<div class="aviso-sm" role="status"><b>O alarme pode não tocar neste celular.</b><span class="small">Leva 1 minuto para arrumar.</span>
@@ -1590,9 +1675,12 @@ function renderHoje(){
      : gs.length && !depois.length ? `<div class="msg ok">${CHECK.replace('<svg','<svg width="22" height="22" style="vertical-align:-4px"')} Todos os remédios de hoje foram tomados.</div>` : ''}
     ${mudNova?`<section class="al-card info" role="status"><h3>Mudança nos seus remédios</h3><p style="margin:0">${esc(mudNova.txt)}</p><p class="small muted" style="margin:0">${esc(haQuanto(mudNova.ts))}</p>
        <div class="btn-row"><button class="btn btn-ghost btn-s" type="button" id="bMudOuvir">${IC.som}Ouvir</button><button class="btn btn-pill btn-s" type="button" id="bMudOk">Entendi</button></div></section>`:''}
+    ${acab.length?`<section class="al-card" role="status" id="acabCard"><h3>${acab.length>1?'Remédios acabando':`O ${esc(med(acab[0].a).apelido)} está acabando`}</h3>
+       ${acab.map(x=>`<p style="margin:0"><b>${esc(med(x.a).nome)} ${esc(x.a.dose)}</b>: ${esc(quandoAcaba(x.f))}. Restam uns ${esc(restamTxt(x.a))}.</p>`).join('')}
+       <button class="btn btn-pill" type="button" id="bAcabGratis">${IC.gratis}Onde tem de graça</button><button class="btn btn-ghost" type="button" id="bAcabComprei">Comprei mais</button></section>`:''}
     ${famPergunta()?`<section class="al-card info" id="famCard"><h3>Quem da família recebe os avisos?</h3><p style="margin:0">Assim, no socorro, o app sabe para quem ligar.</p>
        <div class="btn-row"><button class="btn btn-pill btn-s" type="button" id="bFamPor">${CHECK}Colocar agora</button><button class="btn btn-ghost btn-s" type="button" id="bFamNao">Agora não</button></div></section>`:''}
-    ${depois.length?`<section class="depois"><h3>${ativo?'Depois':'Próximo'}</h3>${depois.map(x=>`<div class="dep-l">${ICO[x.m.k]}<span><b>${esc(x.m.nome)}</b><span>${x.h} · ${x.ds.length} ${x.ds.length>1?'remédios':'remédio'}</span></span></div>`).join('')}</section>`:''}
+    ${depois.length?`<section class="depois"><h3>${ativo?'Depois':'Próximo'}</h3>${depois.map((x,n)=>`<div class="dep-l">${ICO[x.m.k]}<span><b>${esc(x.m.nome)}</b><span>${x.h}${n===0&&!ativo&&faltaMin(x.h)>0?' · daqui a '+emQuanto(faltaMin(x.h)):''} · ${x.ds.length} ${x.ds.length>1?'remédios':'remédio'}</span></span></div>`).join('')}</section>`:''}
     ${ativo&&(S.dicaNome||0)<3?`<p class="hint" style="margin-top:-6px">Toque no nome de um remédio para ouvir para que serve.</p>`:''}
     <div class="atalhos">
       <button class="atalho at-ler" type="button" data-go="ler" data-scan="1">${IC.ler}Ler a caixa</button>
@@ -1603,6 +1691,8 @@ function renderHoje(){
     <button class="aj-link" type="button" data-go="ajustes">${IC.aj}Ajustes (para o familiar)</button>
   </div>`;
   const bed=$('#bEnerDepois'); if(bed) bed.onclick=()=>{ S.energiaAdiar=dayKey(new Date()); save(); renderHoje(); };
+  const bag=$('#bAcabGratis'); if(bag) bag.onclick=()=>{ gratisAba='popular'; go('gratis'); };
+  const bac=$('#bAcabComprei'); if(bac) bac.onclick=()=>{ abrirEstoque(acab[0].a); };
   const bmo=$('#bMudOuvir'); if(bmo) bmo.onclick=()=>ouvir(mudNova.txt);
   const bmk=$('#bMudOk'); if(bmk) bmk.onclick=()=>{ S.mudVisto=mudNova.ts; save(); renderHoje(); };
   const bfp=$('#bFamPor'); if(bfp) bfp.onclick=()=>{ go('ajustes'); abrirAj('dados'); const f=$('#cfgFam'); if(f) setTimeout(()=>{ f.scrollIntoView({block:'center'}); f.focus(); },200); falar('Diga ou escreva o nome de quem da família recebe os avisos, e o telefone. Depois, toque em salvar.'); };
@@ -1622,7 +1712,9 @@ function falaHoje(semMud){
   if(ativo) t+=falaGrupo(ativo)+' ';
   else if(!depois.length) t+='Todos os remédios de hoje foram tomados. ';
   if(feitos.length && !ativo) t+=feitos.map(x=>`${x.m.nome}: tomado às ${falaHora(x.em)}.`).join(' ')+' ';
-  if(depois.length) t+=(ativo?'Depois: ':'O próximo: ')+listaFala(depois.map(x=>`${x.m.nome}, às ${falaHora(x.h)}`))+'. ';
+  if(depois.length) t+=(ativo?'Depois: ':'O próximo: ')+listaFala(depois.map((x,n)=>`${x.m.nome}, às ${falaHora(x.h)}${n===0&&!ativo&&faltaMin(x.h)>0?', daqui a '+emQuantoFala(faltaMin(x.h)):''}`))+'. ';
+  const acab=remediosAcabando();
+  if(acab.length) t+='Atenção: '+listaFala(acab.map(x=>`o ${med(x.a).apelido} ${quandoAcaba(x.f).replace(/ \(.*\)/,'')}`))+'. ';
   return t+'Embaixo tem quatro botões: ler a caixa, meus remédios, remédio de graça e família. Você também pode tocar em falar e dizer o que quer.';
 }
 
@@ -1789,7 +1881,7 @@ async function vivo(){
 function parar(){ lendo=false; try{ reader&&reader.reset(); }catch(e){} const vb=$('#vBox'); if(vb) vb.hidden=true; const b=$('#bVivo'); if(b) b.lastChild.textContent='Usar câmera ao vivo'; }
 
 async function achou(code){
-  code=String(code).replace(/\D/g,'');
+  code=String(code).replace(/\D/g,''); cxSomada='';
   await baseOk;
   if(!code){ msgScan('Digite os números que ficam embaixo das barras.','warn'); return; }
   const it=buscar(code); vibrar(it?'ok':'erro');
@@ -1930,6 +2022,19 @@ function erroPasso(it){
   if(p===3 && !addSel.conferi) return 'Toque em "Conferi com a receita do médico".';
   return '';
 }
+/* pergunta 3: quantos tem na caixa (já vem do registro da Anvisa quando a caixa diz "com 30") */
+const contaWizard = u => /comprimido|cápsula/.test(u[0]) && !wizDestino;
+function estWizard(it,u){
+  if(!contaWizard(u)) return '';
+  if(addSel.estN==null) addSel.estN=+it.qtd||0;
+  const n=addSel.estN, txt=`${fmtNum(n)} ${n===1?u[0]:u[1]}`;
+  return `<div class="est-wz"><p style="margin:0"><b>${addSel.estAb?`Quantos ${u[1]} tem agora?`:n?`Caixa com ${txt}.`:'Avisar antes de acabar?'}</b>
+      ${addSel.estAb?'':n?' O app avisa uns dias antes de acabar.':' Conte os '+u[1]+' e o app avisa uns dias antes de acabar.'}</p>
+    ${addSel.estAb?`<div class="passador"><button type="button" class="btn btn-ghost" data-westd="-1" aria-label="Menos um">−</button><output aria-live="polite"><b>${txt}</b></output><button type="button" class="btn btn-ghost" data-westd="1" aria-label="Mais um">+</button></div>
+      <div class="btn-row"><button type="button" class="btn btn-ghost btn-s" data-westd="-10" aria-label="Menos dez">−10</button><button type="button" class="btn btn-ghost btn-s" data-westd="10" aria-label="Mais dez">+10</button></div>
+      <p class="hint" style="margin:0">Com 0, o app não conta este remédio.</p>`
+      :`<button type="button" class="linkbtn lk-azul" id="bEstWz">${n?'Já começou esta caixa? Corrigir a conta':'Contar agora'}</button>`}</div>`;
+}
 function renderWizard(erro){
   const it=wizIt, i=it.info, u=unidade(it.apres), p=addSel.passo, t=totalSel(it), hs=horasSel();
   const qs=[['1','1',u[0]],['2','2',u[1]],['meio','Meio',u[0]],['outra','Outra','quantidade']];
@@ -1956,6 +2061,7 @@ function renderWizard(erro){
     ${(()=>{ /* uma confirmação só (teste com usuários: duas caixinhas seguidas confundiam). Com aviso, ela vale também para o aviso. */
       const on=t.alertas.length ? (addSel.conferi&&addSel.ciente) : addSel.conferi;
       return `<button type="button" class="conferi" id="bConferi" aria-pressed="${on}"><span class="caixa" aria-hidden="true">${on?'✓':''}</span>${t.alertas.length?'Conferi: é isso mesmo que está na receita':'Conferi com a receita do médico'}</button>`; })()}
+    ${estWizard(it,u)}
     <div class="foto-op">${addSel.foto?`<img class="foto-g" src="${addSel.foto}" alt="Foto da caixa">`:''}
       <button type="button" class="linkbtn" id="bFotoAg">${CAM_SVG}${addSel.foto?'Tirar outra foto da caixa':'Tirar foto da caixa (se quiser)'}</button></div>`;
   $('#wizIn').innerHTML=`<div class="wz-top"><p class="small">${wizDestino?(wizEditar?'Mudar':'Colocar')+' remédio para '+esc(wizDestino.nome):'Colocar remédio'} · pergunta ${p} de 3</p><div class="barra" aria-hidden="true"><i style="width:${Math.round(p*100/3)}%"></i></div>
@@ -1982,6 +2088,8 @@ function renderWizard(erro){
   document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ x.oninput=e=>{ addSel.outroQ[x.dataset.qo]=e.target.value; }; });
   const bf=$('#bConferi'); if(bf) bf.onclick=()=>{ const comAviso=totalSel(it).alertas.length>0, on=comAviso?(addSel.conferi&&addSel.ciente):addSel.conferi;
     addSel.conferi=!on; addSel.ciente=comAviso?!on:addSel.ciente; redesenha(); };
+  const bew=$('#bEstWz'); if(bew) bew.onclick=()=>{ addSel.estAb=true; redesenha(); falar(`Quantos ${u[1]} tem agora? Toque em mais ou menos.`); };
+  document.querySelectorAll('#wiz [data-westd]').forEach(x=>x.onclick=()=>{ addSel.estN=Math.max(0,(addSel.estN||0)+(+x.dataset.westd)); redesenha(); falar(fmtNum(addSel.estN)+' '+(addSel.estN===1?u[0]:u[1])); });
   const bfo=$('#bFotoAg'); if(bfo) bfo.onclick=()=>tirarFoto(f=>{ addSel.foto=f; redesenha(); });
   $('#wzVoltar').onclick=()=>{ if(addSel.passo===1){ fecharWizard(); return; } addSel.passo--; renderWizard(); $('#wiz').scrollTop=0; };
   const seg=$('#wzSeg'); if(seg) seg.onclick=()=>{ document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ addSel.outroQ[x.dataset.qo]=x.value; });
@@ -2007,8 +2115,9 @@ function salvarWizard(it){
   S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
     cor: INFO[it.principio] ? INFO[it.principio].cor : novaCor(),
     serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto,registro:it.registro||'',receita:true,foto:addSel.foto||'',
-    mgDia:tot.mg, acimaBula:tot.acima});
+    mgDia:tot.mg, acimaBula:tot.acima, cxQ:+it.qtd||null});
   const novo=S.agenda[S.agenda.length-1];
+  if(contaWizard(u) && addSel.estN>0 && contavel(novo)) novo.est={n:addSel.estN,fam:{}};
   save(); agendarAlarmes(true); $('#wiz').hidden=true; addSel=null; resultado=null;
   if(quieto){ rxDepoisCorrigir(); if(it.registro && httpPlug() && navigator.onLine) bulaDe(it.registro).then(b=>{ if(!b) baixarBulaOficial(it.registro).catch(()=>{}); }); return; }
   /* fala curta: os detalhes já foram conferidos na tela anterior e ficam escritos no aviso */
@@ -2366,7 +2475,7 @@ function mostrarResultado(it,code,falarAgora){
       <p class="prod" style="margin:0">${esc(i.nome)}${it.dose?' '+esc(it.dose):''}</p></div></div>
     <button class="opn o-main" id="bOuvir" type="button"><span class="n">1</span><span>Ouvir de novo</span></button>
     ${alvo?bulaBtn(2):gA?(agG?`<div class="msg ok">Já está nos remédios de ${esc(gA.nome)}: ${esc(comoTxt(agG))}.</div>${bulaBtn(2)}`:`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos remédios de ${esc(gA.nome)}<small>3 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)
-      :(ag?`<div class="msg ok">Já está nos seus remédios: ${esc(comoTxt(ag))}.</div>${bulaBtn(2)}`
+      :(ag?`<div class="msg ok">Já está nos seus remédios: ${esc(comoTxt(ag))}.</div>${bulaBtn(2)}${cxNovaBtn(ag,it,code)}`
       :gestorAtivo()?`<button class="opn o-pill" id="bPedirAg" type="button"><span class="n">2</span><span>Pedir para ${esc(nomeGestor())} colocar<small>${esc(nomeGestor())} cuida dos seus remédios</small></span></button>${bulaBtn(3)}`
       :`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos meus remédios<small>3 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)}
     <details class="mais"><summary>Mais informações</summary><div class="in">
@@ -2383,6 +2492,10 @@ function mostrarResultado(it,code,falarAgora){
   if(!alvo && !gA) ligarFormAgenda(it);
   if(gA){ const b=$('#bAddAg'); if(b) b.onclick=()=>abrirWizard(it,{destino:gA}); }
   const bp=$('#bPedirAg'); if(bp) bp.onclick=()=>pedirAoGestor(it);
+  const bcx=$('#bCxNova'); if(bcx) bcx.onclick=()=>{ const n=+it.qtd;
+    ag.cxQ=ag.cxQ||n; mudarEstoque(ag,(ag.est?Math.max(0,ag.est.n):0)+n); cxSomada=code;
+    const f=faltaEm(ag), t=`Pronto. Somei esta caixa: agora tem uns ${restamTxt(ag)}${f&&f.data?', '+quandoAcaba(f).replace(/ \(.*\)/,''):''}.`;
+    mostrarResultado(it,code,false); toast(t); falar(t); };
   msgScan('');
   if(falarAgora){
     let pre='';
@@ -2391,6 +2504,13 @@ function mostrarResultado(it,code,falarAgora){
     perguntarVoz(pre+textoFala(it)+(!alvo&&!ag?' Para guardar, toque no botão azul, com o sinal de certo, número dois: colocar nos meus remédios.':''), perg, ms=>tratarContexto(alvo?'conferir':'resultado',ms));
     rolar($('#resBox'));
   }
+}
+/* caixa nova de um remédio que já está na lista: soma na conta (só com o toque, nunca sozinho) */
+let cxSomada='';
+function cxNovaBtn(ag,it,code){
+  if(!contavel(ag) || !(+it.qtd)) return '';
+  if(cxSomada===code) return `<div class="msg ok">${CHECK.replace('<svg','<svg width="20" height="20" style="vertical-align:-4px"')} Caixa somada. Restam uns ${esc(restamTxt(ag))}.</div>`;
+  return `<button class="opn o-ghost" id="bCxNova" type="button"><span class="n">3</span><span>Comprei esta caixa<small>Somar ${esc(it.qtd)} ${esc(unEst(ag)[1])} na conta, para avisar antes de acabar</small></span></button>`;
 }
 /* caixa errada na hora da dose: fica registrado e, se a família estiver conectada, ela recebe o aviso */
 function registrarCaixaErrada(it,lista,hora){
@@ -2414,12 +2534,42 @@ function mudarRotina(nova){
 }
 /* ---------- MEUS REMÉDIOS: só a lista ---------- */
 let removerId='';
+/* conta de comprimidos, em Meus remédios */
+let estEdit='', estVal=0;
+function abrirEstoque(a){ estEdit=a.id; estVal=a.est?Math.max(0,Math.floor(a.est.n)):(+a.cxQ||0); removerId='';
+  if(atual!=='agenda') go('agenda'); else renderAgenda();
+  const el=$('#estEd'); if(el){ rolar(el.closest('.agenda-item')||el); }
+  falar(`Quantos ${unEst(a)[1]} de ${med(a).nome} tem agora, somando todas as caixas? Toque em mais ou menos.`); }
+function estLinha(a){
+  if(!contavel(a)) return '';
+  if(estEdit===a.id){ const u=unEst(a), cx=+a.cxQ||0;
+    return `<div class="est-ed" id="estEd"><p class="label" style="margin:0">Quantos ${u[1]} tem agora, somando todas as caixas?</p>
+      <div class="passador"><button type="button" class="btn btn-ghost" data-estd="-1" aria-label="Menos um">−</button><output aria-live="polite"><b>${fmtNum(estVal)} ${estVal===1?u[0]:u[1]}</b></output><button type="button" class="btn btn-ghost" data-estd="1" aria-label="Mais um">+</button></div>
+      <div class="btn-row"><button type="button" class="btn btn-ghost btn-s" data-estd="-10" aria-label="Menos dez">−10</button><button type="button" class="btn btn-ghost btn-s" data-estd="10" aria-label="Mais dez">+10</button></div>
+      ${cx?`<button type="button" class="btn btn-ghost btn-s" data-estd="${cx}">Somar uma caixa nova (+${cx})</button>`:''}
+      <button type="button" class="btn btn-ok" id="bEstOk">${CHECK}Salvar</button>
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" type="button" id="bEstX">Cancelar</button>${a.est?`<button class="linkbtn" type="button" id="bEstOff">Não avisar para este remédio</button>`:''}</div></div>`; }
+  if(!a.est) return `<button class="linkbtn" type="button" data-est="${a.id}">Avisar antes de acabar</button>`;
+  const f=faltaEm(a);
+  return `<div class="est-l ${baixo(f)?'baixo':''}"><p style="margin:0"><b>Restam uns ${esc(restamTxt(a))}</b>${f&&f.data?` · ${esc(quandoAcaba(f))}`:''}</p>
+    <button class="linkbtn" type="button" data-est="${a.id}">Comprei mais ou contar de novo</button></div>`;
+}
+function ligarEstoque(){
+  document.querySelectorAll('#view-agenda [data-est]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.est); if(a) abrirEstoque(a); });
+  const a=S.agenda.find(q=>q.id===estEdit); if(!a) return;
+  document.querySelectorAll('#estEd [data-estd]').forEach(b=>b.onclick=()=>{ estVal=Math.max(0,estVal+(+b.dataset.estd)); renderAgenda(); const u=unEst(a); falar(fmtNum(estVal)+' '+(estVal===1?u[0]:u[1])); });
+  const ok=$('#bEstOk'); if(ok) ok.onclick=()=>{ estEdit=''; mudarEstoque(a,estVal); renderAgenda(); const f=faltaEm(a);
+    const t=`Pronto. Restam uns ${restamTxt(a)}${f&&f.data?', '+quandoAcaba(f).replace(/ \(.*\)/,''):''}. Aviso uns dias antes de acabar.`; toast(t); falar(t); };
+  const x=$('#bEstX'); if(x) x.onclick=()=>{ estEdit=''; renderAgenda(); };
+  const off=$('#bEstOff'); if(off) off.onclick=()=>{ estEdit=''; a.est=null; save(); agendarEstoque(); renderAgenda(); toast('Pronto. Não vou mais contar este remédio.'); };
+}
 function renderAgenda(){
   const gest=gestorAtivo();
   const itens=S.agenda.map(a=>`<div class="agenda-item">
     <div class="medlinha">${a.foto?fotoDe(a):dotA(a)}<div style="min-width:0"><h3><button class="fala" data-fala="ag:${a.id}">${esc(med(a).nome)} ${esc(a.dose)}</button></h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
     <ul class="ag-mom">${a.horarios.map(h=>{ const m=momentoDe(h); return `<li>${ICO[m.k]}<span><b>${esc((a.mom&&a.mom[h])?MOM[a.mom[h]].nome:m.nome)} · ${h}</b><span class="q">${qtdIcones(comoEm(a,h))}${esc(comoEm(a,h))}</span></span></li>`; }).join('')}</ul>
     ${a.registro?`<button class="btn btn-ghost btn-s" style="width:100%" type="button" data-bula="${esc(a.registro)}" data-nome="${esc((a.produto||med(a).nome)+(a.dose?' '+a.dose:''))}" data-url="${esc('https://consultas.anvisa.gov.br/#/bulario/q/?numeroRegistro='+reg9(a.registro))}">${IC.bula}Ler a bula</button>`:''}
+    ${estLinha(a)}
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button>${gest?'':`<button class="linkbtn" data-del="${a.id}">${removerId===a.id?'Toque de novo para remover':'Remover'}</button>`}</div></div>`).join('');
   $('#view-agenda').innerHTML=`<div class="stack" style="gap:16px">
     <h2>${S.pessoa?'Remédios de '+esc(S.pessoa):'Meus remédios'}</h2>
@@ -2429,13 +2579,14 @@ function renderAgenda(){
     ${gest&&S.mudancas.length?`<div class="form"><h3>Últimas mudanças</h3>${listaMudancas(S.mudancas,5)}</div>`:''}
     ${S.agenda.length&&!gest?`<p class="hint">Para mudar a hora do café, almoço, jantar e de dormir: Ajustes → Horários da minha rotina.</p>`:''}
   </div>`;
+  ligarEstoque();
   document.querySelectorAll('#view-agenda [data-foto]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.foto); if(a) tirarFoto(f=>{ a.foto=f; save(); renderAgenda(); toast('Pronto. Foto salva.'); }); });
   document.querySelectorAll('#view-agenda [data-del]').forEach(b=>b.onclick=()=>{ const id=b.dataset.del;
     if(removerId!==id){ removerId=id; renderAgenda(); falar('Toque de novo para remover.'); return; }
     removerId=''; S.agenda=S.agenda.filter(a=>a.id!==id); save(); agendarAlarmes(false); render(); toast('Removido.'); });
 }
 function falaAgenda(){ if(!S.agenda.length && gestorAtivo()) return `Ainda não tem remédio guardado. ${nomeGestor()} vai colocar pelo próprio celular.`;
-  return S.agenda.length ? (gestorAtivo()?`Quem cuida dos seus remédios é ${nomeGestor()}. `:'')+'Seus remédios. '+S.agenda.map(a=>`${med(a).nome}, ${comoFala(a)}.`).join(' ') : 'Ainda não tem remédio guardado. Toque em colocar remédio.'; }
+  return S.agenda.length ? (gestorAtivo()?`Quem cuida dos seus remédios é ${nomeGestor()}. `:'')+'Seus remédios. '+S.agenda.map(a=>`${med(a).nome}, ${comoFala(a)}.${a.est&&contavel(a)?` Restam uns ${restamTxt(a)}.`:''}`).join(' ') : 'Ainda não tem remédio guardado. Toque em colocar remédio.'; }
 
 /* ---------- AJUSTES: o resto, organizado em grupos, para quem ajuda a configurar ---------- */
 let ajSub='', confirma='';
@@ -2558,6 +2709,8 @@ function subAjustes(){
     return t+`<div class="pessoa"><span class="av">${esc(iniciais(f.nome))}</span><div><h2>${esc(f.nome)}</h2><p class="small muted" style="margin:0">Desde ${esc(fmtData(String(f.desde||'').slice(0,10)))}</p></div></div>
       <div class="field"><label class="label" for="segFone">Telefone de ${esc(curto(f.nome))} (para o botão Ligar)</label><input id="segFone" inputmode="tel" value="${esc(f.fone||'')}" placeholder="DDD + número"></div>
       <button class="btn btn-pill" id="bSegFone" type="button">Salvar telefone</button>
+      <div class="field"><p class="label">Resumo do dia às 21h</p><div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-rsm="0" aria-pressed="${!f.resumo}">Desligado</button><button type="button" data-rsm="1" aria-pressed="${!!f.resumo}">Ligado</button></div>
+        <p class="hint">Uma notificação por dia, com quantas doses ${esc(curto(f.nome))} marcou. O aviso de remédio atrasado chega sempre, ligado ou não.</p></div>
       <button class="btn btn-ghost" id="bPararSeg" type="button">${confirma==='parar'?'Toque de novo para parar':'Parar de acompanhar'}</button>
       <p class="hint">Ao parar, os dados de ${esc(curto(f.nome))} são apagados deste celular.</p>`; }
   return t;
@@ -2608,6 +2761,7 @@ function ligarSubAjustes(){
   on('#bPararGest','onclick',()=>{ if(confirma!=='gest'){ confirma='gest'; renderAjustes(); falar('Toque de novo para confirmar.'); return; }
     confirma=''; const p=S.pareados.find(x=>x.id===ajSeg); if(p) pararGestor(p); ajSub=''; renderAjustes(); renderTopo(); });
   on('#bSegFone','onclick',()=>{ const f=S.seguindo.find(x=>x.id===ajSeg); if(!f) return; f.fone=$('#segFone').value.trim(); save(); toast('Telefone salvo.'); });
+  document.querySelectorAll('#view-ajustes [data-rsm]').forEach(b=>b.onclick=()=>{ const f=S.seguindo.find(x=>x.id===ajSeg); if(!f) return; f.resumo=b.dataset.rsm==='1'; save(); configurarNativo(); renderAjustes(); });
   on('#bPararSeg','onclick',()=>{ if(confirma!=='parar'){ confirma='parar'; renderAjustes(); return; } confirma=''; const f=S.seguindo.find(x=>x.id===ajSeg); if(f) pararAcompanhar(f); ajSub=''; go(modoFamilia()||S.seguindo.length?'ajustes':'hoje'); });
 }
 function apagarTudo(msg){ eloDespedir(); S=novo(); save(); agendarAlarmes(false); configurarNativo(); alvo=null; resultado=null; ajSub=''; abrirBoasVindas(); toast(msg||'Pronto. Tudo apagado.'); }
@@ -2960,7 +3114,7 @@ async function tourBotoes(){
     if(seq!==tourSeq || $('#bv').hidden || passo!==0) return;
     const el=sel?$(sel):null; if(sel && !el) continue;
     document.querySelectorAll('.destaque').forEach(x=>x.classList.remove('destaque'));
-    if(el){ el.classList.add('destaque'); el.scrollIntoView({block:'center',behavior:AP.calmo?'auto':'smooth'}); }
+    if(el){ el.classList.add('destaque'); el.scrollIntoView({block:'center',behavior:semMovimento()?'auto':'smooth'}); }
     await falarE(t);
   }
   document.querySelectorAll('.destaque').forEach(x=>x.classList.remove('destaque'));
@@ -3223,7 +3377,10 @@ const esperando = c => c.esperarAte && Date.now()<c.esperarAte;
 function montarEstado(){
   const desde=dayKey(new Date(Date.now()-7*864e5));
   return {de:'idoso',t:'estado',v:1,n:S.pessoa||'',ts:Date.now(),rot:S.rotina||null,
-    ag:S.agenda.map(a=>({id:a.id,p:a.principio||'',n:a.nome||'',ap:a.apelido||'',d:a.dose||'',c:a.como||'',q:a.qtd||null,h:a.horarios,m:a.mom||null,cor:a.cor||'',r:a.registro||'',pr:a.produto||'',ch:a.chave||''})),
+    ag:S.agenda.map(a=>{ const x={id:a.id,p:a.principio||'',n:a.nome||'',ap:a.apelido||'',d:a.dose||'',c:a.como||'',q:a.qtd||null,h:a.horarios,m:a.mom||null,cor:a.cor||'',r:a.registro||'',pr:a.produto||'',ch:a.chave||''};
+      /* quanto ainda tem: a família vê "restam uns 12 · acaba em 4 dias" */
+      const f=faltaEm(a); if(f) x.es={r:restamTxt(a),dias:f.data?f.dias:null,dt:f.data?dayKey(f.data):''};
+      return x; }),
     mud:(S.mudancas||[]).slice(-5),
     log:S.log.filter(l=>l.dia>=desde).map(l=>[l.dia,l.ag,l.h,l.em]),
     al:(S.alertas||[]).filter(x=>x.ts>Date.now()-7*864e5).slice(-6),
@@ -3257,12 +3414,16 @@ function configurarNativo(){
   const k=dayKey(new Date()), gs=gruposHoje();
   const cfg={relay:RELAY, carteiro:CARTEIRO,
     canais:S.pareados.map(p=>({topic:p.topic,key:p.key,nome:p.nome,papel:'idoso',visto:p.visto||0,estado:p.estadoEnv||'',pt:p.pt||''}))
-      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0,pt:f.pt||'',
+      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0,pt:f.pt||'',resumo:!!f.resumo,hj:resumoNativo(f),ult:f.ultima||0,
         pend:f.gestor?(f.pend||[]).filter(p=>p.cif).map(p=>({uid:p.uid,id:p.item.id,op:p.op,ts:p.ts,cif:p.cif})):[]}))),
     doses:S.pareados.length?gs.map(x=>Object.assign({h:x.h},avisoAtraso(x))):[], dia:k,
     tomados:gs.filter(x=>!x.pend.length).map(x=>x.h), eu:S.pessoa||'', avisados:Object.keys(S.eloAvisados).filter(x=>x.indexOf(k)===0)};
   ELO.configurar({json:JSON.stringify(cfg)}).catch(()=>{});
 }
+/* resumo do dia (às 21h, no celular de quem acompanha): as doses e as marcadas, no formato que o Android lê */
+function resumoNativo(f){ const e=f.estado; if(!f.resumo||!e) return null;
+  const ontem=dayKey(new Date(Date.now()-864e5));
+  return {ts:e.ts||0, d:[].concat(...(e.ag||[]).map(a=>(a.h||[]).map(h=>a.id+'|'+h))), ok:(e.log||[]).filter(l=>l[0]>=ontem).map(l=>l[0]+'|'+l[1]+'|'+l[2])}; }
 const verificados={};
 function checarAtrasos(){
   if(!S.pareados.length) return;
@@ -3344,6 +3505,8 @@ function eloAoAbrir(){ if(!eloAtivo()) return;
   pedirEstados(); eloRodada(); }
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) eloAoAbrir(); });
 setTimeout(eloAoAbrir,4000);
+/* remédio acabando: confere ao abrir (o aviso para a família sai uma vez por marca de 5 dias e véspera) */
+setTimeout(()=>{ try{ checarEstoque(); }catch(e){} },5000);
 /* ----- Estado da conexão: último envio, última notícia, último erro e teste ----- */
 let pingAtual=null;
 const listaConexoes = () => S.pareados.map(p=>({c:p,papel:'idoso',tit:`${p.nome} ${p.gestor?'cuida dos seus remédios':'acompanha você'}`}))
@@ -3617,8 +3780,13 @@ function seguidoAtual(){
   if(acompPrevia) return {id:'previa',nome:S.pessoa||'Dona Lúcia',estado:montarEstado(),ultima:Date.now(),alertas:[],previa:true};
   return S.seguindo.find(f=>f.id===acompSel) || S.seguindo[0] || null;
 }
-function stDe(e){ return {agenda:(e.ag||[]).map(x=>({id:x.id,principio:x.p,nome:x.n,apelido:x.ap,dose:x.d,como:x.c,qtd:x.q,horarios:x.h||[],mom:x.m,cor:x.cor,registro:x.r,produto:x.pr,chave:x.ch})),
+function stDe(e){ return {agenda:(e.ag||[]).map(x=>({id:x.id,principio:x.p,nome:x.n,apelido:x.ap,dose:x.d,como:x.c,qtd:x.q,horarios:x.h||[],mom:x.m,cor:x.cor,registro:x.r,produto:x.pr,chave:x.ch,es:x.es&&typeof x.es==='object'?x.es:null})),
   log:(e.log||[]).map(l=>({dia:l[0],ag:l[1],h:l[2],em:l[3],ok:true}))}; }
+function faltaDe(es){ if(!es||es.dias==null) return null; const m=String(es.dt||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return {dias:es.dias,data:new Date()};
+  const d=new Date(+m[1],+m[2]-1,+m[3],12), hj=new Date(); hj.setHours(12,0,0,0); return {dias:Math.round((d-hj)/864e5),data:d}; }
+const acabaDe = es => quandoAcaba(faltaDe(es));
+const baixoDe = es => baixo(faltaDe(es));
 const hhmm = ms => { const d=new Date(ms); return pad(d.getHours())+':'+pad(d.getMinutes()); };
 function haQuanto(ms){ const m=Math.round((Date.now()-ms)/60000), d=new Date(ms);
   return m<2?'agora':m<60?`há ${m} min`:dayKey(d)===dayKey(new Date())?`hoje, ${hhmm(ms)}`:`${DIAS_LONGO[d.getDay()].toLowerCase()}, ${hhmm(ms)}`; }
@@ -3646,6 +3814,13 @@ function renderAcomp(){
         <button class="btn btn-pill" type="button" data-ligar="1">${IC.tel}Ligar para ${esc(curto(nome))}</button>${(()=>{ const l=lembreteDe(f,x.h); return l?`<p class="small lemb ${l.ok?'ok':''}" role="status" style="margin:0">${l.ok?(l.tomou?`${esc(curto(nome))} já tinha marcado.`:`${CHECK.replace('<svg','<svg width="18" height="18" style="vertical-align:-3px"')} O lembrete chegou no celular de ${esc(curto(nome))} às ${hhmm(l.ok)}.`):`Lembrete enviado às ${hhmm(l.env)}. ${f.pt&&CARTEIRO?`Esperando o celular de ${esc(curto(nome))} confirmar.`:`Esperando o celular de ${esc(curto(nome))} conferir as mensagens (até uns 10 minutos).`}`}</p>`:''; })()}<button class="btn btn-ghost" type="button" data-lembrar="${x.h}">${IC.sino}${lembreteDe(f,x.h)?'Lembrar de novo':'Lembrar no celular'}</button>
         ${ligarAberto&&!f.fone?`<div class="field"><label class="label" for="acFone">Telefone de ${esc(nome)}</label>${botaoContato('acCont')}<div id="acFones" class="stack" hidden></div><div class="manual"><input id="acFone" inputmode="tel" placeholder="DDD + número"><button class="btn btn-pill" id="acFoneOk" type="button">Ligar</button></div></div>`:''}
       </section>`; }).join('');
+    const dsH=dosesHoje(st), okH=dsH.filter(d=>d.reg).length;
+    if(dsH.length) h+=`<div class="form hoje-cont" aria-label="Hoje, ${okH} de ${dsH.length} doses marcadas"><h3>Hoje: ${okH} de ${dsH.length} ${dsH.length===1?'dose marcada':'doses marcadas'}</h3><div class="prog" aria-hidden="true"><i style="width:${Math.round(okH*100/dsH.length)}%"></i></div>
+      ${f.previa?'':`<button class="linkbtn lk-azul" type="button" id="bResumo">${f.resumo?'Resumo do dia às 21h: ligado. Desligar':'Receber um resumo do dia às 21h'}</button>`}</div>`;
+    const acabA=st.agenda.filter(a=>baixoDe(a.es));
+    if(acabA.length) h+=`<section class="al-card" role="status"><h3>${acabA.length>1?'Remédios acabando':`O ${esc(med(acabA[0]).apelido)} está acabando`}</h3>
+      ${acabA.map(a=>`<p style="margin:0"><b>${esc(med(a).nome)} ${esc(a.dose)}</b>: ${esc(acabaDe(a.es))}. Restam uns ${esc(a.es.r)}.</p>`).join('')}
+      <button class="btn btn-pill btn-s" type="button" id="bAcabGrAc">${IC.gratis}Onde tem de graça</button></section>`;
     h+=outros.map(x=>`<div class="mo ${x.st==='ok'?'ok':''}"><div><h3>${esc(x.m.nome)}</h3><p class="s" style="margin:0">${x.st==='ok'?'Tomou às '+esc(x.em):(x.st==='next'?'Agora':x.h)+' · '+x.ds.length+' '+(x.ds.length>1?'remédios':'remédio')}</p></div>${ICO[x.m.k]}</div>`).join('');
     if(!gs.length) h+=`<p class="msg info">Sem remédios para hoje.</p>`;
     if(w.tot) h+=`<div class="form"><h3>Esta semana</h3><p style="margin:0">${w.ok} de ${w.tot} doses marcadas</p><div class="prog" aria-hidden="true"><i style="width:${w.pct}%"></i></div></div>`;
@@ -3665,6 +3840,7 @@ function renderAcomp(){
     if(pend.length) h+=`<div class="vale">${IC.relogio}<div><b>Esperando o celular de ${esc(nome)}</b>${pend.map(p=>`<p class="small" style="margin:4px 0 0">${p.op==='add'?'Colocar':p.op==='edit'?'Mudar':'Tirar'}: ${esc(p.item.nome)} ${esc(p.item.dose)}</p>`).join('')}<p class="small muted" style="margin:4px 0 0">Muda quando ${esc(curto(nome))} abrir o app. Se demorar, eu envio de novo.</p></div></div>`;
     h+=st.agenda.map(a=>`<div class="agenda-item"><div class="medlinha">${dotA(a)}<div style="min-width:0"><h3>${esc(med(a).nome)} ${esc(a.dose)}</h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
       <ul class="ag-mom">${a.horarios.map(hh=>{ const m=momentoDe(hh); return `<li>${ICO[m.k]}<span><b>${esc((a.mom&&a.mom[hh])?MOM[a.mom[hh]].nome:m.nome)} · ${hh}</b><span class="q">${qtdIcones(comoEm(a,hh))}${esc(comoEm(a,hh))}</span></span></li>`; }).join('')}</ul>
+      ${a.es?`<div class="est-l ${baixoDe(a.es)?'baixo':''}"><p style="margin:0"><b>Restam uns ${esc(a.es.r)}</b>${a.es.dias!=null?' · '+esc(acabaDe(a.es)):''}</p></div>`:''}
       ${g?`<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" type="button" data-gmudar="${esc(a.id)}">Mudar horário ou quantidade</button><button class="linkbtn" type="button" data-del="${esc(a.id)}" data-gdel="${esc(a.id)}">${removerId===a.id?'Toque de novo para tirar':'Tirar'}</button></div>`:''}</div>`).join('')
       || `<p class="msg info">Nenhum remédio guardado no celular de ${esc(curto(nome))}.</p>`;
     const mud=(e.mud||[]);
@@ -3679,6 +3855,9 @@ function renderAcomp(){
   const on=(id,fn)=>{ const b=$('#'+id); if(b) b.onclick=fn; };
   on('bMaisSeg',abrirSeguir); on('bEnerAc',abrirEnergia); on('bEuTb',comecarMeus); on('bSamuAc',()=>abrirLink('tel:192')); on('bAtuAc',()=>{ f.pedidoEm=0; pedirEstados(); eloRodada(); toast('Procurando notícias...'); }); on('bConexaoAc',abrirConexao);
   on('bWaAc',()=>enviarWhats(textoSemana(semana(st),nome)));
+  on('bAcabGrAc',()=>{ gratisAba='popular'; go('gratis'); });
+  on('bResumo',()=>{ f.resumo=!f.resumo; save(); configurarNativo(); renderAcomp();
+    const t=f.resumo?`Pronto. Às 21h, este celular mostra quantos remédios ${curto(nome)} marcou no dia.`:'Pronto. Resumo do dia desligado.'; toast(t); falar(t); });
   on('bGestAdd',()=>{ gestorAlvo=f; resultado=null; go('ler'); falar(`Vamos colocar um remédio para ${f.nome}. Leia a caixa do remédio. Depois, copie da receita.`); if(SCAN) lerNativo(); });
   document.querySelectorAll('#view-acomp [data-pedido]').forEach(b=>b.onclick=()=>{ const p=(f.pedidos||[])[+b.dataset.pedido]; if(!p) return;
     const it=p.code?buscar(p.code):null;
@@ -3698,7 +3877,8 @@ function falaAcomp(){
   const f=seguidoAtual(); if(!f) return 'Você ainda não acompanha ninguém.';
   if(!f.estado) return `${f.nome}. Esperando o celular mandar os remédios.`;
   const gs=gruposHoje(stDe(f.estado)), late=gs.filter(x=>x.st==='late'), ok=gs.filter(x=>x.st==='ok');
-  return `${f.nome}. ${late.length?'Ainda não marcou: '+listaFala(late.map(x=>x.m.nome.toLowerCase()+', das '+falaHora(x.h)))+'. ':''}${ok.length?'Já tomou: '+listaFala(ok.map(x=>x.m.nome.toLowerCase()))+'.':''}`;
+  const st=stDe(f.estado), ds=dosesHoje(st), acab=st.agenda.filter(a=>baixoDe(a.es));
+  return `${f.nome}. ${ds.length?`Hoje, ${ds.filter(d=>d.reg).length} de ${ds.length} doses marcadas. `:''}${late.length?'Ainda não marcou: '+listaFala(late.map(x=>x.m.nome.toLowerCase()+', das '+falaHora(x.h)))+'. ':''}${ok.length?'Já tomou: '+listaFala(ok.map(x=>x.m.nome.toLowerCase()))+'. ':''}${acab.length?'Está acabando: '+listaFala(acab.map(a=>med(a).nome+', '+acabaDe(a.es).replace(/ \(.*\)/,'')))+'.':''}`;
 }
 
 /* ---------- conversa por voz: para quem não lê ----------

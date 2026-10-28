@@ -141,6 +141,13 @@ if (!g.includes('com.google.mlkit:text-recognition')) {
 if (!g.includes('firebase-messaging')) {
   g = g.replace(/dependencies \{/, "dependencies {\n    implementation 'com.google.firebase:firebase-messaging:24.1.0'");
 }
+// APK menor: só o código nativo para processadores ARM, os de praticamente todo celular Android (Samsung, Motorola,
+// Xiaomi, Redmi, Poco, Realme, Oppo...), em 64 e 32 bits (este cobre os mais baratos e antigos). Sai o de processador
+// Intel (x86), que hoje só aparece no emulador do computador: para testar no emulador, use uma imagem ARM.
+if (!g.includes('abiFilters')) {
+  g = g.replace(/defaultConfig \{/, "defaultConfig {\n        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }");
+  if (!g.includes('abiFilters')) throw new Error('Não achei defaultConfig no build.gradle');
+}
 // número da versão sobe a cada compilação no GitHub
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 g = g.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
