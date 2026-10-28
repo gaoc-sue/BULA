@@ -40,7 +40,9 @@ import javax.crypto.spec.SecretKeySpec;
  *    enquanto a dose não for marcada, de 10 em 10 minutos por até 3 horas: assim o "Lembrar no celular" da família chega rápido);
  *  - nos dois celulares: busca mensagens novas e mostra a notificação;
  *  - no celular de quem cuida dos remédios (modo gestor): reenvia, de 6 em 6 horas, a mudança que o outro celular ainda não confirmou;
- *  - no celular de quem acompanha, se a pessoa ligou o "resumo do dia": às 21h, mostra quantas doses foram marcadas no dia.
+ *  - no celular de quem acompanha, se a pessoa ligou o "resumo do dia": às 21h, mostra quantas doses foram marcadas no dia;
+ *  - no celular de quem acompanha, se escolheu "a cada dose": quando a pessoa marca TOMEI, uma notificação SEM SOM
+ *    (canal próprio, "Remédio tomado"), sempre a mesma por pessoa, trocada a cada dose. Atraso e socorro continuam no canal com som.
  * Tudo que passa pelo servidor vai criptografado de ponta a ponta (AES-256-GCM). O servidor não consegue ler.
  * Notificação instantânea (se o carteiro estiver configurado): depois de mandar um aviso, pede ao carteiro para acordar
  * o outro celular pelo Firebase, sem conteúdo; ele busca a mensagem na hora (ver Carteiro.java).
@@ -50,6 +52,7 @@ final class Elo {
     static final int JOB_AGORA = 7102;
     private static final String PREFS = "remedio_falado_elo";
     private static final String CANAL = "familia";
+    private static final String CANAL_TOMOU = "tomou";
     private static final long PULSO_MS = 2L * 60 * 60 * 1000;
     private static final long REENVIO_MS = 6L * 60 * 60 * 1000;
     private static final long DESISTE_MS = 3L * 24 * 60 * 60 * 1000;
@@ -217,7 +220,7 @@ final class Elo {
             String topic = c.optString("topic"), key = c.optString("key");
             if (topic.isEmpty() || key.isEmpty()) continue;
             JSONArray pend = c.optJSONArray("pend");
-            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0), pend, c.optString("estado", ""), tomadosHoje, eu); } catch (Exception e) { /* sem internet: tenta na próxima */ }
+            try { buscar(ctx, st, relay, topic, key, papel, c.optLong("visto", 0), pend, c.optString("estado", ""), tomadosHoje, eu, c.optBoolean("tomou", false)); } catch (Exception e) { /* sem internet: tenta na próxima */ }
             if ("familia".equals(papel) && pend != null && pend.length() > 0) reenviar(st, relay, topic, pend);
             // sinal de vida: reenvia o último resumo de 2 em 2 horas (já criptografado pelo app)
             String estado = c.optString("estado", "");
@@ -419,7 +422,7 @@ final class Elo {
     }
 
     private static void buscar(Context ctx, SharedPreferences st, String relay, String topic, String key, String papel, long vistoApp, JSONArray pend, String estado,
-                               Set<String> tomadosHoje, String eu) throws Exception {
+                               Set<String> tomadosHoje, String eu, boolean avisoTomou) throws Exception {
         long desde = Math.max(st.getLong("desde:" + topic, 0), vistoApp);
         if (desde == 0) desde = System.currentTimeMillis() / 1000 - 15 * 60;
         Set<String> vistos = new HashSet<>(st.getStringSet("ids:" + topic, new HashSet<String>()));
@@ -507,6 +510,12 @@ final class Elo {
                     }
                     continue;
                 }
+                // a pessoa marcou TOMEI (ou desfez): notificação sem som, sempre a mesma por pessoa (troca a anterior)
+                if ("familia".equals(papel) && "tomou".equals(msg.optString("t"))) {
+                    JSONObject inf = msg.optJSONObject("info");
+                    if (avisoTomou && inf != null && recente) notificarTomou(ctx, inf.optString("titulo"), inf.optString("texto"), ("tomou:" + topic).hashCode());
+                    continue;
+                }
                 String uid = msg.optString("uid", "");
                 if (!uid.isEmpty()) { if (uids.contains(uid)) continue; uids.add(uid); } // mudança reenviada: avisa uma vez só
                 JSONObject av = msg.optJSONObject("aviso");
@@ -582,25 +591,35 @@ final class Elo {
     }
 
     /* ---------------- notificação ---------------- */
-    static void notificar(Context ctx, String titulo, String texto, int id) {
+    static void notificar(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, CANAL, titulo, texto, id); }
+
+    /** "marcou que tomou": canal sem som e sem vibrar; a família pode desligar só este nas configurações do Android */
+    static void notificarTomou(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, CANAL_TOMOU, titulo, texto, id); }
+
+    private static void notificarEm(Context ctx, String canal, String titulo, String texto, int id) {
+        boolean alto = CANAL.equals(canal);
         try {
             NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
             if (Build.VERSION.SDK_INT >= 26) {
-                NotificationChannel ch = new NotificationChannel(CANAL, "Avisos da família", NotificationManager.IMPORTANCE_HIGH);
-                ch.setDescription("Avisos do celular de quem você acompanha, ou da família que acompanha você.");
+                NotificationChannel ch = alto
+                        ? new NotificationChannel(CANAL, "Avisos da família", NotificationManager.IMPORTANCE_HIGH)
+                        : new NotificationChannel(CANAL_TOMOU, "Remédio tomado (sem som)", NotificationManager.IMPORTANCE_LOW);
+                ch.setDescription(alto ? "Avisos do celular de quem você acompanha, ou da família que acompanha você."
+                        : "Quando a pessoa que você acompanha marca que tomou o remédio. Não toca nem vibra.");
                 nm.createNotificationChannel(ch);
             }
             Intent abrir = ctx.getPackageManager().getLaunchIntentForPackage(ctx.getPackageName());
             PendingIntent pi = abrir == null ? null : PendingIntent.getActivity(ctx, 0, abrir, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
             int icone = ctx.getResources().getIdentifier("ic_stat_icon", "drawable", ctx.getPackageName());
             if (icone == 0) icone = android.R.drawable.ic_dialog_info;
-            Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(ctx, CANAL) : new Notification.Builder(ctx);
+            Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(ctx, canal) : new Notification.Builder(ctx);
             b.setSmallIcon(icone).setContentTitle(titulo).setContentText(texto)
                     .setStyle(new Notification.BigTextStyle().bigText(texto))
                     .setAutoCancel(true);
             if (pi != null) b.setContentIntent(pi);
-            if (Build.VERSION.SDK_INT < 26) b.setPriority(Notification.PRIORITY_HIGH);
+            if (Build.VERSION.SDK_INT < 26) b.setPriority(alto ? Notification.PRIORITY_HIGH : Notification.PRIORITY_LOW);
+            if (!alto) b.setOnlyAlertOnce(true).setShowWhen(true);
             nm.notify(id, b.build());
         } catch (Exception e) { /* sem permissão de notificação */ }
     }

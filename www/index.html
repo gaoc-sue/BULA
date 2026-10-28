@@ -1523,6 +1523,7 @@ function tomarVarios(ds,via){
     : `${nomeP()} tomou os remédios ${m.de} (${d0.h}): ${listaFala(novos.map(d=>`${med(d.a).nome} ${d.a.dose}, ${comoEm(d.a,d.h)}`))}.`;
   S.feed.push({t:'ok',em,txt}); if(S.feed.length>60) S.feed=S.feed.slice(-60); save();
   if(tirou.length){ checarEstoque(); agendarEstoque(); }
+  avisarTomou(novos,via,em);
   const frase = um ? `Registrei o ${med(d0.a).apelido} às ${em}.` : `Registrei os remédios ${m.de} às ${em}.`;
   render();
   mostrarPronto(frase, txt);
@@ -1532,6 +1533,7 @@ function desfazerTomei(){ const u=ultimoTomei; if(!u) return;
   S.log=S.log.filter(l=>!(l.dia===u.dia && u.itens.some(i=>i.ag===l.ag&&i.h===l.h))); S.feed=S.feed.slice(0,u.feed);
   (u.tirou||[]).forEach(t=>{ const a=S.agenda.find(x=>x.id===t.ag); if(a&&a.est) a.est.n+=t.q; });
   ultimoTomei=null; save(); render(); if((u.tirou||[]).length) agendarEstoque();
+  avisarDesfeito(u);
   $('#pronto').hidden=true; toast('Desfeito. A dose voltou a ficar para marcar.'); falar('Desfeito. A dose voltou a ficar para marcar.'); }
 /* "Pronto!": confirmação grande, escrita e falada. Só fecha quando a pessoa toca (Apple, WWDC 2025: sem tempo-limite). */
 function mostrarPronto(frase, aviso){
@@ -1550,6 +1552,28 @@ function mostrarPronto(frase, aviso){
   perguntarVoz('Muito bem. '+frase+' Para voltar ao início, toque no botão azul, com o sinal de certo.','Diga ok para voltar ao início.',ms=>tratarContexto('pronto',ms));
 }
 function tomar(a,h,via){ tomarVarios([{a,h}],via); }
+
+/* ---------- "marcou que tomou": a família vê na hora ----------
+   Vai criptografado, com o "acordar" do carteiro (chega em segundos). No celular da família vira uma notificação SEM SOM,
+   sempre a mesma por pessoa (troca a anterior), e só se a família escolheu "a cada dose". O app sabe que a pessoa
+   marcou, não que engoliu: o texto diz "marcou que tomou". */
+function contaHoje(){ const ds=dosesHoje(); return {ok:ds.filter(d=>d.reg).length,tot:ds.length}; }
+function avisarTomou(novos,via,em){
+  if(!S.pareados.length || S.demo || !eloOk()) return;
+  const quem=curto(nomeP()), um=novos.length===1, d0=novos[0], m=momentoDe(d0.h), c=contaHoje();
+  const conf = via==='caixa' || (alConf && alConf.h===d0.h && novos.every(d=>alConf.ok[d.a.id]));
+  const titulo = um ? `${quem} marcou que tomou o ${med(d0.a).apelido}` : `${quem} marcou que tomou os remédios ${m.de}`;
+  const texto = `Às ${em}${conf?', com a caixa conferida pela câmera':''} · ${novos.map(d=>med(d.a).nome+' '+d.a.dose).join(', ')}. Hoje: ${c.ok} de ${c.tot} doses.`;
+  enviarTomou({h:d0.h,conf,info:{titulo,texto}});
+}
+function avisarDesfeito(u){
+  if(!S.pareados.length || S.demo || !eloOk() || !u.itens.length) return;
+  const c=contaHoje();
+  enviarTomou({h:u.itens[0].h,desfeito:true,info:{titulo:`${curto(nomeP())} desfez a marcação`,texto:`O remédio das ${u.itens[0].h} voltou a ficar para marcar. Hoje: ${c.ok} de ${c.tot} doses.`}});
+}
+async function enviarTomou(extra){
+  for(const p of S.pareados){ try{ await relayPost(p.topic, await cifrarElo(p.key,Object.assign({de:'idoso',t:'tomou',ts:Date.now(),dia:dayKey(new Date())},extra))); p.envEm=Date.now(); }catch(x){ anotarErro(p,x); } }
+}
 
 /* ---------- quanto ainda tem do remédio: avisa uns dias antes de acabar ----------
    Só conta comprimido e cápsula (gota e xarope não dá para contar). A conta parte do número que a pessoa confirmou
@@ -2709,8 +2733,9 @@ function subAjustes(){
     return t+`<div class="pessoa"><span class="av">${esc(iniciais(f.nome))}</span><div><h2>${esc(f.nome)}</h2><p class="small muted" style="margin:0">Desde ${esc(fmtData(String(f.desde||'').slice(0,10)))}</p></div></div>
       <div class="field"><label class="label" for="segFone">Telefone de ${esc(curto(f.nome))} (para o botão Ligar)</label><input id="segFone" inputmode="tel" value="${esc(f.fone||'')}" placeholder="DDD + número"></div>
       <button class="btn btn-pill" id="bSegFone" type="button">Salvar telefone</button>
-      <div class="field"><p class="label">Resumo do dia às 21h</p><div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-rsm="0" aria-pressed="${!f.resumo}">Desligado</button><button type="button" data-rsm="1" aria-pressed="${!!f.resumo}">Ligado</button></div>
-        <p class="hint">Uma notificação por dia, com quantas doses ${esc(curto(f.nome))} marcou. O aviso de remédio atrasado chega sempre, ligado ou não.</p></div>
+      <div class="field"><p class="label">Quando ${esc(curto(f.nome))} marcar que tomou</p><div class="stack">
+        ${MODOS_AVISO.map(([k,t,d])=>`<button type="button" class="conferi" data-rsm="${k}" aria-pressed="${modoAviso(f)===k}"><span class="caixa" aria-hidden="true">${modoAviso(f)===k?'✓':''}</span><span>${esc(t)}<br><span class="small" style="font-weight:400">${esc(d)}</span></span></button>`).join('')}</div>
+        <p class="hint">O aviso de remédio atrasado e o pedido de ajuda chegam sempre, com som, qualquer que seja a escolha.</p></div>
       <button class="btn btn-ghost" id="bPararSeg" type="button">${confirma==='parar'?'Toque de novo para parar':'Parar de acompanhar'}</button>
       <p class="hint">Ao parar, os dados de ${esc(curto(f.nome))} são apagados deste celular.</p>`; }
   return t;
@@ -2761,7 +2786,8 @@ function ligarSubAjustes(){
   on('#bPararGest','onclick',()=>{ if(confirma!=='gest'){ confirma='gest'; renderAjustes(); falar('Toque de novo para confirmar.'); return; }
     confirma=''; const p=S.pareados.find(x=>x.id===ajSeg); if(p) pararGestor(p); ajSub=''; renderAjustes(); renderTopo(); });
   on('#bSegFone','onclick',()=>{ const f=S.seguindo.find(x=>x.id===ajSeg); if(!f) return; f.fone=$('#segFone').value.trim(); save(); toast('Telefone salvo.'); });
-  document.querySelectorAll('#view-ajustes [data-rsm]').forEach(b=>b.onclick=()=>{ const f=S.seguindo.find(x=>x.id===ajSeg); if(!f) return; f.resumo=b.dataset.rsm==='1'; save(); configurarNativo(); renderAjustes(); });
+  document.querySelectorAll('#view-ajustes [data-rsm]').forEach(b=>b.onclick=()=>{ const f=S.seguindo.find(x=>x.id===ajSeg); if(!f) return; f.avisoModo=b.dataset.rsm; save(); configurarNativo(); renderAjustes();
+    const t={dose:`Pronto. Quando ${curto(f.nome)} marcar TOMEI, aparece uma notificação sem som.`,resumo:'Pronto. Às 21h, chega o resumo do dia.',off:'Pronto. Só os avisos importantes.'}[f.avisoModo]; toast(t); falar(t); });
   on('#bPararSeg','onclick',()=>{ if(confirma!=='parar'){ confirma='parar'; renderAjustes(); return; } confirma=''; const f=S.seguindo.find(x=>x.id===ajSeg); if(f) pararAcompanhar(f); ajSub=''; go(modoFamilia()||S.seguindo.length?'ajustes':'hoje'); });
 }
 function apagarTudo(msg){ eloDespedir(); S=novo(); save(); agendarAlarmes(false); configurarNativo(); alvo=null; resultado=null; ajSub=''; abrirBoasVindas(); toast(msg||'Pronto. Tudo apagado.'); }
@@ -3414,14 +3440,21 @@ function configurarNativo(){
   const k=dayKey(new Date()), gs=gruposHoje();
   const cfg={relay:RELAY, carteiro:CARTEIRO,
     canais:S.pareados.map(p=>({topic:p.topic,key:p.key,nome:p.nome,papel:'idoso',visto:p.visto||0,estado:p.estadoEnv||'',pt:p.pt||''}))
-      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0,pt:f.pt||'',resumo:!!f.resumo,hj:resumoNativo(f),ult:f.ultima||0,
+      .concat(S.seguindo.map(f=>({topic:f.topic,key:f.key,nome:f.nome,papel:'familia',visto:f.visto||0,pt:f.pt||'',resumo:modoAviso(f)!=='off',tomou:modoAviso(f)==='dose',hj:resumoNativo(f),ult:f.ultima||0,
         pend:f.gestor?(f.pend||[]).filter(p=>p.cif).map(p=>({uid:p.uid,id:p.item.id,op:p.op,ts:p.ts,cif:p.cif})):[]}))),
     doses:S.pareados.length?gs.map(x=>Object.assign({h:x.h},avisoAtraso(x))):[], dia:k,
     tomados:gs.filter(x=>!x.pend.length).map(x=>x.h), eu:S.pessoa||'', avisados:Object.keys(S.eloAvisados).filter(x=>x.indexOf(k)===0)};
   ELO.configurar({json:JSON.stringify(cfg)}).catch(()=>{});
 }
 /* resumo do dia (às 21h, no celular de quem acompanha): as doses e as marcadas, no formato que o Android lê */
-function resumoNativo(f){ const e=f.estado; if(!f.resumo||!e) return null;
+/* avisos de "tomou": 'off' (só atraso e socorro), 'resumo' (às 21h) ou 'dose' (a cada dose, sem som, + resumo).
+   Padrão: quem cuida dos remédios (gestor) recebe a cada dose; quem só acompanha, o resumo. */
+function modoAviso(f){ if(!f) return 'off'; if(f.avisoModo) return f.avisoModo; if(f.resumo===true) return 'resumo'; if(f.resumo===false) return 'off'; return f.gestor?'dose':'resumo'; }
+const MODOS_AVISO=[['dose','A cada dose, sem som','Quando marcar TOMEI, aparece uma notificação silenciosa, trocada a cada dose. E o resumo às 21h.'],
+  ['resumo','Só o resumo do dia, às 21h','Uma notificação por dia, com quantas doses foram marcadas.'],
+  ['off','Não avisar','Só os avisos importantes: remédio atrasado, caixa errada e pedido de ajuda.']];
+const nomeModo = f => ({dose:'a cada dose, sem som',resumo:'resumo às 21h',off:'desligado'})[modoAviso(f)];
+function resumoNativo(f){ const e=f.estado; if(modoAviso(f)==='off'||!e) return null;
   const ontem=dayKey(new Date(Date.now()-864e5));
   return {ts:e.ts||0, d:[].concat(...(e.ag||[]).map(a=>(a.h||[]).map(h=>a.id+'|'+h))), ok:(e.log||[]).filter(l=>l[0]>=ontem).map(l=>l[0]+'|'+l[1]+'|'+l[2])}; }
 const verificados={};
@@ -3473,6 +3506,10 @@ function tratarMsg(c,papel,o,m){
   if(papel==='familia'){
     c.ultima=Math.max(c.ultima||0,t);
     if(o.t==='estado'){ if(!c.estado || (o.ts||0)>=(c.estado.ts||0)){ c.estado=o; c.estadoEm=t; if(o.n) c.nome=o.n; confirmarPend(c); } }
+    else if(o.t==='tomou'){ c.ultTomou={ts:t,h:o.h||'',desfeito:!!o.desfeito,conf:!!o.conf};
+      if(modoAviso(c)==='dose' && o.info && !document.hidden && Date.now()-t<15*60000) toast(o.info.titulo||'Remédio marcado');
+      /* o resumo atualizado sai logo depois (2,5 s) do outro celular: busca de novo para a tela mudar sem esperar */
+      if(!document.hidden && Date.now()-t<15*60000) setTimeout(()=>{ try{ eloRodada(); }catch(e){} },4000); }
     else if(o.t==='lembrete-ok' && (!c.lembrete || c.lembrete.lid!==o.lid || c.lembrete.ok)){ /* resposta repetida (app e Android) ou antiga */ }
     else if(o.aviso){ c.alertas=(c.alertas||[]).concat([{ts:t,t:o.t,h:o.h||'',tit:o.aviso.titulo||'',txt:o.aviso.texto||''}]).slice(-20);
       if(!document.hidden && Date.now()-t<15*60000) toast(o.aviso.titulo||'Aviso da família'); }
@@ -3816,7 +3853,7 @@ function renderAcomp(){
       </section>`; }).join('');
     const dsH=dosesHoje(st), okH=dsH.filter(d=>d.reg).length;
     if(dsH.length) h+=`<div class="form hoje-cont" aria-label="Hoje, ${okH} de ${dsH.length} doses marcadas"><h3>Hoje: ${okH} de ${dsH.length} ${dsH.length===1?'dose marcada':'doses marcadas'}</h3><div class="prog" aria-hidden="true"><i style="width:${Math.round(okH*100/dsH.length)}%"></i></div>
-      ${f.previa?'':`<button class="linkbtn lk-azul" type="button" id="bResumo">${f.resumo?'Resumo do dia às 21h: ligado. Desligar':'Receber um resumo do dia às 21h'}</button>`}</div>`;
+      ${f.previa?'':`<p class="small" style="margin:0">Avisos quando marcar que tomou: <b>${esc(nomeModo(f))}</b>. <button class="linkbtn lk-azul" type="button" id="bResumo" style="display:inline;min-height:0;padding:0">Mudar</button></p>`}</div>`;
     const acabA=st.agenda.filter(a=>baixoDe(a.es));
     if(acabA.length) h+=`<section class="al-card" role="status"><h3>${acabA.length>1?'Remédios acabando':`O ${esc(med(acabA[0]).apelido)} está acabando`}</h3>
       ${acabA.map(a=>`<p style="margin:0"><b>${esc(med(a).nome)} ${esc(a.dose)}</b>: ${esc(acabaDe(a.es))}. Restam uns ${esc(a.es.r)}.</p>`).join('')}
@@ -3856,8 +3893,7 @@ function renderAcomp(){
   on('bMaisSeg',abrirSeguir); on('bEnerAc',abrirEnergia); on('bEuTb',comecarMeus); on('bSamuAc',()=>abrirLink('tel:192')); on('bAtuAc',()=>{ f.pedidoEm=0; pedirEstados(); eloRodada(); toast('Procurando notícias...'); }); on('bConexaoAc',abrirConexao);
   on('bWaAc',()=>enviarWhats(textoSemana(semana(st),nome)));
   on('bAcabGrAc',()=>{ gratisAba='popular'; go('gratis'); });
-  on('bResumo',()=>{ f.resumo=!f.resumo; save(); configurarNativo(); renderAcomp();
-    const t=f.resumo?`Pronto. Às 21h, este celular mostra quantos remédios ${curto(nome)} marcou no dia.`:'Pronto. Resumo do dia desligado.'; toast(t); falar(t); });
+  on('bResumo',()=>{ go('ajustes'); abrirAj('seg:'+f.id); });
   on('bGestAdd',()=>{ gestorAlvo=f; resultado=null; go('ler'); falar(`Vamos colocar um remédio para ${f.nome}. Leia a caixa do remédio. Depois, copie da receita.`); if(SCAN) lerNativo(); });
   document.querySelectorAll('#view-acomp [data-pedido]').forEach(b=>b.onclick=()=>{ const p=(f.pedidos||[])[+b.dataset.pedido]; if(!p) return;
     const it=p.code?buscar(p.code):null;
