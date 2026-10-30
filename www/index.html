@@ -306,6 +306,17 @@ nav.tabs button{font-size:14px}
 .posto .tem{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .posto .tem span{display:inline-flex;align-items:center;gap:6px;background:var(--ok-soft);color:var(--fg);border-radius:999px;padding:4px 10px;font-weight:700;font-size:.95rem}
 .posto .tem .dot{width:22px;height:22px;font-size:.75rem;margin:0}
+.estq-data{display:flex;gap:12px;align-items:flex-start;border-radius:var(--r);padding:14px 16px;background:var(--ok-soft);border:2px solid var(--ok)}
+.estq-data.velha{background:var(--warn-soft);border-color:var(--warn)}
+.estq-data>svg{flex:none;width:28px;height:28px;color:var(--ok)} .estq-data.velha>svg{color:var(--warn)}
+.estq-data b{display:block;font-size:1.08rem} .estq-data span{display:block;color:var(--muted);font-size:.95rem;margin-top:2px}
+.qtd{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.qrow{display:flex;gap:10px;align-items:center;border-radius:12px;padding:10px 12px;background:var(--sunk)}
+.qrow .qd{flex:none;width:14px;height:14px;border-radius:50%}
+.qrow b{display:block} .qrow span{display:block;font-size:.95rem}
+.q-ok{background:var(--ok-soft)} .q-ok .qd{background:var(--ok)}
+.q-pouco{background:var(--warn-soft)} .q-pouco .qd{background:var(--warn)}
+.q-nao .qd{border:2px solid var(--muted)}
 .qh{border:2px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
 .qh-h{margin:0;font-size:1.05rem}
 .total{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
@@ -854,7 +865,7 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--a
     <div class="block"><p class="label">5. Aviso pelo WhatsApp</p><p>O app só prepara a mensagem. <b>Quem decide e envia é você.</b> Depois de enviada, ela segue as regras do WhatsApp.</p></div>
     <div class="block"><p class="label">6. Informações sobre remédios</p><p>Vêm da lista oficial de preços CMED/Anvisa e das bulas. Podem ter erros ou estar desatualizadas. A receita e a bula oficial são as referências. Em caso de dúvida, o farmacêutico pode ajudar.</p></div>
     <div class="block"><p class="label">Pedir ajuda (Socorro)</p><p>O botão vermelho liga para o SAMU (192) pela linha do celular, sem depender de internet. O aviso para a família vai pela internet, pode atrasar e só aparece como recebido quando o celular dela responde. <b>Em emergência, ligue 192.</b></p></div>
-    <div class="block"><p class="label">Lista dos postos de saúde</p><p>Com internet, o app baixa uma vez por dia a lista pública de estoque dos postos (dados abertos da Prefeitura do Recife, licença ODbL). Nesse download o app não envia nenhum dado seu.</p></div>
+    <div class="block"><p class="label">Lista dos postos de saúde</p><p>Com internet, quando você abre os postos de saúde, o app consulta o estoque público da Prefeitura do Recife (Portal de Dados Abertos, licença ODbL) e guarda o resultado. O app pede sempre os mesmos 10 remédios, não só os seus: a Prefeitura não fica sabendo quais você toma. Nessa consulta o app não envia nenhum dado seu.</p></div>
     <div class="block"><p class="label">7. Como apagar seus dados</p><p>Em Ajustes, toque em "Retirar consentimento e apagar tudo". Isso também desliga a conexão com a família e avisa o outro celular. Desinstalar o app também apaga tudo.</p></div>
     <div class="block"><p class="label">8. Quem fez</p><p>Protótipo acadêmico do Squad 4 · CESAR School (Recife/PE), 2026. Os dados são tratados conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018).</p></div>
     <button class="btn btn-main" id="termosOuvir" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>Ouvir o resumo</button>
@@ -906,7 +917,80 @@ async function buscarEstoque(){
     usarPostos(j);
   }catch(e){} }
 setTimeout(buscarEstoque,4000);
+/* ---------- estoque ao vivo: o próprio celular pergunta ao portal de dados abertos da Prefeitura do Recife ----------
+   O portal não responde a servidores fora do Brasil (a tarefa do GitHub ficou bloqueada); o celular está no Brasil.
+   Pede sempre os 10 remédios, não só os da pessoa: o portal não fica sabendo o que ela toma.
+   Distrito com API (datastore_search): só as linhas dos 10, poucas dezenas de KB. Distrito sem API: baixa a planilha.
+   O resultado fica guardado; se o portal não responder, vale a lista do repositório de dados, com a data dela.
+   A lista do repositório traz, de cada posto, o distrito (d) e o nome da unidade na planilha (u), para juntar os dois. */
+const PORTAL=(()=>{ try{ return localStorage.getItem('bula-portal')||''; }catch(e){ return ''; } })() || 'https://dados.recife.pe.gov.br';
+const CONJ_ESTOQUE='c68396ad-ad0f-4255-a57a-84c97054dd37';
+const PRODUTOS_POSTO={'LOSARTANA 50MG':'losartana','CAPTOPRIL 25MG':'captopril','ENALAPRIL 10MG':'enalapril','HIDROCLOROTIAZIDA 25MG':'hidroclorotiazida','ATENOLOL 50MG':'atenolol','PROPRANOLOL 40MG':'propranolol','ANLODIPINO 5MG':'anlodipino','ESPIRONOLACTONA 25MG':'espironolactona','METFORMINA 850MG':'metformina','GLIBENCLAMIDA 5MG':'glibenclamida'};
+const POUCO_POSTO=300;   /* abaixo disso, "estava acabando" (comprimidos; a combinar com farmacêutico) */
+const VIVO_CACHE='bula-estoque-vivo';
+let VIVO=null, vivoBuscando=false, vivoTentado=0;
+try{ const v=JSON.parse(localStorage.getItem(VIVO_CACHE)||'null'); if(v&&v.porU&&v.em) VIVO=v; }catch(e){}
+async function pegarPortal(url,json,ms){
+  const H=(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorHttp)||null;
+  if(H){ const r=await H.request({method:'GET',url,connectTimeout:ms,readTimeout:ms,responseType:json?'json':'text'});
+    if(r.status>=300) throw new Error('HTTP '+r.status); return json&&typeof r.data==='string'?JSON.parse(r.data):r.data; }
+  const ac=typeof AbortController!=='undefined'?new AbortController():null, t=ac&&setTimeout(()=>ac.abort(),ms);
+  try{ const r=await fetch(url,{cache:'no-store',signal:ac&&ac.signal}); if(!r.ok) throw new Error('HTTP '+r.status); return json?await r.json():await r.text(); }
+  finally{ if(t) clearTimeout(t); } }
+function lerCsv(t){ t=String(t||'').replace(/^﻿/,''); const l1=t.split('\n',1)[0], sep=l1.split(';').length>l1.split(',').length?';':',';
+  const out=[]; let row=[], f='', q=false;
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+    else if(c==='"') q=true; else if(c===sep){ row.push(f); f=''; } else if(c==='\n'){ row.push(f.replace(/\r$/,'')); out.push(row); row=[]; f=''; } else f+=c; }
+  if(f||row.length){ row.push(f); out.push(row); }
+  const cab=(out.shift()||[]).map(k=>k.trim()); return out.filter(r=>r.length>1).map(r=>{ const o={}; cab.forEach((k,i)=>o[k]=r[i]); return o; }); }
+const nomeU = u => String(u||'').trim().replace(/\s+/g,' ').toUpperCase();
+function somarLinhas(linhas,acc){ (linhas||[]).forEach(r=>{ const p=PRODUTOS_POSTO[String(r.produto||'').trim().toUpperCase()]; if(!p) return;
+  if(String(r.apresentacao||'').trim().toUpperCase()!=='COMPR') return;
+  const u=nomeU(r.unidade), q=Number(String(r.quantidade==null?'':r.quantidade).replace(',','.'))||0; if(!u) return;
+  const a=acc[u]=acc[u]||{}; a[p]=(a[p]||0)+Math.max(0,q); }); }
+const distritoDoRecurso = r => { const m=String((r.name||'')+' '+(r.url||'')).match(/distrito[\s_-]*0?(\d)/i); return m?m[1]:''; };
+const dataDoPortal = v => { if(!v) return null; const s=/[zZ]|[+-]\d\d:?\d\d$/.test(v)?v:v+'Z'; const d=new Date(s); return isNaN(d)?null:d; };
+async function buscarEstoqueVivo(forcar){
+  if(vivoBuscando || (!forcar && Date.now()-vivoTentado<20*60000)) return;
+  if(!forcar && VIVO && VIVO.buscado && Date.now()-VIVO.buscado<3*3600000 && dayKey(new Date(VIVO.em))===dayKey(new Date())) return;
+  vivoBuscando=true; vivoTentado=Date.now(); if(atual==='gratis'&&gratisAba==='sus') renderGratis();
+  try{
+    const pk=await pegarPortal(`${PORTAL}/api/3/action/package_show?id=${CONJ_ESTOQUE}`,true,15000);
+    const recs=((pk&&pk.result&&pk.result.resources)||[]).map(r=>({d:distritoDoRecurso(r),id:r.id,url:r.url,api:!!r.datastore_active,data:dataDoPortal(r.last_modified||r.metadata_modified)})).filter(r=>r.d);
+    if(!recs.length) throw new Error('sem arquivos');
+    const filtro=encodeURIComponent(JSON.stringify({produto:Object.keys(PRODUTOS_POSTO)}));
+    const res=await Promise.allSettled(recs.map(async r=>{ const acc={};
+      if(r.api){ const j=await pegarPortal(`${PORTAL}/api/3/action/datastore_search?resource_id=${r.id}&filters=${filtro}&fields=unidade,produto,apresentacao,quantidade&limit=5000`,true,20000);
+        if(!j||!j.success) throw new Error('api'); somarLinhas(j.result&&j.result.records,acc); }
+      else somarLinhas(lerCsv(await pegarPortal(r.url,false,40000)),acc);
+      if(!Object.keys(acc).length) throw new Error('vazio');
+      return {d:r.d,acc,data:r.data}; }));
+    const ok=res.filter(x=>x.status==='fulfilled').map(x=>x.value);
+    if(!ok.length) throw new Error('nenhum distrito');
+    const porU={}, distritos={}; let em=null;
+    ok.forEach(x=>{ Object.assign(porU,x.acc); distritos[x.d]=1; if(x.data&&(!em||x.data<em)) em=x.data; });
+    VIVO={buscado:Date.now(), em:(em||new Date()).toISOString(), hora:!!em, distritos, porU};
+    try{ localStorage.setItem(VIVO_CACHE,JSON.stringify(VIVO)); }catch(e){}
+  }catch(e){ console.warn('estoque ao vivo',e&&e.message); }
+  vivoBuscando=false; if(atual==='gratis'&&gratisAba==='sus') renderGratis();
+}
+/* estoque de um posto: o ao vivo, se for desse distrito e mais novo que a lista do repositório; senão, a lista */
+function vivoVale(){ return !!(VIVO && (!POSTOS||!POSTOS.data_estoque || dayKey(new Date(VIVO.em))>=POSTOS.data_estoque)); }
+function estoqueDe(f){
+  if(vivoVale() && f.d && VIVO.distritos[f.d] && Array.isArray(f.u) && f.u.length){
+    const qtd={}; f.u.forEach(u=>{ const a=VIVO.porU[nomeU(u)]; if(a) Object.keys(a).forEach(p=>qtd[p]=(qtd[p]||0)+a[p]); });
+    return {tem:Object.keys(qtd).filter(p=>qtd[p]>0), qtd, vivo:true}; }
+  return {tem:f.tem||[], qtd:f.qtd||{}, vivo:false}; }
+/* de quando é o estoque mostrado: "hoje, 30/10, às 07:02" */
+function quandoEstoque(){ const hoje=dayKey(new Date());
+  if(vivoVale()){ const d=new Date(VIVO.em), k=dayKey(d), hh=VIVO.hora?` às ${hhmm(d.getTime())}`:'';
+    return {hoje:k===hoje, txt:`${k===hoje?'hoje, ':''}${fmtData(k).slice(0,5)}${hh}`, dia:k}; }
+  const k=POSTOS&&POSTOS.data_estoque; return k?{hoje:k===hoje, txt:`${k===hoje?'hoje, ':''}${fmtData(k).slice(0,5)}`, dia:k}:null; }
+const fmtQtd = n => Math.round(n).toLocaleString('pt-BR');
 let gratisAba='popular', soMeus=false;
+/* "Onde tem de graça": abre nos postos de saúde quando o remédio está na lista de estoque da Prefeitura (com a quantidade) */
+const abaGratisPara = as => as.some(a=>a&&Object.values(PRODUTOS_POSTO).includes(a.principio)) ? 'sus' : 'popular';
 /* doses gratuitas na Farmácia Popular (fev/2025) */
 const GRATIS={losartana:'50 mg',captopril:'25 mg',enalapril:'10 mg',hidroclorotiazida:'25 mg',atenolol:'25 mg',propranolol:'40 mg',anlodipino:'5 mg',espironolactona:'25 mg',metformina:'500 mg ou 850 mg',glibenclamida:'5 mg'};
 /* plugins nativos do Android (Capacitor). No navegador, ficam nulos. */
@@ -1030,12 +1114,16 @@ normalizar();
 let atual='hoje';
 RFCofre.aoErro(()=>{ if(typeof toast==='function') toast('A memória do app está cheia. Remova fotos ou remédios antigos.'); });
 function save(){ RFCofre.gravar(KEY,JSON.stringify(S)); if(typeof aposSalvar==='function') aposSalvar(); }
-/* alarmes de verdade no Android: uma notificação diária por horário da agenda */
+/* alarmes de verdade no Android: uma notificação diária por horário da agenda.
+   Canais criados no Android (Canais.java): "bula_alarme" toca o som do BULA como despertador; "bula_aviso" toca a versão curta */
+const CANAL_ALARME='bula_alarme', CANAL_AVISO='bula_aviso';
+let NOTIF_OK=false;
 async function agendarAlarmes(pedir){
   if(!NOTIF) return;
   try{
     let p=await NOTIF.checkPermissions();
     if(p.display!=='granted' && pedir) p=await NOTIF.requestPermissions();
+    NOTIF_OK = p.display==='granted';
     if(p.display!=='granted') return;
     const pend=await NOTIF.getPending(); if(pend.notifications.length) await NOTIF.cancel({notifications:pend.notifications.map(n=>({id:n.id}))});
     const lista=[]; let id=1;
@@ -1043,7 +1131,7 @@ async function agendarAlarmes(pedir){
     Object.keys(porHora).sort().forEach(h=>{ const as=porHora[h], [hh,mm]=h.split(':').map(Number), m=momentoDe(h), um=as.length===1;
       lista.push({id:id++,title: um?'Hora do '+med(as[0]).apelido : 'Hora dos remédios '+m.de,
         body: as.map(a=>`${med(a).nome} ${a.dose} · ${comoEm(a,h)}`).join('; ')+'. Toque para confirmar.',
-        schedule:{on:{hour:hh,minute:mm},allowWhileIdle:true},extra:{h}}); });
+        schedule:{on:{hour:hh,minute:mm},allowWhileIdle:true},channelId:CANAL_ALARME,extra:{h}}); });
     lista.push(...notifEstoque());
     if(lista.length) await NOTIF.schedule({notifications:lista});
   }catch(e){ console.warn('alarmes',e); }
@@ -1051,9 +1139,9 @@ async function agendarAlarmes(pedir){
 if(NOTIF){
   NOTIF.addListener('localNotificationActionPerformed',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
     if(x.h){ go('hoje'); abrirAlarmeGrupo(x.h); }
-    if(x.est){ gratisAba='popular'; go('gratis'); } });
+    if(x.est){ gratisAba=abaGratisPara(S.agenda.filter(a=>a.id===x.est)); go('gratis'); } });
   NOTIF.addListener('localNotificationReceived',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
-    if(!x.h) return; const k=dayKey(new Date())+'g'+x.h; if($('#alarm').hidden && !S.tocados[k]){ S.tocados[k]=1; save(); abrirAlarmeGrupo(x.h); } });
+    if(!x.h) return; const k=dayKey(new Date())+'g'+x.h; if($('#alarm').hidden && !S.tocados[k]){ S.tocados[k]=1; save(); abrirAlarmeGrupo(x.h,false,'sistema'); } });
 }
 function topo(){ renderTopo(); }
 
@@ -1202,7 +1290,7 @@ async function renderEnergia(){
   on('eAuto',async()=>{ try{ await ENERGIA.abrirAutoInicio(); }catch(e){ toast('Abra Configurações → Apps → BULA.'); } });
   on('eAutoOk',()=>{ AP.autoIni=true; aplicarAparencia(); renderEnergia(); });
   on('eTeste',async()=>{ try{
-      await NOTIF.schedule({notifications:[{id:999001,title:'Teste do BULA',body:'Deu certo! O lembrete funciona com o app fechado.',schedule:{at:new Date(Date.now()+60000),allowWhileIdle:true}}]});
+      await NOTIF.schedule({notifications:[{id:999001,title:'Teste do BULA',body:'Deu certo! O lembrete funciona com o app fechado.',schedule:{at:new Date(Date.now()+60000),allowWhileIdle:true},channelId:CANAL_ALARME}]});
       toast('Pronto. Agora feche o app e espere 1 minuto.'); falar('Pronto. Agora feche o app e espere um minuto.');
     }catch(e){ toast('Não consegui marcar o teste. Veja o passo 1.'); } });
   on('eOuvir',()=>ouvir('Para o alarme tocar sempre. Alguns celulares fecham os apps para economizar bateria. Faça os passos desta tela uma vez: permitir notificações, alarme na hora certa, tirar da economia de bateria'+(forte?' e deixar o app iniciar sozinho':'')+'. No final, toque em testar e feche o app.'));
@@ -1614,7 +1702,7 @@ function notifEstoque(){ const out=[], agora=Date.now(); let id=900;
       const d=new Date(f.data); d.setDate(d.getDate()-t); d.setHours(9,0,0,0);
       if(d.getTime()<=agora+60000 || id>=999) return;
       out.push({id:id++,title:`O ${med(a).apelido} está acabando`,body:`${med(a).nome} ${a.dose} ${txt}. Toque para ver onde tem de graça.`,
-        schedule:{at:d,allowWhileIdle:true},extra:{est:a.id}}); }); });
+        schedule:{at:d,allowWhileIdle:true},channelId:CANAL_AVISO,extra:{est:a.id}}); }); });
   return out; }
 async function agendarEstoque(){
   if(!NOTIF) return;
@@ -1715,7 +1803,7 @@ function renderHoje(){
     <button class="aj-link" type="button" data-go="ajustes">${IC.aj}Ajustes (para o familiar)</button>
   </div>`;
   const bed=$('#bEnerDepois'); if(bed) bed.onclick=()=>{ S.energiaAdiar=dayKey(new Date()); save(); renderHoje(); };
-  const bag=$('#bAcabGratis'); if(bag) bag.onclick=()=>{ gratisAba='popular'; go('gratis'); };
+  const bag=$('#bAcabGratis'); if(bag) bag.onclick=()=>{ gratisAba=abaGratisPara(acab.map(x=>x.a)); go('gratis'); };
   const bac=$('#bAcabComprei'); if(bac) bac.onclick=()=>{ abrirEstoque(acab[0].a); };
   const bmo=$('#bMudOuvir'); if(bmo) bmo.onclick=()=>ouvir(mudNova.txt);
   const bmk=$('#bMudOk'); if(bmk) bmk.onclick=()=>{ S.mudVisto=mudNova.ts; save(); renderHoje(); };
@@ -2655,7 +2743,7 @@ function abrirAj(id){
   if(id==='conectar') return abrirConectar();
   if(id==='conexao') return abrirConexao();
   if(id==='seguir') return abrirSeguir();
-  if(id==='teste'){ const {gs,ativo,depois}=partesHoje(); const x=ativo||depois[0]||gs[0]; if(x) abrirAlarmeGrupo(x.h,true); else toast('Coloque um remédio primeiro.'); return; }
+  if(id==='teste'){ const {gs,ativo,depois}=partesHoje(); const x=ativo||depois[0]||gs[0]; if(x) abrirAlarmeGrupo(x.h,true,'app'); else toast('Coloque um remédio primeiro.'); return; }
   if(id==='eu-remedios') return comecarMeus();
   if(id==='demo'){ if(confirma!=='demo'){ confirma='demo'; $('#zerarMsg').textContent=(S.demo?'Vai apagar os dados de exemplo.':'Vai trocar seus dados pelos de exemplo.')+' Toque de novo para confirmar.'; return; }
     confirma=''; eloDespedir(); S = S.demo ? novo() : seed(); normalizar(); save(); agendarAlarmes(false); configurarNativo(); alvo=null; resultado=null;
@@ -2953,25 +3041,26 @@ function ligarAbas(){ document.querySelectorAll('[data-aba]').forEach(b=>b.oncli
 const NOMES_P = ps => ps.filter(p=>INFO[p]).map(p=>INFO[p].nome);
 const fmtData = d => { const m=String(d||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m? `${m[3]}/${m[2]}/${m[1]}` : String(d||''); };
 function renderPostos(){
-  buscarEstoque();
-  const todos=(POSTOS&&POSTOS.postos)||[], data=fmtData(POSTOS&&POSTOS.data_estoque), velho=POSTOS&&POSTOS.data_estoque&&(Date.now()-Date.parse(POSTOS.data_estoque))>7*864e5;
+  buscarEstoque(); buscarEstoqueVivo();
+  const todos=(POSTOS&&POSTOS.postos)||[], qd=quandoEstoque(), data=qd?qd.txt:'';
   const meus=[...new Set(S.agenda.map(a=>a.principio))].filter(p=>INFO[p]);
   const bairros=[...new Set(todos.map(f=>f.bairro).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-  let lista=todos.filter(f=>(!bairroSel||f.bairro===bairroSel) && (!soMeus||!meus.length||meus.every(p=>(f.tem||[]).includes(p))));
+  let lista=todos.filter(f=>(!bairroSel||f.bairro===bairroSel) && (!soMeus||!meus.length||meus.every(p=>estoqueDe(f).tem.includes(p))));
   if(posicao){ lista=lista.map(f=>Object.assign({},f,{km: f.lat? distanciaKm(posicao.latitude,posicao.longitude,f.lat,f.lon) : 999})).sort((a,b)=>a.km-b.km); }
-  const temTxt = f => { const tem=f.tem||[];
-    if(meus.length){ const sim=meus.filter(p=>tem.includes(p)), nao=meus.filter(p=>!tem.includes(p));
-      return `<p class="small" style="margin:6px 0 0">Seus remédios na última lista${data?' ('+esc(data)+')':''}:</p><div class="tem">${sim.map(p=>`<span>${dot(p)}✓ ${esc(INFO[p].nome)}</span>`).join('')}${nao.map(p=>`<span style="background:var(--sunk)">${esc(INFO[p].nome)}: não tinha</span>`).join('')}</div>`; }
-    return tem.length? `<p class="small" style="margin:6px 0 0">Na última lista${data?' ('+esc(data)+')':''}, tinha ${tem.length} dos 10 remédios de pressão e diabetes.</p>` : ''; };
+  /* sem localização: primeiro os postos que tinham mais remédios da pessoa (a ordem de bairro continua dentro de cada grupo) */
+  else if(meus.length){ const n=f=>meus.filter(p=>estoqueDe(f).tem.includes(p)).length; lista=lista.map((f,i)=>[f,n(f),i]).sort((a,b)=>b[1]-a[1]||a[2]-b[2]).map(x=>x[0]); }
+  const temTxt = f => { const e=estoqueDe(f), tem=e.tem;
+    if(meus.length) return `<p class="small" style="margin:8px 0 0"><b>Seus remédios ${qd&&qd.hoje?'hoje cedo':'na última lista'}:</b></p><div class="qtd">${meus.map(p=>{
+        const n=e.qtd[p]||0, st=!tem.includes(p)?['nao','Não tinha']:(n&&n<POUCO_POSTO)?['pouco','Estava acabando']:['ok','Tinha'+(n?' bastante':'')];
+        return `<div class="qrow q-${st[0]}"><span class="qd" aria-hidden="true"></span><div><b>${esc(INFO[p].nome)}: ${st[1]}</b>${n?`<span>${fmtQtd(n)} comprimidos</span>`:''}</div></div>`; }).join('')}</div>`;
+    return tem.length? `<p class="small" style="margin:6px 0 0">${qd&&qd.hoje?'Hoje cedo':'Na última lista'}, tinha ${tem.length} dos 10 remédios de pressão e diabetes.</p>` : ''; };
   const telBtn = f => f.fone ? `<a class="btn btn-ghost" href="tel:${esc(String(f.fone).replace(/[^\d+]/g,''))}">Ligar</a>` : '';
   const mapaP = f => f.lat ? `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.nome+', '+(f.rua||'')+', '+(f.bairro||'')+', Recife')}`;
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>Remédio de graça</h2>
     ${abasGratis()}
-    <div class="free"><p class="label">Nos postos de saúde da Prefeitura</p>
-      <p>Os remédios da pressão e do diabetes também são de graça nos postos de saúde (SUS) do Recife.</p>
-      <p class="small">Leve a <b>receita</b>, o <b>Cartão SUS</b> e um <b>documento com foto</b>. Pergunte no posto se aceitam receita de médico particular.</p>
-      <button class="btn btn-ghost" id="bOuvirSus">Ouvir como pegar</button></div>
+    ${qd?`<div class="estq-data${qd.hoje?'':' velha'}" role="status">${IC.relogio}<div>${qd.hoje?`<b>Estoque de ${esc(qd.txt)}</b><span>Lista da Prefeitura do Recife. Muda durante o dia: ligue antes de ir.</span>`
+      :`<b>Lista de ${esc(qd.txt)}, pode ter mudado</b><span>${vivoBuscando?'Conferindo o estoque de hoje na Prefeitura...':'Não consegui o estoque de hoje. Ligue antes de ir.'}</span>`}</div></div>`:''}
     ${todos.length?`
     <button class="btn btn-ghost" id="bOrdenarP" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar os mais perto de mim'}</button>
     <p class="hint" style="margin-top:-8px">Sua localização fica só no celular. Não é enviada para ninguém.</p>
@@ -2986,11 +3075,15 @@ function renderPostos(){
       <div class="btn-row"><a class="btn btn-ghost" href="${mapaP(f)}" target="_blank" rel="noopener">Ver no mapa</a>${telBtn(f)}<button class="btn btn-ghost" data-posto="${i}">Ouvir</button></div></div>`).join('')
       : `<p class="msg info">${soMeus?'Nenhum posto tinha todos os seus remédios. Desmarque a opção acima para ver todos.':'Nenhum posto neste bairro.'}</p>`}
     ${lista.length>60?`<p class="hint">Mostrando os 60 primeiros. Escolha o bairro ou use sua localização.</p>`:''}
-    <p class="fine">Fonte: Prefeitura do Recife, dados abertos ("Estoque dos medicamentos nas farmácias da Rede Municipal de Saúde" e "Rede de atenção à saúde"), licença ODbL. Lista de estoque de ${esc(data||'data não informada')}${velho?', antiga':''}; o estoque muda durante o dia. Ligue antes de ir.</p>`
+    <div class="free"><p class="label">Nos postos de saúde da Prefeitura</p>
+      <p>Os remédios da pressão e do diabetes também são de graça nos postos de saúde (SUS) do Recife.</p>
+      <p class="small">Leve a <b>receita</b>, o <b>Cartão SUS</b> e um <b>documento com foto</b>. Pergunte no posto se aceitam receita de médico particular.</p>
+      <button class="btn btn-ghost" id="bOuvirSus">Ouvir como pegar</button></div>
+    <p class="fine">Fonte: Prefeitura do Recife, dados abertos ("Estoque dos medicamentos nas farmácias da Rede Municipal de Saúde" e "Rede de atenção à saúde"), licença ODbL. Estoque de ${esc(data||'data não informada')}; muda durante o dia. Ligue antes de ir.</p>`
     : `<p class="msg info">${POSTOS?'A lista de postos ainda não foi carregada nesta versão.':'Carregando a lista de postos...'}</p>`}
   </div>`;
   ligarAbas();
-  $('#bOuvirSus').onclick=()=>ouvir('Os remédios da pressão e do diabetes também são de graça nos postos de saúde do Recife. Leve a receita, o cartão do SUS e um documento com foto. Pergunte no posto se aceitam receita de médico particular. Ligue antes de ir, porque o estoque muda.');
+  const bos=$('#bOuvirSus'); if(bos) bos.onclick=()=>ouvir('Os remédios da pressão e do diabetes também são de graça nos postos de saúde do Recife. Leve a receita, o cartão do SUS e um documento com foto. Pergunte no posto se aceitam receita de médico particular. Ligue antes de ir, porque o estoque muda.');
   const sb=$('#selBairroP'); if(sb) sb.onchange=e=>{ bairroSel=e.target.value; renderPostos(); };
   const sm=$('#bSoMeus'); if(sm) sm.onclick=()=>{ soMeus=!soMeus; renderPostos(); };
   const bo=$('#bOrdenarP'); if(bo) bo.onclick=async()=>{ bo.textContent='Procurando sua localização...';
@@ -2998,12 +3091,18 @@ function renderPostos(){
       const perto=todos.filter(x=>x.lat).map(x=>({x,km:distanciaKm(posicao.latitude,posicao.longitude,x.lat,x.lon)})).sort((a,b)=>a.km-b.km)[0];
       if(perto) falar(`O posto mais perto é ${perto.x.nome}, a ${fmtKm(perto.km).replace('km','quilômetros').replace(' m',' metros')}.`);
     }catch(e){ toast('Não consegui sua localização. Escolha o bairro.'); renderPostos(); } };
-  document.querySelectorAll('[data-posto]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.posto]; const tem=NOMES_P(f.tem||[]);
-    ouvir(`${f.nome}. ${f.rua?'Fica na '+f.rua+', ':''}no bairro ${f.bairro}.${f.km!==undefined&&f.km<999?' Fica a '+fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')+' de você.':''}${f.horario?' Horário: '+f.horario+'.':''}${f.ff?' Tem Farmácia da Família.':''}${meus.length? ' Na última lista da Prefeitura, '+(meus.every(p=>(f.tem||[]).includes(p))?'tinha todos os seus remédios.':'tinha: '+(listaFala(NOMES_P(meus.filter(p=>(f.tem||[]).includes(p))))||'nenhum dos seus remédios')+'.') : ''} Ligue antes de ir.`); });
+  document.querySelectorAll('[data-posto]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.posto]; const tem=NOMES_P(estoqueDe(f).tem);
+    ouvir(`${f.nome}. ${f.rua?'Fica na '+f.rua+', ':''}no bairro ${f.bairro}.${f.km!==undefined&&f.km<999?' Fica a '+fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')+' de você.':''}${f.horario?' Horário: '+f.horario+'.':''}${f.ff?' Tem Farmácia da Família.':''}${meus.length? ' '+(qd&&qd.hoje?'Hoje cedo':'Na última lista da Prefeitura')+', '+(meus.every(p=>estoqueDe(f).tem.includes(p))?'tinha todos os seus remédios.':'tinha: '+(listaFala(NOMES_P(meus.filter(p=>estoqueDe(f).tem.includes(p))))||'nenhum dos seus remédios')+'.') : ''} Ligue antes de ir.`); });
 }
 
 /* ---------- alarme ---------- */
-function abrirAlarmeGrupo(h,teste){
+/* som do BULA (três notas que sobem). som='sistema': a notificação do Android já está tocando, a voz espera o som acabar;
+   som='app': o próprio app toca o som (teste, pedido da família com o app aberto); sem som: abriu tocando na notificação */
+const SOM_ALARME_MS=4700;
+let somAl=null, alFalaT=null;
+function tocarSomBula(){ try{ if(!somAl) somAl=new Audio('sons/bula_alarme.mp3'); somAl.currentTime=0; const p=somAl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+function pararSomBula(){ clearTimeout(alFalaT); alFalaT=null; try{ if(somAl){ somAl.pause(); somAl.currentTime=0; } }catch(e){} }
+function abrirAlarmeGrupo(h,teste,som){
   let pend=dosesHoje().filter(d=>d.h===h && !d.reg);
   if(!pend.length && teste) pend=dosesHoje().filter(d=>d.h===h);
   if(!pend.length) return;
@@ -3021,12 +3120,16 @@ function abrirAlarmeGrupo(h,teste){
   const frase = um
     ? `${vocativo()}horário do ${i.apelido}: ${i.nome}, ${comoEm(pend[0].a,h)}, conforme a receita. O botão tomei registra a dose.`
     : `${vocativo()}horário dos remédios ${m.de}: ${listaFala(pend.map(d=>med(d.a).nome+', '+comoEm(d.a,d.h)))}, conforme a receita. O botão tomei registra as doses.`;
-  perguntarVoz(frase+' Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei.', 'Já tomou? Diga sim quando tomar, ou diga depois.', ms=>tratarContexto('alarm',ms));
-  $('#alTomei').onclick=()=>{ el.hidden=true; tomarVarios(pend,'alarme'); };
-  $('#alOuvir').onclick=()=>ouvir(frase);
-  $('#alDepois').onclick=()=>{ el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.');
-    if(NOTIF) NOTIF.schedule({notifications:[{id:990000+toMin(h),title:titulo,body:'Lembrete de novo, 10 minutos depois. Toque para marcar.',schedule:{at:new Date(Date.now()+600000),allowWhileIdle:true},extra:{h}}]}).catch(()=>setTimeout(()=>abrirAlarmeGrupo(h),600000));
-    else setTimeout(()=>abrirAlarmeGrupo(h),600000); };
+  const comecar=()=>{ alFalaT=null; if(!el.hidden) perguntarVoz(frase+' Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei.', 'Já tomou? Diga sim quando tomar, ou diga depois.', ms=>tratarContexto('alarm',ms)); };
+  pararSomBula();
+  if(som==='app'){ tocarSomBula(); alFalaT=setTimeout(comecar,SOM_ALARME_MS); }
+  else if(som==='sistema') alFalaT=setTimeout(comecar,SOM_ALARME_MS);
+  else comecar();
+  $('#alTomei').onclick=()=>{ pararSomBula(); el.hidden=true; tomarVarios(pend,'alarme'); };
+  $('#alOuvir').onclick=()=>{ pararSomBula(); ouvir(frase); };
+  $('#alDepois').onclick=()=>{ pararSomBula(); el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.');
+    if(NOTIF) NOTIF.schedule({notifications:[{id:990000+toMin(h),title:titulo,body:'Lembrete de novo, 10 minutos depois. Toque para marcar.',schedule:{at:new Date(Date.now()+600000),allowWhileIdle:true},channelId:CANAL_ALARME,extra:{h}}]}).catch(()=>setTimeout(()=>abrirAlarmeGrupo(h,false,'app'),600000));
+    else setTimeout(()=>abrirAlarmeGrupo(h,false,'app'),600000); };
   $('#alTomei').focus();
 }
 function abrirAlarme(d){ abrirAlarmeGrupo(d.h,true); }
@@ -3094,7 +3197,7 @@ function conferirCodigoAlarme(cod,alvoId){
 }
 setInterval(()=>{
   const k=dayKey(new Date()), hm=nowHM();
-  const id=k+'g'+hm; if(dosesHoje().some(d=>d.h===hm && !d.reg) && !S.tocados[id] && $('#alarm').hidden){ S.tocados[id]=1; save(); abrirAlarmeGrupo(hm); }
+  const id=k+'g'+hm; if(dosesHoje().some(d=>d.h===hm && !d.reg) && !S.tocados[id] && $('#alarm').hidden){ S.tocados[id]=1; save(); abrirAlarmeGrupo(hm,false,NOTIF&&NOTIF_OK?'sistema':'app'); }
   if(!$('#view-hoje').hidden) renderHoje();
 },30000);
 
@@ -3527,7 +3630,7 @@ function tratarMsg(c,papel,o,m){
         const av=pend?{titulo:quem?`O lembrete chegou para ${quem}`:'O lembrete chegou',texto:`O celular mostrou o lembrete dos remédios das ${h} às ${hm}.`}
                      :{titulo:quem?`${quem} já tinha marcado os remédios`:'Os remédios já estavam marcados',texto:`Os remédios das ${h} já estavam marcados como tomados.`};
         cifrarElo(c.key,{de:'idoso',t:'lembrete-ok',lid:o.lid,uid:'ack-'+o.lid,h,tomou:!pend,ts:Date.now(),via:'app',aviso:av}).then(env=>relayPost(c.topic,env)).catch(()=>{}); }
-      if(pend && $('#alarm').hidden) abrirAlarmeGrupo(h); if(pend) toast(`${c.nome} pediu para lembrar do remédio.`); }
+      if(pend && $('#alarm').hidden) abrirAlarmeGrupo(h,false,'app'); if(pend) toast(`${c.nome} pediu para lembrar do remédio.`); }
   }
 }
 /* ao abrir o app: a família pede o resumo atualizado; quem toma o remédio reenvia o seu se estiver velho */

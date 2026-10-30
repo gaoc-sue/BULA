@@ -9,6 +9,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // os canais com o som do BULA nascem antes do app agendar qualquer alarme
+        Canais.criar(this);
         registerPlugin(EnergiaPlugin.class);
         registerPlugin(CofrePlugin.class);
         registerPlugin(EloPlugin.class);

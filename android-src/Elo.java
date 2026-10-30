@@ -2,7 +2,6 @@ package br.com.remediofalado.app;
 
 import android.app.AlarmManager;
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.job.JobInfo;
@@ -51,8 +50,6 @@ final class Elo {
     static final int JOB_PERIODICO = 7101;
     static final int JOB_AGORA = 7102;
     private static final String PREFS = "remedio_falado_elo";
-    private static final String CANAL = "familia";
-    private static final String CANAL_TOMOU = "tomou";
     private static final long PULSO_MS = 2L * 60 * 60 * 1000;
     private static final long REENVIO_MS = 6L * 60 * 60 * 1000;
     private static final long DESISTE_MS = 3L * 24 * 60 * 60 * 1000;
@@ -501,7 +498,7 @@ final class Elo {
                     String h = msg.optString("h");
                     boolean tomou = tomadosHoje.contains(h);
                     JSONObject av = msg.optJSONObject("aviso");
-                    if (!tomou && av != null) notificar(ctx, av.optString("titulo"), av.optString("texto"), id.hashCode());
+                    if (!tomou && av != null) notificarAlarme(ctx, av.optString("titulo"), av.optString("texto"), id.hashCode());
                     if (!lid.isEmpty()) {
                         try {
                             publicarEAcordar(relay, topic, cifrar(key, respostaLembrete(lid, h, tomou, eu, System.currentTimeMillis()).toString()));
@@ -591,24 +588,21 @@ final class Elo {
     }
 
     /* ---------------- notificação ---------------- */
-    static void notificar(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, CANAL, titulo, texto, id); }
+    /** avisos da família, do estoque e o resumo: som curto do BULA */
+    static void notificar(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, Canais.AVISO, titulo, texto, id); }
 
     /** "marcou que tomou": canal sem som e sem vibrar; a família pode desligar só este nas configurações do Android */
-    static void notificarTomou(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, CANAL_TOMOU, titulo, texto, id); }
+    static void notificarTomou(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, Canais.TOMOU, titulo, texto, id); }
+
+    /** a família pediu para lembrar do remédio: toca o som do alarme do BULA */
+    static void notificarAlarme(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, Canais.ALARME, titulo, texto, id); }
 
     private static void notificarEm(Context ctx, String canal, String titulo, String texto, int id) {
-        boolean alto = CANAL.equals(canal);
+        boolean calado = Canais.TOMOU.equals(canal), alarme = Canais.ALARME.equals(canal);
         try {
             NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
-            if (Build.VERSION.SDK_INT >= 26) {
-                NotificationChannel ch = alto
-                        ? new NotificationChannel(CANAL, "Avisos da família", NotificationManager.IMPORTANCE_HIGH)
-                        : new NotificationChannel(CANAL_TOMOU, "Remédio tomado (sem som)", NotificationManager.IMPORTANCE_LOW);
-                ch.setDescription(alto ? "Avisos do celular de quem você acompanha, ou da família que acompanha você."
-                        : "Quando a pessoa que você acompanha marca que tomou o remédio. Não toca nem vibra.");
-                nm.createNotificationChannel(ch);
-            }
+            Canais.criar(ctx);
             Intent abrir = ctx.getPackageManager().getLaunchIntentForPackage(ctx.getPackageName());
             PendingIntent pi = abrir == null ? null : PendingIntent.getActivity(ctx, 0, abrir, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
             int icone = ctx.getResources().getIdentifier("ic_stat_icon", "drawable", ctx.getPackageName());
@@ -618,8 +612,12 @@ final class Elo {
                     .setStyle(new Notification.BigTextStyle().bigText(texto))
                     .setAutoCancel(true);
             if (pi != null) b.setContentIntent(pi);
-            if (Build.VERSION.SDK_INT < 26) b.setPriority(alto ? Notification.PRIORITY_HIGH : Notification.PRIORITY_LOW);
-            if (!alto) b.setOnlyAlertOnce(true).setShowWhen(true);
+            if (alarme) b.setCategory(Notification.CATEGORY_ALARM);
+            if (Build.VERSION.SDK_INT < 26) {
+                b.setPriority(calado ? Notification.PRIORITY_LOW : Notification.PRIORITY_HIGH);
+                if (!calado) b.setSound(Canais.som(ctx, alarme ? "bula_alarme" : "bula_aviso"));
+            }
+            if (calado) b.setOnlyAlertOnce(true).setShowWhen(true);
             nm.notify(id, b.build());
         } catch (Exception e) { /* sem permissão de notificação */ }
     }
