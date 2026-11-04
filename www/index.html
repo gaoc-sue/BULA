@@ -278,6 +278,24 @@ a.btn{text-decoration:none}
 .gr-aqui{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
 .gr-i{display:inline-flex;align-items:center;gap:6px}
 .gr-aqui.pago{margin-top:4px}
+.fp-lista{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+.fp-l{border-top:2px solid var(--soft-line)}
+.fp-l:first-child{border-top:0}
+.fp-l summary{list-style:none;display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:64px;cursor:pointer}
+.fp-l summary::-webkit-details-marker{display:none}
+.fp-l summary::after{content:"";flex:none;width:10px;height:10px;border-right:3px solid var(--accent);border-bottom:3px solid var(--accent);transform:rotate(45deg);margin:-4px 2px 0 0}
+.fp-l[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+.fp-nome{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.fp-nome .selo-fp{margin-left:0}
+.fp-bols{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px 10px}
+.fp-bol{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 4px;border-radius:999px}
+.fp-bol small{font-size:.75rem;font-weight:700;margin:0 4px}
+.fp-bol.gr{background:var(--ok-soft);color:var(--ok)}
+.fp-bol.pg{background:var(--sunk,#EEF1F6);color:var(--fg)}
+.fp-bol .dot{width:24px;height:24px;font-size:.75rem}
+.fp-l .dist{flex:none;font-weight:700;color:var(--accent)}
+.fp-det{display:flex;flex-direction:column;gap:8px;padding:0 16px 14px}
+.fp-det .gr-aqui{margin:0}
 .gr-i .dot{width:26px;height:26px;font-size:.8rem}
 .preco-box{display:flex;flex-direction:column;gap:8px;border:2px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface)}
 .preco-box.ok{border-color:var(--ok,#1a7f37)}
@@ -3239,11 +3257,12 @@ function abasGratis(){ return `<div class="seg seg-g" role="tablist">
 function ligarAbas(){ document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{ gratisAba=b.dataset.aba; bairroSel=''; renderGratis(); }); }
 /* remédio que não é de graça: as farmácias perto (todas) e o mapa do celular. O BULA não indica farmácia. */
 const MAPA_FARM='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('farmácia');
-let FARM_TODAS=null;
+let FARM_TODAS=null, pertoN=5;
 const farmTodasOk = () => FARM_TODAS ? Promise.resolve(FARM_TODAS) : fetch('farmacias-todas.json').then(r=>r.json()).then(j=>{ FARM_TODAS=j.farmacias||[]; return FARM_TODAS; }).catch(()=>{ FARM_TODAS=[]; return FARM_TODAS; });
 const rotaUrl = f => `https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}&travelmode=${f.km<1?'walking':'transit'}`;
 const rotaFala = f => f.km<1 ? `A farmácia fica a uns ${Math.max(50,Math.round(f.km*1000/50)*50)} metros, cerca de ${Math.max(1,Math.round(f.km*1000/75))} minutos a pé.` : `A farmácia fica a uns ${fmtNum(Math.round(f.km*10)/10)} quilômetros. O mapa mostra o caminho de ônibus.`;
 function renderPerto(){
+  if(!$('#view-gratis .fp-lista')) pertoN=5;
   if(FARM_TODAS===null){ farmTodasOk().then(()=>{ if(atual==='gratis'&&gratisAba==='perto') renderPerto(); }); }
   const lin=[];
   if(pertoIt) lin.push({dot:bolinha(pertoIt.info.cor||GENERICO_COR,pertoIt.info.nome),nome:pertoIt.info.nome,dose:pertoIt.dose,g:gratisFP(pertoIt.info.nome||pertoIt.substancia,pertoIt.dose),cx:pertoIt.qtd,preta:/preta/i.test(pertoIt.tarja||'')});
@@ -3252,11 +3271,17 @@ function renderPerto(){
     lin.push({dot:dotA(a),nome:med(a).nome,dose:a.dose,g}); });
   /* remédios da pessoa que são grátis na Farmácia Popular: viram ícones nas farmácias credenciadas */
   const grat=S.agenda.filter(a=>!terminou(a) && gratisDe(a).st==='gratis');
-  const lista = posicao && FARM_TODAS ? FARM_TODAS.filter(f=>f.lat).map(f=>Object.assign({},f,{km:distanciaKm(posicao.latitude,posicao.longitude,f.lat,f.lon)})).sort((a,b)=>a.km-b.km).slice(0,12) : [];
+  const lista = posicao && FARM_TODAS ? FARM_TODAS.filter(f=>f.lat).map(f=>Object.assign({},f,{km:distanciaKm(posicao.latitude,posicao.longitude,f.lat,f.lon)})).sort((a,b)=>a.km-b.km).slice(0,20) : [];
+  const mostrar = lista.slice(0,pertoN);
   const fpPerto = lista.find(f=>f.fp);
   const nomes=lin.map(x=>x.nome+(x.dose?' '+x.dose:''));
   const frase=`Olá. Vocês têm ${nomes.length?listaFala(nomes):'este remédio'}? Qual é o preço?`;
   const nm = f => f.n || 'Farmácia';
+  /* bolinhas na linha da farmácia: na credenciada, o que é grátis e o que é pago; nas outras, tudo é pago */
+  const todos=grat.map(a=>({dot:dotA(a),nome:med(a).nome})).concat(lin);
+  const bolLinha = f => { const g=f.fp?grat.map(a=>({dot:dotA(a),nome:med(a).nome})):[], pg=f.fp?lin:todos;
+    const parte=(cls,rot,l)=>l.length?`<span class="fp-bol ${cls}" aria-label="${rot}: ${esc(listaFala(l.map(x=>x.nome)))}"><small>${rot}</small>${l.map(x=>x.dot).join('')}</span>`:'';
+    return (g.length||pg.length)?`<span class="fp-bols">${parte('gr','Grátis',g)}${parte('pg','Pago',pg)}</span>`:''; };
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>Comprar perto de casa</h2>
     ${abasGratis()}
@@ -3271,11 +3296,15 @@ function renderPerto(){
      : !FARM_TODAS ? '<p class="msg info">Carregando as farmácias…</p>'
      : `${fpPerto&&grat.length&&lin.length?`<section class="al-card info"><h3>Uma ida só</h3><p style="margin:0">Na farmácia credenciada da Farmácia Popular${fpPerto.n?' <b>'+esc(fpPerto.n)+'</b>,':''} a <b>${fmtKm(fpPerto.km)}</b>, você pega <b>${esc(listaFala(grat.map(a=>med(a).nome)))}</b> de graça e pode comprar <b>${esc(listaFala(lin.map(x=>x.nome)))}</b>. Ligue antes e pergunte se tem.</p>
          <a class="btn btn-pill" href="${rotaUrl(fpPerto)}" id="bUmaIda" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>Como chegar</a></section>`:''}
-       ${lista.map((f,i)=>`<div class="farm f-perto"><div><h3>${esc(nm(f))}${f.fp?' <span class="selo-fp">Farmácia Popular</span>':''}</h3>
-         <p class="muted" style="margin:2px 0 0">${[f.r,f.b].filter(Boolean).map(esc).join(' · ')}${f.r||f.b?' · ':''}<span class="dist">a ${fmtKm(f.km)}</span></p>
-         ${f.fp&&grat.length?`<p class="gr-aqui"><b>Grátis aqui:</b> ${grat.map(a=>`<span class="gr-i">${dotA(a)}${esc(med(a).nome)}</span>`).join('')}</p>`:''}
-         ${f.fp&&grat.length&&lin.length?`<p class="gr-aqui pago"><b>Pagando:</b> ${lin.map(x=>`<span class="gr-i">${x.dot}${esc(x.nome)}</span>`).join('')}</p>`:''}</div>
-         <div class="btn-row"><a class="btn btn-ghost" href="${rotaUrl(f)}" data-rota="${i}" target="_blank" rel="noopener">Como chegar</a>${f.t?`<a class="btn btn-ghost" href="tel:${esc(f.t)}">Ligar</a>`:`<button class="btn btn-ghost" type="button" data-farmp="${i}">Ouvir</button>`}</div></div>`).join('')}
+       <div class="fp-lista">${mostrar.map((f,i)=>`<details class="fp-l f-perto" data-i="${i}"><summary>
+           <span class="fp-nome"><b>${esc(nm(f))}</b>${f.fp?'<span class="selo-fp">Farmácia Popular</span>':''}
+             ${bolLinha(f)}</span>
+           <span class="dist">${fmtKm(f.km)}</span></summary>
+         <div class="fp-det">${f.r||f.b?`<p class="muted" style="margin:0">${[f.r,f.b].filter(Boolean).map(esc).join(' · ')}</p>`:''}
+           ${f.fp&&grat.length?`<p class="gr-aqui"><b>Grátis aqui:</b> ${grat.map(a=>`<span class="gr-i">${dotA(a)}${esc(med(a).nome)}</span>`).join('')}</p>`:''}
+           ${f.fp&&grat.length&&lin.length?`<p class="gr-aqui pago"><b>Pagando:</b> ${lin.map(x=>`<span class="gr-i">${x.dot}${esc(x.nome)}</span>`).join('')}</p>`:''}
+           <div class="btn-row"><a class="btn btn-ghost btn-s" href="${rotaUrl(f)}" data-rota="${i}" target="_blank" rel="noopener">Como chegar</a>${f.t?`<a class="btn btn-ghost btn-s" href="tel:${esc(f.t)}">Ligar</a>`:''}<button class="btn btn-ghost btn-s" type="button" data-farmp="${i}">Ouvir</button></div></div></details>`).join('')}</div>
+       ${lista.length>pertoN?`<button class="btn btn-ghost" id="bPertoMais" type="button">Ver mais farmácias</button>`:''}
        <a class="linkbtn" id="bMapaFarm" href="${MAPA_FARM}" target="_blank" rel="noopener">Não achou? Ver todas as farmácias no mapa</a>`}
     <div class="farm"><p class="label">Antes de ir, ligue e pergunte</p><p class="say">“${esc(frase)}”</p>
       <button class="btn btn-ghost" id="bFrasePerto" type="button">Ouvir a frase</button></div>
@@ -3289,6 +3318,8 @@ function renderPerto(){
       if(f) falar(`A farmácia mais perto fica a ${fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')}.${f.fp?' É da Farmácia Popular.':''}`);
     }catch(e){ toast('Não consegui sua localização. Toque em ver todas as farmácias no mapa.'); renderPerto(); } };
   const bu=$('#bUmaIda'); if(bu) bu.addEventListener('click',()=>falar(rotaFala(fpPerto)));
+  const bm=$('#bPertoMais'); if(bm) bm.onclick=()=>{ pertoN+=5; renderPerto(); };
+  document.querySelectorAll('#view-gratis details.fp-l').forEach(d=>d.addEventListener('toggle',()=>{ if(d.open){ const f=lista[+d.dataset.i]; falar(`${nm(f)}${f.fp?', da Farmácia Popular':''}. ${rotaFala(f)}`); } }));
   document.querySelectorAll('#view-gratis [data-rota]').forEach(a=>a.addEventListener('click',()=>{ const f=lista[+a.dataset.rota]; if(f) falar(rotaFala(f)); }));
   document.querySelectorAll('#view-gratis [data-farmp]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.farmp]; ouvir(`${nm(f)}${f.fp?', da Farmácia Popular':''}. ${f.r?'Fica na '+f.r+'. ':''}${rotaFala(f)}`); });
   $('#bFrasePerto').onclick=()=>ouvir(frase);
