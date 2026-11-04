@@ -272,6 +272,16 @@ nav.tabs button{font-size:14px}
 .letra button{min-width:52px;min-height:52px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--fg);font-weight:700;cursor:pointer;font-size:18px;line-height:1}
 .letra button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.seg-g button{font-size:.92rem;line-height:1.15;padding:6px 4px}
+a.btn{text-decoration:none}
+.selo-fp{display:inline-block;vertical-align:middle;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--ok-soft);color:var(--ok);margin-left:4px}
+.gr-aqui{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.gr-i{display:inline-flex;align-items:center;gap:6px}
+.gr-i .dot{width:26px;height:26px;font-size:.8rem}
+.preco-box{display:flex;flex-direction:column;gap:8px;border:2px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface)}
+.preco-box.ok{border-color:var(--ok,#1a7f37)}
+.preco-l{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-top:2px solid var(--soft-line)}
+.preco-l:first-of-type{border-top:0}
 .seg button{min-height:56px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--fg);font-weight:700;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .dist{font-weight:700;color:var(--accent)}
@@ -1025,9 +1035,33 @@ function quandoEstoque(){ const hoje=dayKey(new Date()), dm=k=>{ const f=fmtData
 const fmtQtd = n => Math.round(n).toLocaleString('pt-BR');
 let gratisAba='popular', soMeus=false;
 /* "Onde tem de graça": abre nos postos de saúde quando o remédio está na lista de estoque da Prefeitura (com a quantidade) */
-const abaGratisPara = as => as.some(a=>a&&Object.values(PRODUTOS_POSTO).includes(a.principio)) ? 'sus' : 'popular';
+/* remédio da lista dos postos (pela substância e pela dose: losartana 100 mg não é a dos postos) */
+function noPosto(principio,dose){ const d=doseMg(dose);
+  return Object.entries(PRODUTOS_POSTO).some(([k,p])=>p===principio && (d==null || Math.abs((+(k.match(/(\d+)MG/)||[])[1]||0)-d)<1e-6)); }
+const abaGratisPara = as => as.some(a=>a&&noPosto(a.principio,a.dose)) ? 'sus' : as.some(a=>a&&gratisDe(a).st==='gratis') ? 'popular' : 'perto';
 /* doses gratuitas na Farmácia Popular (fev/2025) */
 const GRATIS={losartana:'50 mg',captopril:'25 mg',enalapril:'10 mg',hidroclorotiazida:'25 mg',atenolol:'25 mg',propranolol:'40 mg',anlodipino:'5 mg',espironolactona:'25 mg',metformina:'500 mg ou 850 mg',glibenclamida:'5 mg'};
+/* lista completa de grátis da Farmácia Popular (Ministério da Saúde, fevereiro de 2025): substância e doses em mg (null = qualquer dose) */
+const GRATIS_FP=[
+  [/ipratropio/,[0.02,0.25]],[/beclometasona/,[0.05,0.2,0.25]],[/salbutamol/,[0.1,5]],
+  [/metformina/,[500,850]],[/glibenclamida/,[5]],[/insulina humana/,null],
+  [/atenolol/,[25]],[/anlodipino/,[5]],[/captopril/,[25]],[/propranolol/,[40]],[/hidroclorotiazida/,[25]],[/losartana/,[50]],
+  [/enalapril/,[10]],[/espironolactona/,[25]],[/furosemida/,[40]],[/metoprolol/,[25]],
+  [/medroxiprogesterona/,[150]],[/etinilestradiol.*levonorgestrel|levonorgestrel.*etinilestradiol/,null],[/^noretisterona$/,[0.35]],[/estradiol.*noretisterona|noretisterona.*estradiol/,null],
+  [/alendronato/,[70]],[/sinvastatina/,[10,20,40]],[/carbidopa.*levodopa|levodopa.*carbidopa/,null],[/benserazida.*levodopa|levodopa.*benserazida/,null],
+  [/timolol/,[2.5,5]],[/budesonida/,[0.032,0.05]],[/dapagliflozina/,[10]]];
+const semAc = t => String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const doseMg = d => { const m=String(d||'').match(/([\d.,]+)\s*(mcg|mg|g)\b/i); if(!m) return null; const n=+m[1].replace(/\./g,'').replace(',','.'); return /mcg/i.test(m[2])?n/1000:/^g$/i.test(m[2])?n*1000:n; };
+const fmtDoseMg = n => n<1 ? fmtNum(Math.round(n*1000*100)/100)+' mcg' : fmtNum(n)+' mg';
+/* 'gratis' (esta dose é grátis), 'outra' (grátis só em outra dose) ou 'nao' (não está na lista) */
+function gratisFP(nome,dose){
+  const n=semAc(nome).replace(/^(cloridrato|maleato|besilato|succinato|tartarato|sulfato|brometo|dipropionato|acetato|potassica|sodica|de|do|da|\s)+/g,'').trim();
+  const g=GRATIS_FP.find(([re])=>re.test(n)||re.test(semAc(nome))); if(!g) return {st:'nao'};
+  if(!g[1]) return {st:'gratis'};
+  const d=doseMg(dose); if(d!=null && g[1].some(x=>Math.abs(x-d)<1e-6)) return {st:'gratis'};
+  return {st:'outra',doses:listaFala(g[1].map(fmtDoseMg))};
+}
+const gratisDe = a => gratisFP(med(a).nome||a.nome, a.dose);
 /* plugins nativos do Android (Capacitor). No navegador, ficam nulos. */
 const CAP = window.Capacitor;
 const nativo = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
@@ -1184,7 +1218,7 @@ async function agendarAlarmes(pedir){
 if(NOTIF){
   NOTIF.addListener('localNotificationActionPerformed',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
     if(x.h){ go('hoje'); abrirAlarmeGrupo(x.h); }
-    if(x.est){ gratisAba=abaGratisPara(S.agenda.filter(a=>a.id===x.est)); go('gratis'); } });
+    if(x.est){ gratisAba=abaGratisPara(S.agenda.filter(a=>a.id===x.est)); pertoIt=null; go('gratis'); } });
   NOTIF.addListener('localNotificationReceived',ev=>{ const x=ev.notification&&ev.notification.extra; if(!x) return;
     if(!x.h) return; const k=dayKey(new Date())+'g'+x.h; if($('#alarm').hidden && !S.tocados[k]){ S.tocados[k]=1; save(); abrirAlarmeGrupo(x.h,false,'sistema'); } });
 }
@@ -1819,7 +1853,7 @@ function notifEstoque(){ const out=[], agora=Date.now(); let id=900;
     [[EST_AVISO,'acaba em '+EST_AVISO+' dias'],[1,'acaba amanhã']].forEach(([t,txt])=>{
       const d=new Date(f.data); d.setDate(d.getDate()-t); d.setHours(9,0,0,0);
       if(d.getTime()<=agora+60000 || id>=999) return;
-      out.push({id:id++,title:`O ${med(a).apelido} está acabando`,body:`${med(a).nome} ${a.dose} ${txt}. Toque para ver onde tem de graça.`,
+      out.push({id:id++,title:`O ${med(a).apelido} está acabando`,body:`${med(a).nome} ${a.dose} ${txt}. ${abaGratisPara([a])==='perto'?'Toque para ver farmácias perto.':'Toque para ver onde tem de graça.'}`,
         schedule:{at:d,allowWhileIdle:true},channelId:CANAL_AVISO,extra:{est:a.id}}); }); });
   return out; }
 async function agendarEstoque(){
@@ -1907,7 +1941,7 @@ function renderHoje(){
        <div class="btn-row"><button class="btn btn-ghost btn-s" type="button" id="bMudOuvir">${IC.som}Ouvir</button><button class="btn btn-pill btn-s" type="button" id="bMudOk">Entendi</button></div></section>`:''}
     ${acab.length?`<section class="al-card" role="status" id="acabCard"><h3>${acab.length>1?'Remédios acabando':`O ${esc(med(acab[0].a).apelido)} está acabando`}</h3>
        ${acab.map(x=>`<p style="margin:0"><b>${esc(med(x.a).nome)} ${esc(x.a.dose)}</b>: ${esc(quandoAcaba(x.f))}. Restam uns ${esc(restamTxt(x.a))}.</p>`).join('')}
-       <button class="btn btn-pill" type="button" id="bAcabGratis">${IC.gratis}Onde tem de graça</button><button class="btn btn-ghost" type="button" id="bAcabComprei">Comprei mais</button></section>`:''}
+       <button class="btn btn-pill" type="button" id="bAcabGratis">${IC.gratis}${abaGratisPara(acab.map(x=>x.a))==='perto'?'Farmácias perto de você':'Onde tem de graça'}</button><button class="btn btn-ghost" type="button" id="bAcabComprei">Comprei mais</button></section>`:''}
     ${prazoCards()}
     ${famPergunta()?`<section class="al-card info" id="famCard"><h3>Quem da família recebe os avisos?</h3><p style="margin:0">Assim, no socorro, o app sabe para quem ligar.</p>
        <div class="btn-row"><button class="btn btn-pill btn-s" type="button" id="bFamPor">${CHECK}Colocar agora</button><button class="btn btn-ghost btn-s" type="button" id="bFamNao">Agora não</button></div></section>`:''}
@@ -1922,7 +1956,7 @@ function renderHoje(){
     <button class="aj-link" type="button" data-go="ajustes">${IC.aj}Ajustes (para o familiar)</button>
   </div>`;
   const bed=$('#bEnerDepois'); if(bed) bed.onclick=()=>{ S.energiaAdiar=dayKey(new Date()); save(); renderHoje(); };
-  const bag=$('#bAcabGratis'); if(bag) bag.onclick=()=>{ gratisAba=abaGratisPara(acab.map(x=>x.a)); go('gratis'); };
+  const bag=$('#bAcabGratis'); if(bag) bag.onclick=()=>{ gratisAba=abaGratisPara(acab.map(x=>x.a)); pertoIt=null; go('gratis'); };
   const bac=$('#bAcabComprei'); if(bac) bac.onclick=()=>{ abrirEstoque(acab[0].a); };
   ligarPrazo('#view-hoje');
   const bmo=$('#bMudOuvir'); if(bmo) bmo.onclick=()=>ouvir(mudNova.txt);
@@ -2709,6 +2743,20 @@ function rxPdf(){
   inp.click();
 }
 /* remédio lido: nome + opções numeradas (CPqD Alcance; Apple: poucas opções por tela). O resto fica em "Mais informações". */
+/* depois de ler a caixa: é de graça? se não for, as farmácias perto */
+let pertoIt=null;
+function precoBox(it){
+  if(!it || it.hosp) return '';
+  const g=gratisFP(it.info.nome||it.substancia,it.dose), posto=noPosto(it.principio,it.dose);
+  if(g.st==='gratis'||posto) return `<div class="preco-box ok" id="precoBox"><p style="margin:0"><b>De graça</b> ${posto&&g.st!=='gratis'?'no posto de saúde':'na Farmácia Popular'}, com a receita.</p>
+    <button class="btn btn-ghost btn-s" type="button" id="bPrecoIr">${IC.gratis}Onde pegar de graça</button></div>`;
+  return `<div class="preco-box" id="precoBox"><p style="margin:0"><b>${g.st==='outra'?'De graça na Farmácia Popular só na dose '+esc(g.doses)+'. Esta caixa não.':'Este remédio não é dado de graça pela Farmácia Popular.'}</b></p>
+    <p class="small" style="margin:0">No posto de saúde, vale perguntar.</p>
+    <button class="btn btn-ghost btn-s" type="button" id="bPrecoIr">${IC.gratis}Farmácias perto de você</button></div>`;
+}
+function ligarPrecoBox(it){ const b=$('#bPrecoIr'); if(!b) return;
+  b.onclick=()=>{ const g=gratisFP(it.info.nome||it.substancia,it.dose), posto=noPosto(it.principio,it.dose);
+    gratisAba = posto ? 'sus' : g.st==='gratis' ? 'popular' : 'perto'; pertoIt = gratisAba==='perto' ? it : null; bairroSel=''; go('gratis'); }; }
 function mostrarResultado(it,code,falarAgora){
   const i=it.info, ag=agendaDe(chaveIt(it));
   let conf='';
@@ -2733,6 +2781,7 @@ function mostrarResultado(it,code,falarAgora){
       :gestorAtivo()?`<button class="opn o-pill" id="bPedirAg" type="button"><span class="n">2</span><span>Pedir para ${esc(nomeGestor())} colocar<small>${esc(nomeGestor())} cuida dos seus remédios</small></span></button>${bulaBtn(3)}`
       :`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos meus remédios<small>3 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)}
     <button class="btn btn-ghost" type="button" id="bNaoUsar" data-bula="${esc(it.registro)}" data-perg="3" data-nome="${esc(it.produto+(it.dose?' '+it.dose:''))}" data-url="${esc(bulaUrl(it))}">${IC.socorro}Quando não devo usar? (bula)</button>
+    ${precoBox(it)}
     <details class="mais"><summary>Mais informações</summary><div class="in">
       ${txServe(it)?`<div class="block"><p class="label">Para que serve, segundo a bula</p><p>“${esc(txServe(it))}”</p><p class="fine">${esc(fonteTx(it))}</p></div>`
         :`<div class="block"><p class="label">Para que serve</p><p>A indicação está na bula oficial, no botão “Ler a bula”, e no <b>QR code da caixa</b>.</p></div>`}
@@ -2743,6 +2792,7 @@ function mostrarResultado(it,code,falarAgora){
     </div></details>
   </article>`;
   $('#bOuvir').onclick=()=>ouvir(textoFala(it));
+  ligarPrecoBox(it);
   const bt=$('#bTomeiCx'); if(bt){ const a=alvo, c=certo; bt.onclick=()=>{ alvo=null; resultado=null; go('hoje'); tomar(c,a.h,'caixa'); }; }
   if(!alvo && !gA) ligarFormAgenda(it);
   if(gA){ const b=$('#bAddAg'); if(b) b.onclick=()=>abrirWizard(it,{destino:gA}); }
@@ -3140,12 +3190,14 @@ let bairroSel='';
 function mapa(f){ return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${f.nome}, ${f.rua}, ${f.bairro}, Recife - PE`); }
 function renderGratis(){
   if(gratisAba==='sus') return renderPostos();
+  if(gratisAba==='perto') return renderPerto();
   const meus=[...new Set(S.agenda.map(a=>a.principio))].filter(p=>p&&GRATIS[p]);
   const bairros=[...new Set(FARMACIAS.map(f=>f.bairro))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   const temCoords=FARMACIAS.some(f=>f.lat);
   let lista=FARMACIAS.filter(f=>!bairroSel||f.bairro===bairroSel);
   if(posicao && temCoords){ lista=lista.map(f=>Object.assign({},f,{km: f.lat? distanciaKm(posicao.latitude,posicao.longitude,f.lat,f.lon) : 999})).sort((a,b)=>a.km-b.km); }
-  const remTxt=meus.length? meus.map(p=>`${INFO[p].nome} ${(S.agenda.find(a=>a.principio===p)||{}).dose||GRATIS[p]}`) : ['losartana 50 mg'];
+  const outrosG=S.agenda.filter(a=>!(a.principio&&GRATIS[a.principio]) && !terminou(a) && gratisDe(a).st==='gratis');
+  const remTxt=(meus.length||outrosG.length)? meus.map(p=>`${INFO[p].nome} ${(S.agenda.find(a=>a.principio===p)||{}).dose||GRATIS[p]}`).concat(outrosG.map(a=>`${med(a).nome} ${a.dose}`)) : ['losartana 50 mg'];
   const frase=`Olá. Vocês têm ${listaFala(remTxt)} pela Farmácia Popular? Quero retirar de graça.`;
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>Remédio de graça</h2>
@@ -3153,7 +3205,8 @@ function renderGratis(){
     ${temCoords?`<button class="btn btn-pill" id="bOrdenar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar as mais perto de mim'}</button>
       <p class="hint" style="margin-top:-8px">Sua localização fica só no celular. Não é enviada para ninguém.</p>`:''}
     <div class="free"><p class="label">Seus remédios são grátis</p>
-      ${meus.length? meus.map(p=>`<p><button class="fala" data-fala="${p}">${dot(p)}<b>${esc(INFO[p].nome)}</b></button> <span class="muted">grátis na dose ${esc(GRATIS[p])}</span></p>`).join('') : '<p>Coloque seus remédios em Meus remédios para ver quais são grátis.</p>'}
+      ${outrosG.map(a=>`<p>${dotA(a)} <b>${esc(med(a).nome)}</b> <span class="muted">grátis na dose ${esc(a.dose)}</span></p>`).join('')}
+      ${meus.length||outrosG.length? meus.map(p=>`<p><button class="fala" data-fala="${p}">${dot(p)}<b>${esc(INFO[p].nome)}</b></button> <span class="muted">grátis na dose ${esc(GRATIS[p])}</span></p>`).join('') : '<p>Coloque seus remédios em Meus remédios para ver quais são grátis.</p>'}
       <p class="small">Na farmácia credenciada, leve <b>documento com foto e CPF</b> e a <b>receita</b> (do SUS ou particular).</p>
       <button class="btn btn-ghost" id="bOuvirGratis">Ouvir como pegar</button></div>
     <div class="farm"><p class="label">Antes de ir, ligue e pergunte</p><p class="say" id="frase">“${esc(frase)}”</p>
@@ -3164,7 +3217,7 @@ function renderGratis(){
     ${lista.length? lista.map((f,i)=>`<div class="farm"><div><h3>${esc(f.nome)}</h3><p class="muted">${esc(f.rua)} · ${esc(f.bairro)}${f.km!==undefined&&f.km<999?` · <span class="dist">a ${fmtKm(f.km)}</span>`:''}</p></div>
       <div class="btn-row"><a class="btn btn-ghost" href="${mapa(f)}" target="_blank" rel="noopener">Ver no mapa</a><button class="btn btn-ghost" data-farm="${i}">Ouvir</button></div></div>`).join('')
       : '<p class="msg info">Carregando a lista de farmácias...</p>'}
-    <p class="fine">Lista do Ministério da Saúde (Painel endereço das Farmácias), dados até 09/10/2026: ${FARMACIAS.length} farmácias credenciadas no Recife. Remédios grátis conforme o Ministério da Saúde (fevereiro de 2025).</p>
+    <p class="fine">Lista do Ministério da Saúde (Painel endereço das Farmácias), atualizada em 04/11/2026: ${FARMACIAS.length} farmácias credenciadas no Recife. Remédios grátis conforme o Ministério da Saúde (fevereiro de 2025).</p>
   </div>`;
   ligarAbas();
   $('#selBairro').onchange=e=>{ bairroSel=e.target.value; renderGratis(); };
@@ -3178,10 +3231,66 @@ function renderGratis(){
   document.querySelectorAll('[data-farm]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.farm]; ouvir(`${f.nome}. Fica na ${f.rua}, no bairro ${f.bairro}.${f.km!==undefined&&f.km<999?' Fica a '+fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')+' de você.':''}`); });
 }
 
-function abasGratis(){ return `<div class="seg" role="tablist" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+function abasGratis(){ return `<div class="seg seg-g" role="tablist">
   <button type="button" role="tab" data-aba="popular" aria-pressed="${gratisAba==='popular'}">Farmácia Popular</button>
-  <button type="button" role="tab" data-aba="sus" aria-pressed="${gratisAba==='sus'}">Posto de saúde (SUS)</button></div>`; }
+  <button type="button" role="tab" data-aba="sus" aria-pressed="${gratisAba==='sus'}">Posto do SUS</button>
+  <button type="button" role="tab" data-aba="perto" aria-pressed="${gratisAba==='perto'}">Comprar perto</button></div>`; }
 function ligarAbas(){ document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{ gratisAba=b.dataset.aba; bairroSel=''; renderGratis(); }); }
+/* remédio que não é de graça: as farmácias perto (todas) e o mapa do celular. O BULA não indica farmácia. */
+const MAPA_FARM='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('farmácia');
+let FARM_TODAS=null;
+const farmTodasOk = () => FARM_TODAS ? Promise.resolve(FARM_TODAS) : fetch('farmacias-todas.json').then(r=>r.json()).then(j=>{ FARM_TODAS=j.farmacias||[]; return FARM_TODAS; }).catch(()=>{ FARM_TODAS=[]; return FARM_TODAS; });
+const rotaUrl = f => `https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}&travelmode=${f.km<1?'walking':'transit'}`;
+const rotaFala = f => f.km<1 ? `A farmácia fica a uns ${Math.max(50,Math.round(f.km*1000/50)*50)} metros, cerca de ${Math.max(1,Math.round(f.km*1000/75))} minutos a pé.` : `A farmácia fica a uns ${fmtNum(Math.round(f.km*10)/10)} quilômetros. O mapa mostra o caminho de ônibus.`;
+function renderPerto(){
+  if(FARM_TODAS===null){ farmTodasOk().then(()=>{ if(atual==='gratis'&&gratisAba==='perto') renderPerto(); }); }
+  const lin=[];
+  if(pertoIt) lin.push({nome:pertoIt.info.nome,dose:pertoIt.dose,g:gratisFP(pertoIt.info.nome||pertoIt.substancia,pertoIt.dose),cx:pertoIt.qtd,preta:/preta/i.test(pertoIt.tarja||'')});
+  S.agenda.filter(a=>!terminou(a)).forEach(a=>{ const g=gratisDe(a), posto=noPosto(a.principio,a.dose);
+    if(g.st==='gratis'||posto) return; if(pertoIt && chaveAg(a)===chaveIt(pertoIt)) return;
+    lin.push({nome:med(a).nome,dose:a.dose,g}); });
+  /* remédios da pessoa que são grátis na Farmácia Popular: viram ícones nas farmácias credenciadas */
+  const grat=S.agenda.filter(a=>!terminou(a) && gratisDe(a).st==='gratis');
+  const lista = posicao && FARM_TODAS ? FARM_TODAS.filter(f=>f.lat).map(f=>Object.assign({},f,{km:distanciaKm(posicao.latitude,posicao.longitude,f.lat,f.lon)})).sort((a,b)=>a.km-b.km).slice(0,12) : [];
+  const fpPerto = lista.find(f=>f.fp);
+  const nomes=lin.map(x=>x.nome+(x.dose?' '+x.dose:''));
+  const frase=`Olá. Vocês têm ${nomes.length?listaFala(nomes):'este remédio'}? Qual é o preço?`;
+  const nm = f => f.n || 'Farmácia';
+  $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
+    <h2>Comprar perto de casa</h2>
+    ${abasGratis()}
+    ${lin.length?`<div class="free"><p class="label">${lin.length>1?'Não são dados de graça pela Farmácia Popular':'Não é dado de graça pela Farmácia Popular'}</p>
+      ${lin.map(x=>`<div class="preco-l"><p style="margin:0"><b>${esc(x.nome)}${x.dose?' '+esc(x.dose):''}</b></p>
+        ${x.g.st==='outra'?`<p class="small" style="margin:0">De graça só na dose ${esc(x.g.doses)}.</p>`:''}
+        ${x.preta?'<p class="small" style="margin:0"><b>Tarja preta:</b> leve a receita especial.</p>':''}</div>`).join('')}
+      <p class="small" style="margin:0">No posto de saúde, vale perguntar.</p></div>`
+     :`<p class="msg info">Seus remédios são dados de graça. Esta parte é para quando o remédio não é.</p>`}
+    ${!posicao?`<div class="farm"><p style="margin:0">Para mostrar as farmácias mais perto, o BULA usa a sua localização só neste celular.</p>
+        <button class="btn btn-pill" id="bPertoLoc" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>Mostrar farmácias perto de mim</button></div>`
+     : !FARM_TODAS ? '<p class="msg info">Carregando as farmácias…</p>'
+     : `${fpPerto&&grat.length&&lin.length?`<section class="al-card info"><h3>Uma ida só</h3><p style="margin:0">Na farmácia da Farmácia Popular a <b>${fmtKm(fpPerto.km)}</b>, você pega <b>${esc(listaFala(grat.map(a=>med(a).nome)))}</b> de graça e pode comprar <b>${esc(listaFala(lin.map(x=>x.nome)))}</b>. Ligue antes e pergunte se tem.</p></section>`:''}
+       ${lista.map((f,i)=>`<div class="farm f-perto"><div><h3>${esc(nm(f))}${f.fp?' <span class="selo-fp">Farmácia Popular</span>':''}</h3>
+         <p class="muted" style="margin:2px 0 0">${[f.r,f.b].filter(Boolean).map(esc).join(' · ')}${f.r||f.b?' · ':''}<span class="dist">a ${fmtKm(f.km)}</span></p>
+         ${f.fp&&grat.length?`<p class="gr-aqui"><b>Grátis aqui:</b> ${grat.map(a=>`<span class="gr-i">${dotA(a)}${esc(med(a).nome)}</span>`).join('')}</p>`:''}</div>
+         <div class="btn-row"><a class="btn btn-ghost" href="${rotaUrl(f)}" data-rota="${i}" target="_blank" rel="noopener">Como chegar</a>${f.t?`<a class="btn btn-ghost" href="tel:${esc(f.t)}">Ligar</a>`:`<button class="btn btn-ghost" type="button" data-farmp="${i}">Ouvir</button>`}</div></div>`).join('')}
+       <a class="linkbtn" id="bMapaFarm" href="${MAPA_FARM}" target="_blank" rel="noopener">Não achou? Ver todas as farmácias no mapa</a>`}
+    <div class="farm"><p class="label">Antes de ir, ligue e pergunte</p><p class="say">“${esc(frase)}”</p>
+      <button class="btn btn-ghost" id="bFrasePerto" type="button">Ouvir a frase</button></div>
+    <button class="btn btn-main" id="bOuvirPerto" type="button">${IC.som}Ouvir</button>
+    <p class="fine">Farmácias: mapa aberto OpenStreetMap (© colaboradores do OpenStreetMap, licença ODbL), 04/11/2026, que pode não ter todas; selo Farmácia Popular pela lista do Ministério da Saúde de 04/11/2026. Remédios grátis conforme o Ministério da Saúde (fevereiro de 2025). O BULA não vende remédio nem indica farmácia.</p>
+  </div>`;
+  ligarAbas();
+  const bl=$('#bPertoLoc'); if(bl) bl.onclick=async()=>{ bl.textContent='Procurando sua localização...';
+    try{ posicao=await minhaPosicao(); await farmTodasOk(); renderPerto();
+      const f=FARM_TODAS.filter(x=>x.lat).map(x=>Object.assign({},x,{km:distanciaKm(posicao.latitude,posicao.longitude,x.lat,x.lon)})).sort((a,b)=>a.km-b.km)[0];
+      if(f) falar(`A farmácia mais perto fica a ${fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')}.${f.fp?' É da Farmácia Popular.':''}`);
+    }catch(e){ toast('Não consegui sua localização. Toque em ver todas as farmácias no mapa.'); renderPerto(); } };
+  document.querySelectorAll('#view-gratis [data-rota]').forEach(a=>a.addEventListener('click',()=>{ const f=lista[+a.dataset.rota]; if(f) falar(rotaFala(f)); }));
+  document.querySelectorAll('#view-gratis [data-farmp]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.farmp]; ouvir(`${nm(f)}${f.fp?', da Farmácia Popular':''}. ${f.r?'Fica na '+f.r+'. ':''}${rotaFala(f)}`); });
+  $('#bFrasePerto').onclick=()=>ouvir(frase);
+  $('#bOuvirPerto').onclick=()=>ouvir((lin.length?lin.map(x=>`${x.nome}${x.dose?', '+x.dose.replace('mg','miligramas'):''}: não é dado de graça pela Farmácia Popular.`).join(' ')+' No posto de saúde, vale perguntar. ':'')
+    +(lista.length?`A farmácia mais perto fica a ${fmtKm(lista[0].km).replace('km','quilômetros').replace(' m',' metros')}. Toque em como chegar para ver o caminho.`:'Toque no botão azul para ver as farmácias perto de você.')+' Antes de ir, ligue e pergunte se tem o remédio e o preço.');
+}
 const NOMES_P = ps => ps.filter(p=>INFO[p]).map(p=>INFO[p].nome);
 const fmtData = d => { const m=String(d||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m? `${m[3]}/${m[2]}/${m[1]}` : String(d||''); };
 function renderPostos(){
