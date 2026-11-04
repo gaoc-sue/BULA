@@ -22,6 +22,11 @@ public class EloAlarme extends BroadcastReceiver {
             @Override
             public void run() {
                 try { if (conferir) Elo.executar(ctx); } catch (Throwable t) { }
+                // celular ligou ou o app foi atualizado: o guardião remarca os lembretes que perderam o alarme
+                if (!conferir) {
+                    try { Guardiao.conferir(ctx); } catch (Throwable t) { }
+                    try { Guardiao.agendar(ctx); } catch (Throwable t) { }
+                }
                 try { Elo.agendarAtraso(ctx); } catch (Throwable t) { }
                 // se faltou internet agora, a tarefa normal tenta de novo assim que a rede voltar
                 try { if (conferir) Elo.agora(ctx); } catch (Throwable t) { }

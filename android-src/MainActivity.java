@@ -11,6 +11,8 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // os canais com o som do BULA nascem antes do app agendar qualquer alarme
         Canais.criar(this);
+        // guardião dos alarmes: confere a cada 3 horas se algum lembrete perdeu o alarme
+        Guardiao.agendar(this);
         registerPlugin(EnergiaPlugin.class);
         registerPlugin(CofrePlugin.class);
         registerPlugin(EloPlugin.class);

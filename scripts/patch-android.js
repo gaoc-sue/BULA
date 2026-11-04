@@ -8,7 +8,7 @@ let m = fs.readFileSync(manifestPath, 'utf8');
 const perms = [
   'android.permission.CAMERA',
   'android.permission.POST_NOTIFICATIONS',
-  'android.permission.SCHEDULE_EXACT_ALARM',
+  'android.permission.USE_EXACT_ALARM',
   'android.permission.RECEIVE_BOOT_COMPLETED',
   'android.permission.WAKE_LOCK',
   'android.permission.READ_CONTACTS',
@@ -20,6 +20,10 @@ const perms = [
   'android.permission.ACCESS_NETWORK_STATE',
   'android.permission.RECORD_AUDIO'
 ];
+// alarme na hora certa: no Android 13+ vale USE_EXACT_ALARM (dada na instalação, sem tela de configuração);
+// SCHEDULE_EXACT_ALARM fica só para o Android 12 (lá ela já vem ligada)
+m = m.replace(/\s*<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"[^>]*\/>/g, '');
+m = m.replace('</manifest>', '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />\n</manifest>');
 for (const p of perms) {
   if (!m.includes(`"${p}"`)) m = m.replace('</manifest>', `    <uses-permission android:name="${p}" />\n</manifest>`);
 }
@@ -34,6 +38,10 @@ if (!m.includes('com.google.mlkit.vision.DEPENDENCIES')) {
 // conexão com a família com o app fechado: tarefa do Android (JobScheduler), sem biblioteca extra
 if (!m.includes('br.com.remediofalado.app.EloJob')) {
   m = m.replace('</application>', '        <service android:name="br.com.remediofalado.app.EloJob" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />\n    </application>');
+}
+// guardião dos alarmes: remarca os lembretes que perderam o alarme (a cada 3 horas, ao ligar o celular e ao atualizar o app)
+if (!m.includes('br.com.remediofalado.app.Guardiao')) {
+  m = m.replace('</application>', '        <service android:name="br.com.remediofalado.app.Guardiao" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />\n    </application>');
 }
 // aviso de atraso para a família na hora certa: alarme exato 30 minutos depois da dose (e remarca ao ligar o celular)
 if (!m.includes('br.com.remediofalado.app.EloAlarme')) {

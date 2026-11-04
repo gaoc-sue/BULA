@@ -327,6 +327,9 @@ nav.tabs button{font-size:14px}
 /* quanto ainda tem do remédio */
 .est-l{display:flex;flex-direction:column;gap:2px;border-top:2px solid var(--soft-line);padding-top:10px}
 .est-l.baixo b{color:var(--warn)}
+.prazo-l{display:flex;flex-direction:column;gap:8px;border-top:2px solid var(--soft-line);padding-top:10px}
+.prazo-l.fim b,.prazo-l.ult b{color:var(--warn)}
+.prazo-wz{display:flex;flex-direction:column;gap:10px;border:2px solid var(--line);border-radius:18px;padding:12px 14px;background:var(--bg)}
 .est-ed,.est-wz{display:flex;flex-direction:column;gap:10px;border:2px solid var(--line);border-radius:18px;padding:12px 14px;background:var(--bg)}
 .est-ed .btn-row .btn,.est-wz .btn-row .btn{flex:1}
 .hoje-cont{display:flex;flex-direction:column;gap:8px}
@@ -926,6 +929,7 @@ setTimeout(buscarEstoque,4000);
 const PORTAL=(()=>{ try{ return localStorage.getItem('bula-portal')||''; }catch(e){ return ''; } })() || 'https://dados.recife.pe.gov.br';
 const CONJ_ESTOQUE='c68396ad-ad0f-4255-a57a-84c97054dd37';
 const PRODUTOS_POSTO={'LOSARTANA 50MG':'losartana','CAPTOPRIL 25MG':'captopril','ENALAPRIL 10MG':'enalapril','HIDROCLOROTIAZIDA 25MG':'hidroclorotiazida','ATENOLOL 50MG':'atenolol','PROPRANOLOL 40MG':'propranolol','ANLODIPINO 5MG':'anlodipino','ESPIRONOLACTONA 25MG':'espironolactona','METFORMINA 850MG':'metformina','GLIBENCLAMIDA 5MG':'glibenclamida'};
+const RECURSOS_POSTO={1:'537f0b95-4eb7-4912-9d7c-32caf9fd68ac',2:'30e87813-b5a3-4cbd-b35e-b09156f52698',3:'832ae42d-0163-45e8-82c1-a4e00a5ec1b6',4:'a4d419a8-4355-4ae9-b116-9cc35b914f50',5:'77040c32-2a39-4416-ba93-5c7386b46dcb',6:'ac869f94-a655-4388-871b-9957b0a642a4',7:'97109f18-a189-4084-acaf-b3aff6e65d51',8:'2e411ebc-0bef-4e03-ae34-2b792b5468c2'};
 const POUCO_POSTO=300;   /* abaixo disso, "estava acabando" (comprimidos; a combinar com farmacêutico) */
 const VIVO_CACHE='bula-estoque-vivo';
 let VIVO=null, vivoBuscando=false, vivoTentado=0;
@@ -956,9 +960,11 @@ async function buscarEstoqueVivo(forcar){
   if(!forcar && VIVO && VIVO.buscado && Date.now()-VIVO.buscado<3*3600000 && dayKey(new Date(VIVO.em))===dayKey(new Date())) return;
   vivoBuscando=true; vivoTentado=Date.now(); if(atual==='gratis'&&gratisAba==='sus') renderGratis();
   try{
-    const pk=await pegarPortal(`${PORTAL}/api/3/action/package_show?id=${CONJ_ESTOQUE}`,true,15000);
-    const recs=((pk&&pk.result&&pk.result.resources)||[]).map(r=>({d:distritoDoRecurso(r),id:r.id,url:r.url,api:!!r.datastore_active,data:dataDoPortal(r.last_modified||r.metadata_modified)})).filter(r=>r.d);
-    if(!recs.length) throw new Error('sem arquivos');
+    let recs=[];
+    try{ const pk=await pegarPortal(`${PORTAL}/api/3/action/package_show?id=${CONJ_ESTOQUE}`,true,15000);
+      recs=((pk&&pk.result&&pk.result.resources)||[]).map(r=>({d:distritoDoRecurso(r),id:r.id,url:r.url,api:!!r.datastore_active,data:dataDoPortal(r.last_modified||r.metadata_modified)})).filter(r=>r.d); }catch(e){}
+    /* sem a lista do portal: os endereços conhecidos (out/2026), sem a hora do arquivo */
+    if(!recs.length) recs=Object.entries(RECURSOS_POSTO).map(([d,id])=>({d,id,api:d!=='1',url:`${PORTAL}/dataset/${CONJ_ESTOQUE}/resource/${id}/download/medicamentos_distrito0${d}.csv`,data:null}));
     const filtro=encodeURIComponent(JSON.stringify({produto:Object.keys(PRODUTOS_POSTO)}));
     const res=await Promise.allSettled(recs.map(async r=>{ const acc={};
       if(r.api){ const j=await pegarPortal(`${PORTAL}/api/3/action/datastore_search?resource_id=${r.id}&filters=${filtro}&fields=unidade,produto,apresentacao,quantidade&limit=5000`,true,20000);
@@ -983,10 +989,10 @@ function estoqueDe(f){
     return {tem:Object.keys(qtd).filter(p=>qtd[p]>0), qtd, vivo:true}; }
   return {tem:f.tem||[], qtd:f.qtd||{}, vivo:false}; }
 /* de quando é o estoque mostrado: "hoje, 30/10, às 07:02" */
-function quandoEstoque(){ const hoje=dayKey(new Date());
+function quandoEstoque(){ const hoje=dayKey(new Date()), dm=k=>{ const f=fmtData(k); return k.slice(0,4)===hoje.slice(0,4)?f.slice(0,5):f; };
   if(vivoVale()){ const d=new Date(VIVO.em), k=dayKey(d), hh=VIVO.hora?` às ${hhmm(d.getTime())}`:'';
-    return {hoje:k===hoje, txt:`${k===hoje?'hoje, ':''}${fmtData(k).slice(0,5)}${hh}`, dia:k}; }
-  const k=POSTOS&&POSTOS.data_estoque; return k?{hoje:k===hoje, txt:`${k===hoje?'hoje, ':''}${fmtData(k).slice(0,5)}`, dia:k}:null; }
+    return {hoje:k===hoje, txt:`${k===hoje?'hoje, ':''}${dm(k)}${hh}`, dia:k, consultado:!VIVO.hora}; }
+  const k=POSTOS&&POSTOS.data_estoque; return k?{hoje:k===hoje, txt:`${k===hoje?'hoje, ':''}${dm(k)}`, dia:k}:null; }
 const fmtQtd = n => Math.round(n).toLocaleString('pt-BR');
 let gratisAba='popular', soMeus=false;
 /* "Onde tem de graça": abre nos postos de saúde quando o remédio está na lista de estoque da Prefeitura (com a quantidade) */
@@ -1127,10 +1133,20 @@ async function agendarAlarmes(pedir){
     if(p.display!=='granted') return;
     const pend=await NOTIF.getPending(); if(pend.notifications.length) await NOTIF.cancel({notifications:pend.notifications.map(n=>({id:n.id}))});
     const lista=[]; let id=1;
-    const porHora={}; S.agenda.forEach(a=>a.horarios.forEach(h=>(porHora[h]=porHora[h]||[]).push(a)));
-    Object.keys(porHora).sort().forEach(h=>{ const as=porHora[h], [hh,mm]=h.split(':').map(Number), m=momentoDe(h), um=as.length===1;
-      lista.push({id:id++,title: um?'Hora do '+med(as[0]).apelido : 'Hora dos remédios '+m.de,
-        body: as.map(a=>`${med(a).nome} ${a.dose} · ${comoEm(a,h)}`).join('; ')+'. Toque para confirmar.',
+    const hoje=dayKey(new Date()), porHora={};
+    S.agenda.filter(a=>noTrat(a,hoje)).forEach(a=>a.horarios.forEach(h=>(porHora[h]=porHora[h]||[]).push(a)));
+    Object.keys(porHora).sort().forEach(h=>{ const as=porHora[h], [hh,mm]=h.split(':').map(Number), m=momentoDe(h);
+      const titulo = l => l.length===1?'Hora do '+med(l[0]).apelido : 'Hora dos remédios '+m.de;
+      const linha = (a,dia) => `${med(a).nome} ${a.dose} · ${comoEm(a,h)}${a.ate&&a.ate===dia?' (último dia)':a.ate&&!dia?' (até '+dmAte(a.ate)+')':''}`;
+      const fim = as.every(a=>a.ate) ? as.map(a=>a.ate).sort().pop() : '';
+      if(fim && diasAte(fim)<=MAX_DIAS_PRAZO){
+        /* só remédio com prazo neste horário: um alarme por dia até o último dia da receita; depois não toca mais */
+        const d=new Date(); d.setHours(hh,mm,0,0); if(d.getTime()<=Date.now()+30000) d.setDate(d.getDate()+1);
+        for(let n=0;n<=MAX_DIAS_PRAZO;n++){ const dia=dayKey(d), l=as.filter(a=>dia<=a.ate); if(!l.length) break;
+          lista.push({id:id++,title:titulo(l),body:l.map(a=>linha(a,dia)).join('; ')+'. Toque para confirmar.',
+            schedule:{at:new Date(d.getTime()),allowWhileIdle:true},channelId:CANAL_ALARME,extra:{h}});
+          d.setDate(d.getDate()+1); }
+      } else lista.push({id:id++,title:titulo(as),body:as.map(a=>linha(a,'')).join('; ')+'. Toque para confirmar.',
         schedule:{on:{hour:hh,minute:mm},allowWhileIdle:true},channelId:CANAL_ALARME,extra:{h}}); });
     lista.push(...notifEstoque());
     if(lista.length) await NOTIF.schedule({notifications:lista});
@@ -1296,6 +1312,35 @@ async function renderEnergia(){
   on('eOuvir',()=>ouvir('Para o alarme tocar sempre. Alguns celulares fecham os apps para economizar bateria. Faça os passos desta tela uma vez: permitir notificações, alarme na hora certa, tirar da economia de bateria'+(forte?' e deixar o app iniciar sozinho':'')+'. No final, toque em testar e feche o app.'));
   on('eFechar',()=>{ $('#energia').hidden=true; calar(); render(); });
 }
+/* logo depois do "Concordo": as permissões do alarme em sequência, uma vez só (no teste, muita gente aceitava e ia dormir sem ajustar).
+   1) notificações (pergunta do Android); 2) alarme na hora certa: já vem ligado (USE_EXACT_ALARM no manifesto);
+   3) tirar da economia de bateria (pergunta do Android); 4) só em marcas que fecham apps: a tela com o passo do início automático.
+   Contatos, câmera e localização não entram aqui: são pedidos na hora em que a pessoa usa. */
+const voltarDoAndroid = ms => new Promise(res=>{ let saiu=false, fim=false;
+  const ok=()=>{ if(fim) return; fim=true; document.removeEventListener('visibilitychange',v); res(); };
+  const v=()=>{ if(document.hidden) saiu=true; else if(saiu) setTimeout(ok,400); };
+  document.addEventListener('visibilitychange',v); setTimeout(()=>{ if(!saiu) ok(); },ms||1500); setTimeout(ok,120000); });
+async function permissoesDoAlarme(){
+  if(!nativo || !NOTIF || S.permPedidas) return false;
+  S.permPedidas=dayKey(new Date()); save();
+  await checarEnergia();
+  if(ENER.notif===false){
+    falar('Agora o celular vai perguntar se o BULA pode avisar a hora do remédio. Toque em permitir.');
+    await espera(1200);
+    try{ const p=await NOTIF.requestPermissions(); NOTIF_OK=p.display==='granted'; }catch(e){}
+    await checarEnergia();
+  }
+  if(ENER.notif && ENER.bateria===false){
+    falar('Mais uma: para o alarme não ser fechado pelo celular, toque em permitir.');
+    await espera(900);
+    try{ await ENERGIA.liberarBateria(); await voltarDoAndroid(); }catch(e){}
+    await checarEnergia();
+  }
+  if(ENER.notif) agendarAlarmes(false);
+  /* início automático não tem pergunta do Android: a pessoa liga na configuração da marca */
+  if(ENER.notif && marcaForte() && !AP.autoIni){ await abrirEnergia(); return true; }
+  return true;
+}
 /* volta das configurações do Android: confere de novo */
 document.addEventListener('visibilitychange',()=>{ if(document.hidden||!nativo) return; if(VOZ_PT===false) carregarVozes(); checarEnergia().then(()=>{ if(!$('#energia').hidden) renderEnergia(); else if(atual==='hoje'||(atual==='ajustes'&&!ajSub)) render(); }); eloRodada(); });
 setTimeout(()=>checarEnergia().then(()=>{ if(atual==='hoje' && !bvAberto) renderHoje(); }),800);
@@ -1409,10 +1454,10 @@ function trecho(t,max){ max=max||420; const p=String(t||'').split(/\n{2,}/)[0].r
   if(p.length<=max) return p; const c=p.slice(0,max); const k=c.lastIndexOf('. '); return (k>80?c.slice(0,k+1):c)+' (…)'; }
 const paras = t => esc(t).split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
 let bulaAberta=null;
-async function abrirBula(registro,nome,url){
+async function abrirBula(registro,nome,url,perg){
   const el=$('#bulaV'); el.hidden=false; el.scrollTop=0;
   $('#bulaIn').innerHTML='<p class="msg info">Abrindo a bula...</p>';
-  const b=await bulaDe(registro); bulaAberta={registro,nome,url};
+  const b=await bulaDe(registro); bulaAberta={registro,nome,url,perg:perg||''};
   renderBula(b);
   // confere versão nova (no máximo 1 vez a cada 30 dias)
   if(b && httpPlug() && navigator.onLine && (!b.conferida || (Date.now()-new Date(b.conferida).getTime())>30*864e5)){
@@ -1424,7 +1469,7 @@ async function abrirBula(registro,nome,url){
   }
 }
 function renderBula(b,estado){
-  const {registro,nome,url}=bulaAberta||{};
+  const {registro,nome,url,perg}=bulaAberta||{}, abrir=perg&&b&&b.secoes[perg]?String(perg):'1';
   let h=`<h2 id="bulaT" tabindex="-1">Bula completa</h2><p class="wz-med"><b>${esc(nome||(b&&b.produto)||'')}</b></p>`;
   if(!b){
     h+= estado==='baixando' ? `<p class="msg info" role="status">Baixando a bula oficial da Anvisa...</p>`
@@ -1437,7 +1482,7 @@ function renderBula(b,estado){
   } else {
     h+=`<p class="small muted">${esc(b.fonte||'Bula do paciente oficial')}, versão de ${esc(fmtData(b.data))}. Guardada neste celular: funciona sem internet.</p>
       <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><div><b>A dose é sempre a da receita do médico.</b><br><span class="small">Em caso de dúvida, o farmacêutico pode ajudar. Toque numa pergunta para abrir.</span></div></div>
-      ${Object.keys(PERG_BULA).filter(n=>b.secoes[n]).map(n=>`<details class="bsec" ${n==='1'?'open':''}><summary><span class="bn">${n}</span><span>${PERG_BULA[n]}</span></summary>
+      ${Object.keys(PERG_BULA).filter(n=>b.secoes[n]).map(n=>`<details class="bsec" id="bsec${n}" ${n===abrir?'open':''}><summary><span class="bn">${n}</span><span>${PERG_BULA[n]}</span></summary>
         <div class="btxt">${paras(b.secoes[n])}</div><button class="btn btn-ghost btn-s" type="button" data-ouvirsec="${n}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir esta parte</button></details>`).join('')}
       ${httpPlug()?`<button class="btn btn-ghost" id="bAtuBula" type="button">Ver se tem versão nova</button>`:''}`;
   }
@@ -1453,8 +1498,10 @@ function renderBula(b,estado){
     catch(e){ toast('Não consegui conferir agora. Tente com internet.'); ba.textContent='Ver se tem versão nova'; } };
   $('#bFecharBula').onclick=()=>{ $('#bulaV').hidden=true; pararLongo(); bulaAberta=null; };
   const t=$('#bulaT'); if(t) t.focus();
+  /* aberta numa pergunta (ex.: 3, quando não devo usar): rola até ela */
+  if(abrir!=='1'){ const sec=$('#bsec'+abrir); if(sec) sec.scrollIntoView({block:'start',behavior:semMovimento()?'auto':'smooth'}); }
 }
-document.addEventListener('click',e=>{ const b=e.target.closest('[data-bula]'); if(b){ e.preventDefault(); abrirBula(b.dataset.bula,b.dataset.nome||'',b.dataset.url||''); } });
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-bula]'); if(b){ e.preventDefault(); abrirBula(b.dataset.bula,b.dataset.nome||'',b.dataset.url||'',b.dataset.perg||''); } });
 
 /* ---------- consentimento para dados de saúde (LGPD, art. 11, I: específico e destacado) ---------- */
 const CONSENT_VERSAO='2026-10b';
@@ -1497,7 +1544,7 @@ function renderConsentimento(erro){
   /* tocar em "Concordo" é o aceite (ato claro da pessoa, LGPD art. 8º e 11, I) */
   $('#consOk').onclick=()=>{
     const tAnt=S.consentimento&&S.consentimento.versao===CONSENT_VERSAO?S.consentimento.tipo:'';
-    S.consentimento={versao:CONSENT_VERSAO,em:new Date().toISOString(),tipo:(tAnt&&tAnt!==(fam?'familia':'pessoa'))?'ambos':(fam?'familia':'pessoa'),via:consVia||'toque'}; consVia=''; save(); $('#consent').hidden=true; const f=consDepois; consDepois=null; if(f) f(); };
+    S.consentimento={versao:CONSENT_VERSAO,em:new Date().toISOString(),tipo:(tAnt&&tAnt!==(fam?'familia':'pessoa'))?'ambos':(fam?'familia':'pessoa'),via:consVia||'toque'}; consVia=''; save(); $('#consent').hidden=true; const f=consDepois; consDepois=null; if(f) f(); permissoesDoAlarme(); };
   $('#consNao').onclick=()=>{ $('#consent').hidden=true; calar();
     if(consModo==='existente'){ apagarTudo('Seus dados foram apagados deste celular.'); }
     else toast('Tudo bem. Sem a sua permissão, o app não guarda dados de saúde. Você pode ver a demonstração.'); };
@@ -1522,11 +1569,20 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-fala]'); 
 function calar(){ if(TTS) TTS.stop().catch(()=>{}); else if('speechSynthesis' in window) speechSynthesis.cancel(); }
 let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,Math.min(9000,2600+String(t).length*45)); }
 
+/* ---------- fim do tratamento: "por 7 dias" na receita. a.ate = último dia (AAAA-MM-DD); sem a.ate = uso contínuo ---------- */
+const noTrat = (a,dia) => !a.ate || (dia||dayKey(new Date())) <= a.ate;
+const terminou = a => !!a.ate && dayKey(new Date()) > a.ate;
+const ultimoDia = a => !!a.ate && dayKey(new Date()) === a.ate;
+const ateDe = n => { const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+n-1); return dayKey(d); };
+const diasAte = k => { const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return 0; const d=new Date(+m[1],+m[2]-1,+m[3],12), hj=new Date(); hj.setHours(12,0,0,0); return Math.round((d-hj)/864e5)+1; };
+const diasDe = t => { const m=String(t||'').match(/(\d+)\s*(dia|semana|m[eê]s)/i); if(!m) return 0; const n=+m[1], u=m[2][0].toLowerCase(); return u==='s'?n*7:u==='m'?n*30:n; };
+const dmAte = k => String(k||'').slice(8,10)+'/'+String(k||'').slice(5,7);
+const MAX_DIAS_PRAZO=30; /* até 30 dias: um alarme por dia, que para sozinho. Mais longo: alarme diário, ajustado quando o app abre */
 /* ---------- doses do dia ---------- */
 function dosesHoje(est){
   est=est||S;
   const k=dayKey(new Date()), agora=toMin(nowHM()), out=[];
-  est.agenda.forEach(a=>a.horarios.forEach(h=>{
+  est.agenda.filter(a=>noTrat(a,k)).forEach(a=>a.horarios.forEach(h=>{
     const reg=est.log.find(l=>l.dia===k&&l.ag===a.id&&l.h===h);
     const diff=agora-toMin(h);
     let st = reg? 'ok' : diff>30? 'late' : diff>=-60? 'next' : 'later';
@@ -1675,10 +1731,11 @@ const unEst = a => /c[áa]psul/i.test(a.como||'') ? ['cápsula','cápsulas'] : [
 function restamTxt(a){ const n=Math.max(0,Math.floor((a.est&&a.est.n)||0)), u=unEst(a); return n+' '+(n===1?u[0]:u[1]); }
 /* o dia em que não vai ter remédio para uma dose, seguindo os horários (as doses de hoje já marcadas já foram descontadas) */
 function faltaEm(a){
-  if(!a || !a.est || !contavel(a)) return null;
+  if(!a || !a.est || !contavel(a) || terminou(a)) return null;
   let n=a.est.n; const hoje=new Date(), k=dayKey(hoje);
   const feitas=new Set(S.log.filter(l=>l.dia===k&&l.ag===a.id).map(l=>l.h)), hs=a.horarios.slice().sort();
   for(let dia=0; dia<400; dia++) for(const h of hs){
+    if(a.ate && dia>0 && diasAte(a.ate)<=dia) return {dias:400,data:null}; /* o tratamento termina antes de acabar a caixa */
     if(dia===0 && feitas.has(h)) continue;
     const q=qtdDose(a,h);
     if(n+1e-9<q){ const d=new Date(hoje); d.setHours(12,0,0,0); d.setDate(d.getDate()+dia); return {dias:dia,data:d,h}; }
@@ -1689,6 +1746,38 @@ const dataCurta = d => `${SEM_AB[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}`
 function quandoAcaba(f){ if(!f||!f.data) return ''; if(f.dias<=0) return 'acaba hoje'; if(f.dias===1) return 'acaba amanhã'; return `acaba em ${f.dias} dias (${dataCurta(f.data)})`; }
 const baixo = f => !!(f && f.data && f.dias<=EST_AVISO);
 function remediosAcabando(){ return S.agenda.map(a=>({a,f:faltaEm(a)})).filter(x=>baixo(x.f)); }
+/* prazo da receita, em Meus remédios e na lista da família */
+function prazoLinha(a,podeMudar){
+  if(!a.ate) return '';
+  if(terminou(a)) return `<div class="prazo-l fim"><p style="margin:0"><b>Terminou em ${dmAte(a.ate)}</b>, como estava na receita. O alarme dele parou.</p>
+    ${podeMudar?`<div class="btn-row"><button class="btn btn-ghost btn-s" type="button" data-fimtirar="${esc(a.id)}">Tirar da lista</button><button class="btn btn-pill btn-s" type="button" data-fimcont="${esc(a.id)}">Continuar tomando</button></div>`:''}</div>`;
+  if(ultimoDia(a)) return `<div class="prazo-l ult"><p style="margin:0"><b>Hoje é o último dia</b>, como está na receita. Amanhã o alarme dele não toca mais.</p></div>`;
+  const f=diasAte(a.ate);
+  return `<div class="prazo-l"><p style="margin:0"><b>Até ${dmAte(a.ate)}</b> · ${f===2?'falta 1 dia depois de hoje':'faltam '+(f-1)+' dias depois de hoje'}, como está na receita.</p></div>`;
+}
+/* na tela de hoje: último dia e tratamento que terminou */
+function prazoCards(){
+  const ult=S.agenda.filter(ultimoDia), fins=S.agenda.filter(a=>terminou(a) && !(S.fimVisto&&S.fimVisto[a.id]===a.ate)), gest=gestorAtivo();
+  let h='';
+  if(ult.length) h+=`<section class="al-card info" role="status"><h3>Último dia ${ult.length>1?'destes remédios':'deste remédio'}</h3>
+    ${ult.map(a=>`<p style="margin:0">Hoje é o último dia de <b>${esc(med(a).nome)} ${esc(a.dose)}</b>, como está na receita.</p>`).join('')}
+    <p class="small muted" style="margin:0">Amanhã o alarme ${ult.length>1?'deles':'dele'} não toca mais.</p></section>`;
+  fins.forEach(a=>{ h+=`<section class="al-card" role="status"><h3>Terminou o ${esc(med(a).apelido)}</h3>
+    <p style="margin:0"><b>${esc(med(a).nome)} ${esc(a.dose)}</b>: era até ${dmAte(a.ate)}, como estava na receita. O alarme dele parou.</p>
+    ${gest?`<p class="small" style="margin:0">Se o médico mandou continuar, fale com ${esc(nomeGestor())}.</p><button class="btn btn-pill btn-s" type="button" data-fimok="${esc(a.id)}">Entendi</button>`
+      :`<p class="small muted" style="margin:0">Se o médico mandou continuar, toque em continuar tomando.</p>
+      <div class="btn-row"><button class="btn btn-ghost btn-s" type="button" data-fimtirar="${esc(a.id)}">Tirar da lista</button><button class="btn btn-pill btn-s" type="button" data-fimcont="${esc(a.id)}">Continuar tomando</button></div>`}</section>`; });
+  return h;
+}
+function ligarPrazo(sel){
+  const ach = id => S.agenda.find(a=>a.id===id);
+  document.querySelectorAll(sel+' [data-fimtirar]').forEach(b=>b.onclick=()=>{ const a=ach(b.dataset.fimtirar); if(!a) return;
+    S.agenda=S.agenda.filter(x=>x!==a); save(); agendarAlarmes(false); render(); const t=`Pronto. Tirei ${med(a).nome} da lista.`; toast(t); falar(t); });
+  document.querySelectorAll(sel+' [data-fimcont]').forEach(b=>b.onclick=()=>{ const a=ach(b.dataset.fimcont); if(!a) return;
+    a.ate=''; save(); agendarAlarmes(false); render(); const t=`Pronto. O alarme de ${med(a).nome} continua todo dia, sem data para parar.`; toast(t); falar(t); });
+  document.querySelectorAll(sel+' [data-fimok]').forEach(b=>b.onclick=()=>{ const a=ach(b.dataset.fimok); if(!a) return;
+    S.fimVisto=S.fimVisto||{}; S.fimVisto[a.id]=a.ate; save(); render(); });
+}
 function mudarEstoque(a,n){
   n=Math.max(0,Math.round(n*4)/4);
   const antes=a.est?a.est.n:null;
@@ -1790,6 +1879,7 @@ function renderHoje(){
     ${acab.length?`<section class="al-card" role="status" id="acabCard"><h3>${acab.length>1?'Remédios acabando':`O ${esc(med(acab[0].a).apelido)} está acabando`}</h3>
        ${acab.map(x=>`<p style="margin:0"><b>${esc(med(x.a).nome)} ${esc(x.a.dose)}</b>: ${esc(quandoAcaba(x.f))}. Restam uns ${esc(restamTxt(x.a))}.</p>`).join('')}
        <button class="btn btn-pill" type="button" id="bAcabGratis">${IC.gratis}Onde tem de graça</button><button class="btn btn-ghost" type="button" id="bAcabComprei">Comprei mais</button></section>`:''}
+    ${prazoCards()}
     ${famPergunta()?`<section class="al-card info" id="famCard"><h3>Quem da família recebe os avisos?</h3><p style="margin:0">Assim, no socorro, o app sabe para quem ligar.</p>
        <div class="btn-row"><button class="btn btn-pill btn-s" type="button" id="bFamPor">${CHECK}Colocar agora</button><button class="btn btn-ghost btn-s" type="button" id="bFamNao">Agora não</button></div></section>`:''}
     ${depois.length?`<section class="depois"><h3>${ativo?'Depois':'Próximo'}</h3>${depois.map((x,n)=>`<div class="dep-l">${ICO[x.m.k]}<span><b>${esc(x.m.nome)}</b><span>${x.h}${n===0&&!ativo&&faltaMin(x.h)>0?' · daqui a '+emQuanto(faltaMin(x.h)):''} · ${x.ds.length} ${x.ds.length>1?'remédios':'remédio'}</span></span></div>`).join('')}</section>`:''}
@@ -1805,6 +1895,7 @@ function renderHoje(){
   const bed=$('#bEnerDepois'); if(bed) bed.onclick=()=>{ S.energiaAdiar=dayKey(new Date()); save(); renderHoje(); };
   const bag=$('#bAcabGratis'); if(bag) bag.onclick=()=>{ gratisAba=abaGratisPara(acab.map(x=>x.a)); go('gratis'); };
   const bac=$('#bAcabComprei'); if(bac) bac.onclick=()=>{ abrirEstoque(acab[0].a); };
+  ligarPrazo('#view-hoje');
   const bmo=$('#bMudOuvir'); if(bmo) bmo.onclick=()=>ouvir(mudNova.txt);
   const bmk=$('#bMudOk'); if(bmk) bmk.onclick=()=>{ S.mudVisto=mudNova.ts; save(); renderHoje(); };
   const bfp=$('#bFamPor'); if(bfp) bfp.onclick=()=>{ go('ajustes'); abrirAj('dados'); const f=$('#cfgFam'); if(f) setTimeout(()=>{ f.scrollIntoView({block:'center'}); f.focus(); },200); falar('Diga ou escreva o nome de quem da família recebe os avisos, e o telefone. Depois, toque em salvar.'); };
@@ -2119,7 +2210,8 @@ function abrirWizard(it,opc){ opc=opc||{};
   if(wizEditar||opc.prefill){ const ed=wizEditar||opc.prefill; addSel.mom=[...new Set(Object.values(ed.mom||{}))]; horasDoMom();
     const u=unidade(it.apres); (ed.horarios||[]).forEach(h=>{ const q=String((ed.qtd&&ed.qtd[h])||ed.como||'').trim();
       if(!addSel.h.includes(h)) addSel.outro=h;
-      addSel.q[h] = q==='1 '+u[0]?'1' : q==='2 '+u[1]?'2' : q==='meio '+u[0]?'meio' : 'outra'; if(addSel.q[h]==='outra') addSel.outroQ[h]=q; }); }
+      addSel.q[h] = q==='1 '+u[0]?'1' : q==='2 '+u[1]?'2' : q==='meio '+u[0]?'meio' : 'outra'; if(addSel.q[h]==='outra') addSel.outroQ[h]=q; });
+    if(ed.ate && !terminou(ed)){ addSel.ate=ed.ate; addSel.prazoAb=true; const r=diasAte(ed.ate); if(!PRAZOS.includes(r)){ addSel.prazoOutro=true; addSel.prazoN=r; } } }
   const w=$('#wiz'); w.hidden=false; renderWizard();
   if(AP.vozGuia && vozDisponivel()){ vozSeq++; falarE('Pegue a receita do médico. São 3 perguntas.').then(wizVoz); }
   else falar('Pegue a receita do médico. São 3 perguntas. '+PERGUNTAS[0]+' Toque no que está na receita e depois no botão azul, com o sinal de certo, continuar. Ou toque no botão azul, responder falando.'); }
@@ -2133,6 +2225,17 @@ function erroPasso(it){
   if(p===3 && totalSel(it).alertas.length && !(addSel.conferi&&addSel.ciente)) return 'Leia o aviso e toque em “Conferi: é isso mesmo que está na receita”.';
   if(p===3 && !addSel.conferi) return 'Toque em "Conferi com a receita do médico".';
   return '';
+}
+/* pergunta 3: por quanto tempo (só se a receita tiver prazo, como "por 7 dias"; o normal é uso contínuo) */
+const PRAZOS=[7,10,14,30];
+function prazoWizard(){
+  if(!addSel.prazoAb && !addSel.ate) return `<button type="button" class="linkbtn lk-azul" id="bPrazo">A receita diz “por 7 dias” ou outro prazo? Marcar</button>`;
+  const on = k => k==='0' ? !addSel.ate && !addSel.prazoOutro : k==='outro' ? !!addSel.prazoOutro : !addSel.prazoOutro && addSel.ate===ateDe(+k);
+  const ops=[['0','Sempre','uso contínuo']].concat(PRAZOS.map(n=>[String(n),n+' dias',''])).concat([['outro','Outro','nº de dias']]);
+  return `<div class="prazo-wz"><p style="margin:0"><b>Por quanto tempo?</b> <span class="small muted">Copie da receita.</span></p>
+    <div class="opts">${ops.map(([k,b,sm])=>`<button type="button" class="opt" data-prazo="${k}" aria-pressed="${on(k)}"><b>${esc(b)}</b>${sm?`<small>${esc(sm)}</small>`:''}</button>`).join('')}</div>
+    ${addSel.prazoOutro?`<label class="small" for="prazoN"><b>Quantos dias, contando hoje?</b></label><input class="bv-in" id="prazoN" type="number" inputmode="numeric" min="1" max="365" value="${addSel.prazoN||''}" placeholder="Ex.: 5">`:''}
+    <p class="small" style="margin:0" role="status">${addSel.ate?`Último dia: <b>${dmAte(addSel.ate)}</b>. Depois disso, o alarme dele para sozinho.`:'O alarme toca todo dia, sem data para parar.'}</p></div>`;
 }
 /* pergunta 3: quantos tem na caixa (já vem do registro da Anvisa quando a caixa diz "com 30") */
 const contaWizard = u => /comprimido|cápsula/.test(u[0]) && !wizDestino;
@@ -2173,6 +2276,7 @@ function renderWizard(erro){
     ${(()=>{ /* uma confirmação só (teste com usuários: duas caixinhas seguidas confundiam). Com aviso, ela vale também para o aviso. */
       const on=t.alertas.length ? (addSel.conferi&&addSel.ciente) : addSel.conferi;
       return `<button type="button" class="conferi" id="bConferi" aria-pressed="${on}"><span class="caixa" aria-hidden="true">${on?'✓':''}</span>${t.alertas.length?'Conferi: é isso mesmo que está na receita':'Conferi com a receita do médico'}</button>`; })()}
+    ${prazoWizard()}
     ${estWizard(it,u)}
     <div class="foto-op">${addSel.foto?`<img class="foto-g" src="${addSel.foto}" alt="Foto da caixa">`:''}
       <button type="button" class="linkbtn" id="bFotoAg">${CAM_SVG}${addSel.foto?'Tirar outra foto da caixa':'Tirar foto da caixa (se quiser)'}</button></div>`;
@@ -2200,6 +2304,14 @@ function renderWizard(erro){
   document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ x.oninput=e=>{ addSel.outroQ[x.dataset.qo]=e.target.value; }; });
   const bf=$('#bConferi'); if(bf) bf.onclick=()=>{ const comAviso=totalSel(it).alertas.length>0, on=comAviso?(addSel.conferi&&addSel.ciente):addSel.conferi;
     addSel.conferi=!on; addSel.ciente=comAviso?!on:addSel.ciente; redesenha(); };
+  const bpz=$('#bPrazo'); if(bpz) bpz.onclick=()=>{ addSel.prazoAb=true; redesenha(); falar('Por quanto tempo? Copie da receita.'); };
+  document.querySelectorAll('#wiz [data-prazo]').forEach(x=>x.onclick=()=>{ const k=x.dataset.prazo;
+    addSel.prazoOutro = k==='outro';
+    if(k==='0') addSel.ate=''; else if(k!=='outro') addSel.ate=ateDe(+k); else addSel.ate=addSel.prazoN?ateDe(addSel.prazoN):'';
+    redesenha(); falar(k==='0'?'Sempre. O alarme toca todo dia.':k==='outro'?'Escreva quantos dias.':`${k} dias. O último dia é ${dmAte(addSel.ate).replace('/',' do ')}.`);
+    if(k==='outro'){ const n=$('#prazoN'); if(n) n.focus(); } });
+  const pzn=$('#prazoN'); if(pzn) pzn.oninput=e=>{ const n=Math.round(+e.target.value); addSel.prazoN=n>0&&n<=365?n:0; addSel.ate=addSel.prazoN?ateDe(addSel.prazoN):'';
+    const st=document.querySelector('#wiz .prazo-wz [role=status]'); if(st) st.innerHTML=addSel.ate?`Último dia: <b>${dmAte(addSel.ate)}</b>. Depois disso, o alarme dele para sozinho.`:'O alarme toca todo dia, sem data para parar.'; };
   const bew=$('#bEstWz'); if(bew) bew.onclick=()=>{ addSel.estAb=true; redesenha(); falar(`Quantos ${u[1]} tem agora? Toque em mais ou menos.`); };
   document.querySelectorAll('#wiz [data-westd]').forEach(x=>x.onclick=()=>{ addSel.estN=Math.max(0,(addSel.estN||0)+(+x.dataset.westd)); redesenha(); falar(fmtNum(addSel.estN)+' '+(addSel.estN===1?u[0]:u[1])); });
   const bfo=$('#bFotoAg'); if(bfo) bfo.onclick=()=>tirarFoto(f=>{ addSel.foto=f; redesenha(); });
@@ -2221,13 +2333,13 @@ function salvarWizard(it){
   const i=it.info;
   if(wizDestino){ const f=wizDestino, ed=wizEditar;
     const item={id:ed?ed.id:'g'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,cor:INFO[it.principio]?INFO[it.principio].cor:(i.cor||GENERICO_COR),
-      dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto||'',registro:it.registro||'',receita:true,mgDia:tot.mg,acimaBula:tot.acima};
+      dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto||'',registro:it.registro||'',receita:true,mgDia:tot.mg,acimaBula:tot.acima,ate:addSel.ate||''};
     $('#wiz').hidden=true; addSel=null; resultado=null; wizDestino=null; wizEditar=null; gestorAlvo=null;
     enviarAgenda(f,ed?'edit':'add',item,quieto); if(quieto){ rxDepoisCorrigir(); return; } acompTab='remedios'; go('acomp'); return; }
   S.agenda.push({id:'a'+Date.now(),chave:chaveIt(it),principio:it.principio||'',nome:i.nome,apelido:i.apelido,
     cor: INFO[it.principio] ? INFO[it.principio].cor : novaCor(),
     serve:i.serve,cuidado:i.cuidado,dose:it.dose||'',como,qtd,mom,horarios:hs,produto:it.produto,registro:it.registro||'',receita:true,foto:addSel.foto||'',
-    mgDia:tot.mg, acimaBula:tot.acima, cxQ:+it.qtd||null});
+    mgDia:tot.mg, acimaBula:tot.acima, cxQ:+it.qtd||null, ate:addSel.ate||''});
   const novo=S.agenda[S.agenda.length-1];
   if(contaWizard(u) && addSel.estN>0 && contavel(novo)) novo.est={n:addSel.estN,fam:{}};
   save(); agendarAlarmes(true); $('#wiz').hidden=true; addSel=null; resultado=null;
@@ -2376,6 +2488,7 @@ function rxSel(x){
   wizDestino=RX.destino; wizEditar=null;
   addSel=novoSel(); addSel.mom=[...new Set(hs.filter(y=>y.k).map(y=>y.k))]; addSel.h=hs.map(y=>y.h); addSel.conferi=true; addSel.ciente=x.ciente;
   hs.forEach(y=>{ addSel.q[y.h]='outra'; addSel.outroQ[y.h]=qtdRotulo(y.q,u); });
+  const nd=x.o&&!x.o.continuo?diasDe(x.o.dias):0; if(nd) addSel.ate=ateDe(nd);
   return {it,u,hs,t:hs.length?totalSel(it):null};
 }
 function rxJa(it){ const ag=RX&&RX.destino&&RX.destino.estado ? stDe(RX.destino.estado).agenda : S.agenda; return it ? ag.find(a=>chaveAg(a)===chaveIt(it)) : null; }
@@ -2452,7 +2565,7 @@ function rxCard(){
      : hs.length?`<div class="total">${hs.map(y=>`<div class="resumo-li"><span class="mom-ico">${ICO[(y.k?MOM[y.k]:momentoDe(y.h)).k]}</span><span><b>${esc(y.k?MOM[y.k].nome:'Às '+y.h)}</b> · ${y.h}<br>${qtdIcones(qtdRotulo(y.q,s.u))}${esc(qtdRotulo(y.q,s.u))}</span></div>`).join('')}
         ${o.intervalo?`<p class="small muted" style="margin-top:6px">De ${o.intervalo} em ${o.intervalo} horas, a partir do café da manhã.</p>`:''}
         ${t&&t.n!=null?`<p style="margin-top:6px"><b>Total do dia: ${esc(qtdRotulo(t.n,s.u))}</b>${t.mg!=null?` = <b>${fmtMg(t.mg)}</b>`:''}</p>`:''}</div>
-        ${o.dias?`<p class="small">A receita diz <b>por ${esc(o.dias)}</b>. O alarme não para sozinho: tire o remédio do app quando terminar.</p>`:''}`:''}
+        ${o.dias&&diasDe(o.dias)&&!o.continuo?`<p class="small">A receita diz <b>por ${esc(o.dias)}</b>. O último dia é ${dmAte(ateDe(diasDe(o.dias)))}; depois disso, o alarme dele para sozinho.</p>`:''}`:''}
     ${t&&t.alertas.length&&!ja&&!o.sos?`<div class="msg warn alerta" role="alert"><b>Atenção:</b> ${t.alertas.map(esc).join(' ')}
       ${t.txt&&t.acima?`<span class="alerta-txt small">Segundo a bula: “${esc(t.txt)}”</span>`:''}
       <span class="alerta-txt">Pode estar certo, se o médico receitou assim. Em caso de dúvida, o farmacêutico ou o médico podem confirmar.</span></div>
@@ -2499,7 +2612,7 @@ function rxSalvar(x){
 function rxCorrigir(x){
   const s=rxSel(x); if(!s) return;
   const mom={}, qtd={}; s.hs.forEach(y=>{ if(y.k) mom[y.h]=y.k; qtd[y.h]=qtdRotulo(y.q,s.u); });
-  RX.corrigindo=x; abrirWizard(s.it,{destino:RX.destino,prefill:{mom,horarios:s.hs.map(y=>y.h),qtd}});
+  RX.corrigindo=x; abrirWizard(s.it,{destino:RX.destino,prefill:{mom,horarios:s.hs.map(y=>y.h),qtd,ate:addSel.ate||''}});
 }
 function rxDepoisCorrigir(){ const x=RX&&RX.corrigindo; if(!x) return; RX.corrigindo=null; x.status='ok'; rxProximo(); }
 /* ler o código de barras da caixa: troca o remédio lido na receita pelo da caixa (mantém horário e quantidade) */
@@ -2590,11 +2703,12 @@ function mostrarResultado(it,code,falarAgora){
       :(ag?`<div class="msg ok">Já está nos seus remédios: ${esc(comoTxt(ag))}.</div>${bulaBtn(2)}${cxNovaBtn(ag,it,code)}`
       :gestorAtivo()?`<button class="opn o-pill" id="bPedirAg" type="button"><span class="n">2</span><span>Pedir para ${esc(nomeGestor())} colocar<small>${esc(nomeGestor())} cuida dos seus remédios</small></span></button>${bulaBtn(3)}`
       :`<button class="opn o-pill" id="bAddAg" type="button"><span class="n">2</span><span>Colocar nos meus remédios<small>3 perguntas, copiando da receita</small></span></button>${bulaBtn(3)}`)}
+    <button class="btn btn-ghost" type="button" id="bNaoUsar" data-bula="${esc(it.registro)}" data-perg="3" data-nome="${esc(it.produto+(it.dose?' '+it.dose:''))}" data-url="${esc(bulaUrl(it))}">${IC.socorro}Quando não devo usar? (bula)</button>
     <details class="mais"><summary>Mais informações</summary><div class="in">
       ${txServe(it)?`<div class="block"><p class="label">Para que serve, segundo a bula</p><p>“${esc(txServe(it))}”</p><p class="fine">${esc(fonteTx(it))}</p></div>`
         :`<div class="block"><p class="label">Para que serve</p><p>A indicação está na bula oficial, no botão “Ler a bula”, e no <b>QR code da caixa</b>.</p></div>`}
       ${txCuid(it)?`<div class="warnbox block"><p class="label">Se esquecer uma dose, segundo a bula</p><p>“${esc(txCuid(it))}”</p></div>`
-        :`<div class="warnbox block"><p class="label">Cuidados</p><p>${i.cuidado?esc(i.cuidado)+' ':''}Os cuidados estão na bula oficial: perguntas 3, 4 e 8.</p></div>`}
+        :`<div class="warnbox block"><p class="label">Cuidados</p><p>${i.cuidado?esc(i.cuidado)+' ':''}Os outros cuidados estão na bula oficial: perguntas 4 e 8.</p></div>`}
       <p class="small">${esc(it.produto)}${it.qtd?' · '+it.qtd+' '+unidade(it.apres)[1]:''}</p>
       <p class="fine">${i.geral?'O tipo de remédio vem da classificação registrada na Anvisa. ':i.bula?'Trechos da bula do paciente ('+esc(i.bula)+'). ':''}${it.hosp?'Uso hospitalar. ':''}Código ${esc(code)} · Registro Anvisa ${esc(it.registro)}</p>
     </div></details>
@@ -2681,6 +2795,7 @@ function renderAgenda(){
     <div class="medlinha">${a.foto?fotoDe(a):dotA(a)}<div style="min-width:0"><h3><button class="fala" data-fala="ag:${a.id}">${esc(med(a).nome)} ${esc(a.dose)}</button></h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
     <ul class="ag-mom">${a.horarios.map(h=>{ const m=momentoDe(h); return `<li>${ICO[m.k]}<span><b>${esc((a.mom&&a.mom[h])?MOM[a.mom[h]].nome:m.nome)} · ${h}</b><span class="q">${qtdIcones(comoEm(a,h))}${esc(comoEm(a,h))}</span></span></li>`; }).join('')}</ul>
     ${a.registro?`<button class="btn btn-ghost btn-s" style="width:100%" type="button" data-bula="${esc(a.registro)}" data-nome="${esc((a.produto||med(a).nome)+(a.dose?' '+a.dose:''))}" data-url="${esc('https://consultas.anvisa.gov.br/#/bulario/q/?numeroRegistro='+reg9(a.registro))}">${IC.bula}Ler a bula</button>`:''}
+    ${prazoLinha(a,!gest)}
     ${estLinha(a)}
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button>${gest?'':`<button class="linkbtn" data-del="${a.id}">${removerId===a.id?'Toque de novo para remover':'Remover'}</button>`}</div></div>`).join('');
   $('#view-agenda').innerHTML=`<div class="stack" style="gap:16px">
@@ -2691,7 +2806,7 @@ function renderAgenda(){
     ${gest&&S.mudancas.length?`<div class="form"><h3>Últimas mudanças</h3>${listaMudancas(S.mudancas,5)}</div>`:''}
     ${S.agenda.length&&!gest?`<p class="hint">Para mudar a hora do café, almoço, jantar e de dormir: Ajustes → Horários da minha rotina.</p>`:''}
   </div>`;
-  ligarEstoque();
+  ligarEstoque(); ligarPrazo('#view-agenda');
   document.querySelectorAll('#view-agenda [data-foto]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.foto); if(a) tirarFoto(f=>{ a.foto=f; save(); renderAgenda(); toast('Pronto. Foto salva.'); }); });
   document.querySelectorAll('#view-agenda [data-del]').forEach(b=>b.onclick=()=>{ const id=b.dataset.del;
     if(removerId!==id){ removerId=id; renderAgenda(); falar('Toque de novo para remover.'); return; }
@@ -2952,7 +3067,7 @@ document.addEventListener('click',e=>{ const a=e.target.closest('a[target="_blan
 function resumoSemana(){
   const hoje=new Date(); let tot=0, ok=0;
   for(let i=6;i>=0;i--){ const d=new Date(hoje); d.setDate(d.getDate()-i); const k=dayKey(d);
-    S.agenda.forEach(a=>a.horarios.forEach(h=>{ if(i===0 && toMin(h)>toMin(nowHM())) return; tot++; if(S.log.some(l=>l.dia===k&&l.ag===a.id&&l.h===h)) ok++; })); }
+    S.agenda.filter(a=>noTrat(a,k)).forEach(a=>a.horarios.forEach(h=>{ if(i===0 && toMin(h)>toMin(nowHM())) return; tot++; if(S.log.some(l=>l.dia===k&&l.ag===a.id&&l.h===h)) ok++; })); }
   return {tot,ok,pct: tot? Math.round(ok/tot*100):0};
 }
 
@@ -3059,7 +3174,7 @@ function renderPostos(){
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
     <h2>Remédio de graça</h2>
     ${abasGratis()}
-    ${qd?`<div class="estq-data${qd.hoje?'':' velha'}" role="status">${IC.relogio}<div>${qd.hoje?`<b>Estoque de ${esc(qd.txt)}</b><span>Lista da Prefeitura do Recife. Muda durante o dia: ligue antes de ir.</span>`
+    ${qd?`<div class="estq-data${qd.hoje?'':' velha'}" role="status">${IC.relogio}<div>${qd.hoje?`<b>Estoque ${qd.consultado?'consultado ':'de '}${esc(qd.txt)}</b><span>Lista da Prefeitura do Recife. Muda durante o dia: ligue antes de ir.</span>`
       :`<b>Lista de ${esc(qd.txt)}, pode ter mudado</b><span>${vivoBuscando?'Conferindo o estoque de hoje na Prefeitura...':'Não consegui o estoque de hoje. Ligue antes de ir.'}</span>`}</div></div>`:''}
     ${todos.length?`
     <button class="btn btn-ghost" id="bOrdenarP" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar os mais perto de mim'}</button>
@@ -3098,7 +3213,7 @@ function renderPostos(){
 /* ---------- alarme ---------- */
 /* som do BULA (três notas que sobem). som='sistema': a notificação do Android já está tocando, a voz espera o som acabar;
    som='app': o próprio app toca o som (teste, pedido da família com o app aberto); sem som: abriu tocando na notificação */
-const SOM_ALARME_MS=4700;
+const SOM_ALARME_MS=4700, MAX_ADIAR=3;
 let somAl=null, alFalaT=null;
 function tocarSomBula(){ try{ if(!somAl) somAl=new Audio('sons/bula_alarme.mp3'); somAl.currentTime=0; const p=somAl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
 function pararSomBula(){ clearTimeout(alFalaT); alFalaT=null; try{ if(somAl){ somAl.pause(); somAl.currentTime=0; } }catch(e){} }
@@ -3108,13 +3223,15 @@ function abrirAlarmeGrupo(h,teste,som){
   if(!pend.length) return;
   const m=momentoDe(h), el=$('#alarm'), um=pend.length===1, i=med(pend[0].a);
   const titulo = um ? 'Hora do '+i.apelido : 'Hora dos remédios '+m.de;
+  const kAd=dayKey(new Date())+'g'+h, adiou=(S.adiou&&S.adiou[kAd])||0;
   el.innerHTML=`<div class="in">
     <svg class="bell" viewBox="0 0 24 24" width="72" height="72" style="margin:0 auto" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
     <span class="hour">${h}</span><h2 id="alarmTitle">${esc(titulo)}</h2>
     ${um && pend[0].a.foto ? fotoDe(pend[0].a,'foto-g') : ''}
     <div class="cx" style="text-align:left"><div class="cx-meds">${pend.map(d=>medLinha(d,false)).join('')}</div><div id="alConf"></div></div>
     <button class="btn btn-ok" id="alTomei">${CHECK}${um?'TOMEI':'Tomei todos'}</button>
-    <div class="btn-row"><button class="btn btn-main" id="alOuvir">${IC.som}Ouvir de novo</button><button class="btn btn-ghost" id="alDepois">Daqui a 10 min</button></div></div>`;
+    <div class="btn-row"><button class="btn btn-main" id="alOuvir">${IC.som}Ouvir de novo</button><button class="btn btn-ghost" id="alDepois">${adiou>=MAX_ADIAR?'Agora não':adiou===MAX_ADIAR-1?'Daqui a 10 min (último)':'Daqui a 10 min'}</button></div>
+    ${adiou>=MAX_ADIAR?`<p class="small" style="margin:0;text-align:center">Já lembrei ${MAX_ADIAR} vezes deste horário. Não vou lembrar de novo.</p>`:''}</div>`;
   el.hidden=false;
   alConf={h,pend,ok:{},msg:null,digitar:false}; desenharConferencia();
   const frase = um
@@ -3127,8 +3244,13 @@ function abrirAlarmeGrupo(h,teste,som){
   else comecar();
   $('#alTomei').onclick=()=>{ pararSomBula(); el.hidden=true; tomarVarios(pend,'alarme'); };
   $('#alOuvir').onclick=()=>{ pararSomBula(); ouvir(frase); };
-  $('#alDepois').onclick=()=>{ pararSomBula(); el.hidden=true; calar(); toast('Vou lembrar de novo em 10 minutos.');
-    if(NOTIF) NOTIF.schedule({notifications:[{id:990000+toMin(h),title:titulo,body:'Lembrete de novo, 10 minutos depois. Toque para marcar.',schedule:{at:new Date(Date.now()+600000),allowWhileIdle:true},channelId:CANAL_ALARME,extra:{h}}]}).catch(()=>setTimeout(()=>abrirAlarmeGrupo(h,false,'app'),600000));
+  $('#alDepois').onclick=()=>{ pararSomBula(); el.hidden=true; calar();
+    /* no máximo 3 adiamentos por horário: depois, "Agora não" fecha sem lembrar de novo (a família já recebe o aviso de atraso) */
+    if(adiou>=MAX_ADIAR){ toast('Tudo bem. Quando tomar, marque na tela inicial.'); falar('Tudo bem. Não vou lembrar de novo deste horário. Quando tomar, marque na tela inicial.'); return; }
+    const hoje=dayKey(new Date()); S.adiou=Object.fromEntries(Object.entries(S.adiou||{}).filter(([k])=>k.startsWith(hoje))); S.adiou[kAd]=adiou+1; save();
+    const ultimo=adiou+1>=MAX_ADIAR;
+    toast(ultimo?'Vou lembrar mais uma vez, em 10 minutos.':'Vou lembrar de novo em 10 minutos.');
+    if(NOTIF) NOTIF.schedule({notifications:[{id:990000+toMin(h),title:titulo,body:ultimo?'Último lembrete deste horário. Toque para marcar.':'Lembrete de novo, 10 minutos depois. Toque para marcar.',schedule:{at:new Date(Date.now()+600000),allowWhileIdle:true},channelId:CANAL_ALARME,extra:{h}}]}).catch(()=>setTimeout(()=>abrirAlarmeGrupo(h,false,'app'),600000));
     else setTimeout(()=>abrirAlarmeGrupo(h,false,'app'),600000); };
   $('#alTomei').focus();
 }
@@ -3507,6 +3629,7 @@ function montarEstado(){
   const desde=dayKey(new Date(Date.now()-7*864e5));
   return {de:'idoso',t:'estado',v:1,n:S.pessoa||'',ts:Date.now(),rot:S.rotina||null,
     ag:S.agenda.map(a=>{ const x={id:a.id,p:a.principio||'',n:a.nome||'',ap:a.apelido||'',d:a.dose||'',c:a.como||'',q:a.qtd||null,h:a.horarios,m:a.mom||null,cor:a.cor||'',r:a.registro||'',pr:a.produto||'',ch:a.chave||''};
+      if(a.ate) x.at=a.ate;
       /* quanto ainda tem: a família vê "restam uns 12 · acaba em 4 dias" */
       const f=faltaEm(a); if(f) x.es={r:restamTxt(a),dias:f.data?f.dias:null,dt:f.data?dayKey(f.data):''};
       return x; }),
@@ -3852,7 +3975,7 @@ function itemSeguro(x){ const str=v=>String(v==null?'':v).slice(0,120);
   const hs=(Array.isArray(x.horarios)?x.horarios:[]).filter(h=>/^\d{2}:\d{2}$/.test(h)).slice(0,8);
   const qtd={}, mom={}; hs.forEach(h=>{ if(x.qtd&&x.qtd[h]) qtd[h]=str(x.qtd[h]); if(x.mom&&MOM[x.mom[h]]) mom[h]=x.mom[h]; });
   return {id:str(x.id),chave:str(x.chave),principio:INFO[x.principio]?x.principio:'',nome:str(x.nome),apelido:str(x.apelido),cor:/^#[0-9a-f]{6}$/i.test(x.cor)?x.cor:GENERICO_COR,
-    dose:str(x.dose),como:str(x.como),qtd,mom,horarios:hs,produto:str(x.produto),registro:str(x.registro).replace(/\D/g,''),receita:true,mgDia:+x.mgDia||null,acimaBula:!!x.acimaBula}; }
+    dose:str(x.dose),como:str(x.como),qtd,mom,horarios:hs,produto:str(x.produto),registro:str(x.registro).replace(/\D/g,''),receita:true,mgDia:+x.mgDia||null,acimaBula:!!x.acimaBula,ate:/^\d{4}-\d{2}-\d{2}$/.test(x.ate||'')?x.ate:''}; }
 /* no celular do gestor: manda a mudança, criptografada */
 const msgAgenda = (op,item,uid) => { const nome=item.nome||'remédio', dose=item.dose||'';
   return {de:'familia',t:'agenda',op,item,uid,por:S.eu||'Família',ts:Date.now(),conferi:true,
@@ -3920,7 +4043,7 @@ function seguidoAtual(){
   if(acompPrevia) return {id:'previa',nome:S.pessoa||'Dona Lúcia',estado:montarEstado(),ultima:Date.now(),alertas:[],previa:true};
   return S.seguindo.find(f=>f.id===acompSel) || S.seguindo[0] || null;
 }
-function stDe(e){ return {agenda:(e.ag||[]).map(x=>({id:x.id,principio:x.p,nome:x.n,apelido:x.ap,dose:x.d,como:x.c,qtd:x.q,horarios:x.h||[],mom:x.m,cor:x.cor,registro:x.r,produto:x.pr,chave:x.ch,es:x.es&&typeof x.es==='object'?x.es:null})),
+function stDe(e){ return {agenda:(e.ag||[]).map(x=>({id:x.id,principio:x.p,nome:x.n,apelido:x.ap,dose:x.d,como:x.c,qtd:x.q,horarios:x.h||[],mom:x.m,cor:x.cor,registro:x.r,produto:x.pr,chave:x.ch,ate:/^\d{4}-\d{2}-\d{2}$/.test(x.at||'')?x.at:'',es:x.es&&typeof x.es==='object'?x.es:null})),
   log:(e.log||[]).map(l=>({dia:l[0],ag:l[1],h:l[2],em:l[3],ok:true}))}; }
 function faltaDe(es){ if(!es||es.dias==null) return null; const m=String(es.dt||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if(!m) return {dias:es.dias,data:new Date()};
@@ -3980,6 +4103,7 @@ function renderAcomp(){
     if(pend.length) h+=`<div class="vale">${IC.relogio}<div><b>Esperando o celular de ${esc(nome)}</b>${pend.map(p=>`<p class="small" style="margin:4px 0 0">${p.op==='add'?'Colocar':p.op==='edit'?'Mudar':'Tirar'}: ${esc(p.item.nome)} ${esc(p.item.dose)}</p>`).join('')}<p class="small muted" style="margin:4px 0 0">Muda quando ${esc(curto(nome))} abrir o app. Se demorar, eu envio de novo.</p></div></div>`;
     h+=st.agenda.map(a=>`<div class="agenda-item"><div class="medlinha">${dotA(a)}<div style="min-width:0"><h3>${esc(med(a).nome)} ${esc(a.dose)}</h3><p class="muted small">${esc(med(a).apelido)}</p></div></div>
       <ul class="ag-mom">${a.horarios.map(hh=>{ const m=momentoDe(hh); return `<li>${ICO[m.k]}<span><b>${esc((a.mom&&a.mom[hh])?MOM[a.mom[hh]].nome:m.nome)} · ${hh}</b><span class="q">${qtdIcones(comoEm(a,hh))}${esc(comoEm(a,hh))}</span></span></li>`; }).join('')}</ul>
+      ${prazoLinha(a)}
       ${a.es?`<div class="est-l ${baixoDe(a.es)?'baixo':''}"><p style="margin:0"><b>Restam uns ${esc(a.es.r)}</b>${a.es.dias!=null?' · '+esc(acabaDe(a.es)):''}</p></div>`:''}
       ${g?`<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" type="button" data-gmudar="${esc(a.id)}">Mudar horário ou quantidade</button><button class="linkbtn" type="button" data-del="${esc(a.id)}" data-gdel="${esc(a.id)}">${removerId===a.id?'Toque de novo para tirar':'Tirar'}</button></div>`:''}</div>`).join('')
       || `<p class="msg info">Nenhum remédio guardado no celular de ${esc(curto(nome))}.</p>`;
