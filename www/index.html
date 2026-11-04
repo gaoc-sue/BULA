@@ -825,9 +825,38 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--a
 :root[data-calmo="1"] .state{background:var(--sunk);color:var(--fg)}
 :root[data-calmo="1"] .alarm{background:var(--surface);color:var(--fg)}
 :root[data-calmo="1"] .alarm .btn-ghost{border-color:var(--line);color:var(--fg)}
+/* abertura: azul, B branco devagar, depois BULA e a sigla (mesma cor da abertura do Android, sem piscar branco) */
+.abertura{position:fixed;inset:0;z-index:1000;background:#1E4FD0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 28px;transition:opacity .45s ease}
+.abertura.sai{opacity:0;pointer-events:none}
+.abertura .ab-b{width:150px;height:150px;filter:drop-shadow(0 10px 22px rgba(8,22,70,.3));opacity:0;transform:scale(.86);animation:abLogo 1.4s cubic-bezier(.2,.7,.2,1) .15s forwards}
+.abertura .ab-nome{font-weight:700;font-size:64px;letter-spacing:.02em;line-height:1;margin:6px 0 12px;opacity:0;animation:abSobe .9s ease-out 1.1s forwards}
+.abertura .ab-sigla{font-size:21px;line-height:1.3;margin:0;color:rgba(255,255,255,.88);opacity:0;animation:abSobe .9s ease-out 1.6s forwards}
+.abertura .ab-sigla b{color:#fff}
+.abertura .ab-cred{position:absolute;left:0;right:0;bottom:calc(34px + env(safe-area-inset-bottom,0px));margin:0;font-size:15px;font-weight:700;letter-spacing:.02em;opacity:0;animation:abCred .8s ease-out 2s forwards}
+@keyframes abLogo{to{opacity:1;transform:scale(1)}}
+@keyframes abSobe{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes abCred{to{opacity:.92}}
+@media (prefers-reduced-motion:reduce){.abertura *{animation:none!important;opacity:1!important;transform:none!important}}
+:root[data-calmo="1"] .abertura *{animation:none!important;opacity:1!important;transform:none!important}
 </style>
 </head>
 <body>
+<div class="abertura" id="abertura" role="img" aria-label="BULA, Base Unificada de Linguagem Acessível. Squad 4, CESAR School.">
+  <svg class="ab-b" viewBox="0 0 64 64" aria-hidden="true"><g transform="translate(14.36 9.46) scale(0.98)"><path d="M6 0H22C29.5 0 34 4.2 34 10C34 13.4 32.3 16.2 29.6 17.7C33.8 19.3 36 22.8 36 27C36 34.2 30.6 39 23 39H11.5L3.4 45.3C1.9 46.4 0 45.7 0 43.8V6C0 2.7 2.7 0 6 0Z" fill="#FFFFFF"/><rect x="7" y="12.6" width="16.5" height="4.8" rx="2.4" fill="#1E4FD0"/><rect x="7" y="21.2" width="11" height="4.8" rx="2.4" fill="#1E4FD0"/></g></svg>
+  <p class="ab-nome" aria-hidden="true">BULA</p>
+  <p class="ab-sigla" aria-hidden="true"><b>B</b>ase <b>U</b>nificada de<br><b>L</b>inguagem <b>A</b>cessível</p>
+  <p class="ab-cred" aria-hidden="true">Squad 4 · CESAR School</p>
+</div>
+<script>
+/* fecha a abertura em 3 s (1,5 s no modo calmo ou sem animação); um toque pula; o alarme fecha na hora */
+(function(){ var el=document.getElementById('abertura'), fim=false;
+  var calmo=false; try{ calmo=!!(JSON.parse(localStorage.getItem('remedio-falado-aparencia'))||{}).calmo; }catch(e){}
+  if(calmo) document.documentElement.setAttribute('data-calmo','1');
+  var rapido=calmo||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  window.fecharAbertura=function(){ if(fim) return; fim=true; el.classList.add('sai'); el.setAttribute('aria-hidden','true'); setTimeout(function(){ el.remove(); },500); };
+  el.addEventListener('click',window.fecharAbertura);
+  setTimeout(window.fecharAbertura, rapido?1500:3000); })();
+</script>
 
 <div class="wrap" id="app">
   <header class="top" id="topo"></header>
@@ -3218,6 +3247,7 @@ let somAl=null, alFalaT=null;
 function tocarSomBula(){ try{ if(!somAl) somAl=new Audio('sons/bula_alarme.mp3'); somAl.currentTime=0; const p=somAl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
 function pararSomBula(){ clearTimeout(alFalaT); alFalaT=null; try{ if(somAl){ somAl.pause(); somAl.currentTime=0; } }catch(e){} }
 function abrirAlarmeGrupo(h,teste,som){
+  if(window.fecharAbertura) fecharAbertura();
   let pend=dosesHoje().filter(d=>d.h===h && !d.reg);
   if(!pend.length && teste) pend=dosesHoje().filter(d=>d.h===h);
   if(!pend.length) return;
