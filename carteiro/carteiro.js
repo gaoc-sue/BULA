@@ -1,114 +1,97 @@
-/*
- * Carteiro do BULA (Cloudflare Workers).
- *
- * Só faz uma coisa: quando um celular manda uma mensagem para o outro (pelo servidor de passagem, criptografada),
- * ele pede aqui para o outro celular "acordar" na hora. O carteiro manda pelo Firebase Cloud Messaging um aviso
- * SEM CONTEÚDO ({t:"acordar"}). O celular acorda e busca a mensagem criptografada sozinho.
- *
- * O carteiro nunca vê remédio, nome ou horário: só o código de notificação do aparelho (token do Firebase).
- * Não guarda nada e não grava log.
- *
- * Segredo necessário (configurado pela publicação automática): FIREBASE_SA = o JSON da conta de serviço do Firebase.
- */
+name: Publicar o carteiro (notificação instantânea)
 
-const ESCOPO = 'https://www.googleapis.com/auth/firebase.messaging';
-const TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const INTERVALO_MS = 3000; // o mesmo celular não é acordado mais de uma vez a cada 3 segundos
+# Publica o carteiro no Cloudflare Workers, confere se está no ar, grava o endereço em www/carteiro.json
+# e, se o endereço mudou, gera o APK de novo. Passo a passo da configuração: docs/notificacao-instantanea.md
 
-let acesso = null;          // {token, ate}
-const ultimos = new Map();  // token do aparelho -> última vez (memória desta instância, sem gravar)
+on:
+  push:
+    branches: [main]
+    paths: ['carteiro/**', '.github/workflows/carteiro.yml']
+  workflow_dispatch:
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 'no-store',
-};
-const resposta = (obj, status = 200) =>
-  new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS } });
+permissions:
+  contents: write
+  actions: write
 
-function b64url(bytes) {
-  let s = '';
-  const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
-  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-const b64urlTexto = t => b64url(new TextEncoder().encode(t));
+concurrency: carteiro
 
-function pemParaBytes(pem) {
-  const corpo = String(pem).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
-  const bin = atob(corpo);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
 
-export function lerConta(env) {
-  let sa;
-  try { sa = typeof env.FIREBASE_SA === 'string' ? JSON.parse(env.FIREBASE_SA) : env.FIREBASE_SA; } catch (e) { sa = null; }
-  if (!sa || !sa.client_email || !sa.private_key || !sa.project_id) throw new Error('FIREBASE_SA ausente ou incompleto');
-  return sa;
-}
+      - name: Conferir os segredos
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_CONTA: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+        run: |
+          faltam=""
+          [ -n "$CF_TOKEN" ] || faltam="$faltam CLOUDFLARE_API_TOKEN"
+          [ -n "$CF_CONTA" ] || faltam="$faltam CLOUDFLARE_ACCOUNT_ID"
+          [ -n "$FIREBASE_SA" ] || faltam="$faltam FIREBASE_SA"
+          if [ -n "$faltam" ]; then echo "::error::Faltam os segredos:$faltam. Veja docs/notificacao-instantanea.md"; exit 1; fi
+          printf '%s' "$FIREBASE_SA" | python3 -c "import json,sys; j=json.load(sys.stdin); assert j.get('type')=='service_account' and j.get('project_id') and j.get('private_key')" \
+            || { echo "::error::FIREBASE_SA precisa ser o arquivo JSON inteiro da conta de serviço do Firebase."; exit 1; }
 
-/* JWT assinado (RS256) trocado por um token de acesso do Google, guardado até 1 minuto antes de vencer */
-export async function tokenDeAcesso(sa, agora = Date.now(), f = fetch) {
-  if (acesso && acesso.email === sa.client_email && acesso.ate > agora + 60000) return acesso.token;
-  const iat = Math.floor(agora / 1000);
-  const cab = b64urlTexto(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const corpo = b64urlTexto(JSON.stringify({ iss: sa.client_email, scope: ESCOPO, aud: TOKEN_URL, iat, exp: iat + 3600 }));
-  const chave = await crypto.subtle.importKey('pkcs8', pemParaBytes(sa.private_key), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
-  const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, new TextEncoder().encode(cab + '.' + corpo));
-  const jwt = cab + '.' + corpo + '.' + b64url(assinatura);
-  const r = await f(TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + jwt,
-  });
-  if (!r.ok) throw new Error('google token ' + r.status);
-  const j = await r.json();
-  acesso = { token: j.access_token, ate: agora + (j.expires_in || 3600) * 1000, email: sa.client_email };
-  return acesso.token;
-}
+      - name: Publicar no Cloudflare
+        id: pub
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: carteiro
+          command: deploy
 
-export async function enviarAcorda(env, tokenAparelho, f = fetch) {
-  const sa = lerConta(env);
-  const at = await tokenDeAcesso(sa, Date.now(), f);
-  const r = await f(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + at },
-    // só dados, prioridade alta (acorda o celular mesmo economizando bateria) e válido por 10 minutos
-    body: JSON.stringify({ message: { token: tokenAparelho, data: { t: 'acordar' }, android: { priority: 'high', ttl: '600s' } } }),
-  });
-  let detalhe = '';
-  if (!r.ok) { try { const j = await r.json(); detalhe = (j.error && (j.error.status || j.error.message)) || ''; } catch (e) { } }
-  return { ok: r.ok, status: r.status, detalhe };
-}
+      - name: Preparar a chave do Firebase (não vai para o repositório)
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+        run: |
+          python3 -c "import json,os; json.dump({'FIREBASE_SA': os.environ['FIREBASE_SA']}, open('carteiro/segredos.json','w'))"
 
-export default {
-  async fetch(req, env) {
-    const url = new URL(req.url);
-    if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
-    if (req.method === 'GET' && url.pathname === '/saude') {
-      let pronto = true;
-      try { lerConta(env); } catch (e) { pronto = false; }
-      return resposta({ ok: true, firebase: pronto });
-    }
-    if (req.method !== 'POST' || url.pathname !== '/acordar') return resposta({ erro: 'não encontrado' }, 404);
-    if (Number(req.headers.get('content-length') || 0) > 8192) return resposta({ erro: 'grande demais' }, 413);
-    let b;
-    try { b = await req.json(); } catch (e) { return resposta({ erro: 'json' }, 400); }
-    const token = String((b && b.token) || '');
-    if (!/^[A-Za-z0-9_:\-]{20,4096}$/.test(token)) return resposta({ erro: 'token' }, 400);
-    const agora = Date.now();
-    if (agora - (ultimos.get(token) || 0) < INTERVALO_MS) return resposta({ ok: true, agrupado: true });
-    ultimos.set(token, agora);
-    if (ultimos.size > 5000) ultimos.clear();
-    try {
-      const r = await enviarAcorda(env, token);
-      // UNREGISTERED / NOT_FOUND: o app foi desinstalado ou trocou o código; quem enviou pode esquecer este token
-      return resposta({ ok: r.ok, invalido: r.status === 404 || r.detalhe === 'UNREGISTERED' }, r.ok ? 200 : 502);
-    } catch (e) {
-      return resposta({ ok: false, erro: 'firebase' }, 502);
-    }
-  },
-};
+      - name: Guardar a chave do Firebase no carteiro
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: carteiro
+          command: secret bulk segredos.json
+
+      - name: Apagar o arquivo temporário
+        if: always()
+        run: rm -f carteiro/segredos.json
+
+      - name: Conferir se está no ar e gravar o endereço no app
+        env:
+          URL_PUB: ${{ steps.pub.outputs.deployment-url }}
+          SAIDA: ${{ steps.pub.outputs.command-output }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          URL="${URL_PUB:-$(printf '%s' "$SAIDA" | grep -o 'https://[A-Za-z0-9.-]*workers\.dev' | head -1)}"
+          URL="${URL%/}"
+          if [ -z "$URL" ]; then
+            echo "::error::O Cloudflare não devolveu o endereço. Abra Workers e Pages no painel do Cloudflare uma vez e escolha o seu subdomínio workers.dev; depois rode este fluxo de novo."
+            exit 1
+          fi
+          echo "Endereço do carteiro: $URL"
+          ok=""
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS -m 10 "$URL/saude" | python3 -c "import json,sys; assert json.load(sys.stdin)['firebase']"; then ok=1; break; fi
+            sleep 6
+          done
+          [ -n "$ok" ] || { echo "::error::O carteiro não respondeu com a chave do Firebase em $URL/saude"; exit 1; }
+          novo="{\"url\": \"$URL\"}"
+          if [ "$(cat www/carteiro.json 2>/dev/null)" != "$novo" ]; then
+            echo "$novo" > www/carteiro.json
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add www/carteiro.json
+            git commit -m "Endereço do carteiro (notificação instantânea)"
+            git push
+            gh workflow run build-apk.yml --ref main
+            echo "Endereço gravado em www/carteiro.json. O APK novo está sendo gerado."
+          else
+            echo "Endereço já estava certo no app."
+          fi
