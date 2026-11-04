@@ -277,6 +277,7 @@ a.btn{text-decoration:none}
 .selo-fp{display:inline-block;vertical-align:middle;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--ok-soft);color:var(--ok);margin-left:4px}
 .gr-aqui{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
 .gr-i{display:inline-flex;align-items:center;gap:6px}
+.gr-aqui.pago{margin-top:4px}
 .gr-i .dot{width:26px;height:26px;font-size:.8rem}
 .preco-box{display:flex;flex-direction:column;gap:8px;border:2px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface)}
 .preco-box.ok{border-color:var(--ok,#1a7f37)}
@@ -3245,10 +3246,10 @@ const rotaFala = f => f.km<1 ? `A farmácia fica a uns ${Math.max(50,Math.round(
 function renderPerto(){
   if(FARM_TODAS===null){ farmTodasOk().then(()=>{ if(atual==='gratis'&&gratisAba==='perto') renderPerto(); }); }
   const lin=[];
-  if(pertoIt) lin.push({nome:pertoIt.info.nome,dose:pertoIt.dose,g:gratisFP(pertoIt.info.nome||pertoIt.substancia,pertoIt.dose),cx:pertoIt.qtd,preta:/preta/i.test(pertoIt.tarja||'')});
+  if(pertoIt) lin.push({dot:bolinha(pertoIt.info.cor||GENERICO_COR,pertoIt.info.nome),nome:pertoIt.info.nome,dose:pertoIt.dose,g:gratisFP(pertoIt.info.nome||pertoIt.substancia,pertoIt.dose),cx:pertoIt.qtd,preta:/preta/i.test(pertoIt.tarja||'')});
   S.agenda.filter(a=>!terminou(a)).forEach(a=>{ const g=gratisDe(a), posto=noPosto(a.principio,a.dose);
     if(g.st==='gratis'||posto) return; if(pertoIt && chaveAg(a)===chaveIt(pertoIt)) return;
-    lin.push({nome:med(a).nome,dose:a.dose,g}); });
+    lin.push({dot:dotA(a),nome:med(a).nome,dose:a.dose,g}); });
   /* remédios da pessoa que são grátis na Farmácia Popular: viram ícones nas farmácias credenciadas */
   const grat=S.agenda.filter(a=>!terminou(a) && gratisDe(a).st==='gratis');
   const lista = posicao && FARM_TODAS ? FARM_TODAS.filter(f=>f.lat).map(f=>Object.assign({},f,{km:distanciaKm(posicao.latitude,posicao.longitude,f.lat,f.lon)})).sort((a,b)=>a.km-b.km).slice(0,12) : [];
@@ -3268,10 +3269,12 @@ function renderPerto(){
     ${!posicao?`<div class="farm"><p style="margin:0">Para mostrar as farmácias mais perto, o BULA usa a sua localização só neste celular.</p>
         <button class="btn btn-pill" id="bPertoLoc" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>Mostrar farmácias perto de mim</button></div>`
      : !FARM_TODAS ? '<p class="msg info">Carregando as farmácias…</p>'
-     : `${fpPerto&&grat.length&&lin.length?`<section class="al-card info"><h3>Uma ida só</h3><p style="margin:0">Na farmácia da Farmácia Popular a <b>${fmtKm(fpPerto.km)}</b>, você pega <b>${esc(listaFala(grat.map(a=>med(a).nome)))}</b> de graça e pode comprar <b>${esc(listaFala(lin.map(x=>x.nome)))}</b>. Ligue antes e pergunte se tem.</p></section>`:''}
+     : `${fpPerto&&grat.length&&lin.length?`<section class="al-card info"><h3>Uma ida só</h3><p style="margin:0">Na farmácia credenciada da Farmácia Popular${fpPerto.n?' <b>'+esc(fpPerto.n)+'</b>,':''} a <b>${fmtKm(fpPerto.km)}</b>, você pega <b>${esc(listaFala(grat.map(a=>med(a).nome)))}</b> de graça e pode comprar <b>${esc(listaFala(lin.map(x=>x.nome)))}</b>. Ligue antes e pergunte se tem.</p>
+         <a class="btn btn-pill" href="${rotaUrl(fpPerto)}" id="bUmaIda" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>Como chegar</a></section>`:''}
        ${lista.map((f,i)=>`<div class="farm f-perto"><div><h3>${esc(nm(f))}${f.fp?' <span class="selo-fp">Farmácia Popular</span>':''}</h3>
          <p class="muted" style="margin:2px 0 0">${[f.r,f.b].filter(Boolean).map(esc).join(' · ')}${f.r||f.b?' · ':''}<span class="dist">a ${fmtKm(f.km)}</span></p>
-         ${f.fp&&grat.length?`<p class="gr-aqui"><b>Grátis aqui:</b> ${grat.map(a=>`<span class="gr-i">${dotA(a)}${esc(med(a).nome)}</span>`).join('')}</p>`:''}</div>
+         ${f.fp&&grat.length?`<p class="gr-aqui"><b>Grátis aqui:</b> ${grat.map(a=>`<span class="gr-i">${dotA(a)}${esc(med(a).nome)}</span>`).join('')}</p>`:''}
+         ${f.fp&&grat.length&&lin.length?`<p class="gr-aqui pago"><b>Pagando:</b> ${lin.map(x=>`<span class="gr-i">${x.dot}${esc(x.nome)}</span>`).join('')}</p>`:''}</div>
          <div class="btn-row"><a class="btn btn-ghost" href="${rotaUrl(f)}" data-rota="${i}" target="_blank" rel="noopener">Como chegar</a>${f.t?`<a class="btn btn-ghost" href="tel:${esc(f.t)}">Ligar</a>`:`<button class="btn btn-ghost" type="button" data-farmp="${i}">Ouvir</button>`}</div></div>`).join('')}
        <a class="linkbtn" id="bMapaFarm" href="${MAPA_FARM}" target="_blank" rel="noopener">Não achou? Ver todas as farmácias no mapa</a>`}
     <div class="farm"><p class="label">Antes de ir, ligue e pergunte</p><p class="say">“${esc(frase)}”</p>
@@ -3285,6 +3288,7 @@ function renderPerto(){
       const f=FARM_TODAS.filter(x=>x.lat).map(x=>Object.assign({},x,{km:distanciaKm(posicao.latitude,posicao.longitude,x.lat,x.lon)})).sort((a,b)=>a.km-b.km)[0];
       if(f) falar(`A farmácia mais perto fica a ${fmtKm(f.km).replace('km','quilômetros').replace(' m',' metros')}.${f.fp?' É da Farmácia Popular.':''}`);
     }catch(e){ toast('Não consegui sua localização. Toque em ver todas as farmácias no mapa.'); renderPerto(); } };
+  const bu=$('#bUmaIda'); if(bu) bu.addEventListener('click',()=>falar(rotaFala(fpPerto)));
   document.querySelectorAll('#view-gratis [data-rota]').forEach(a=>a.addEventListener('click',()=>{ const f=lista[+a.dataset.rota]; if(f) falar(rotaFala(f)); }));
   document.querySelectorAll('#view-gratis [data-farmp]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.farmp]; ouvir(`${nm(f)}${f.fp?', da Farmácia Popular':''}. ${f.r?'Fica na '+f.r+'. ':''}${rotaFala(f)}`); });
   $('#bFrasePerto').onclick=()=>ouvir(frase);
