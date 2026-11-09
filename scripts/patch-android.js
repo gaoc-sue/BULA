@@ -186,3 +186,13 @@ const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 g = g.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
 fs.writeFileSync(gradlePath, g);
 console.log('Android ajustado: permissões, ícone do app e da notificação, abertura, voz, bateria, cofre, conexão com a família, leitura e compartilhar da receita.');
+
+// download do Gradle: o servidor às vezes demora mais que os 10 s padrão (erro "timeout (10000ms)") → espera até 2 min
+(() => {
+  const wp = path.join(__dirname, '..', 'android', 'gradle', 'wrapper', 'gradle-wrapper.properties');
+  if (!fs.existsSync(wp)) { console.warn('Aviso: não achei gradle-wrapper.properties'); return; }
+  let w = fs.readFileSync(wp, 'utf8');
+  w = /networkTimeout=/.test(w) ? w.replace(/networkTimeout=\d+/, 'networkTimeout=120000') : w.trimEnd() + '\nnetworkTimeout=120000\n';
+  fs.writeFileSync(wp, w);
+  console.log('Gradle: espera de download aumentada para 2 min.');
+})();
