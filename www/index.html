@@ -499,6 +499,21 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--f
 
 /* bula completa */
 .bsec{border:2.5px solid var(--line);border-radius:16px;background:var(--surface);padding:0}
+/* resumo fácil da bula */
+.resumo-b{border:2.5px solid var(--accent);border-radius:16px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:12px}
+.rb-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rb-cab h3{margin:0;font-size:1.3rem}
+.rb-it{border-top:2px solid var(--line);padding-top:10px}
+.rb-it h4{margin:0 0 4px;font-size:1.12rem}
+.rb-it p{margin:0 0 6px;font-size:1.08rem;line-height:1.5}
+.rb-it .linkbtn{min-height:40px;padding:0}
+.bt-oficial{margin:8px 0 0}
+.gl{all:unset;cursor:pointer;text-decoration:underline dotted;text-decoration-thickness:2px;text-underline-offset:3px}
+.gl:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.inter-card{border:2.5px solid var(--warn);background:var(--warn-soft);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.inter-card h3,.inter-card h4{margin:0;color:var(--warn)}
+.inter-card p{margin:0}
+.inter-card q{font-style:italic}
 .bsec summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;min-height:72px;font-weight:700;font-size:1.12rem}
 .bsec summary::-webkit-details-marker{display:none}
 .bsec summary::after{content:"+";font-size:1.6rem;line-height:1;color:var(--accent)}
@@ -1205,13 +1220,18 @@ const KEY='remedio-falado-demo-v1';
 function seed(){
   const hoje=new Date(); const log=[];
   const agenda=[
-    {id:'a1',principio:'losartana',dose:'50 mg',como:'1 comprimido',horarios:['07:00','19:00'],mom:{'07:00':'cafe','19:00':'jantar'}},
-    {id:'a2',principio:'anlodipino',dose:'5 mg',como:'1 comprimido',horarios:['07:00'],mom:{'07:00':'cafe'}},
-    {id:'a3',principio:'metformina',dose:'850 mg',como:'1 comprimido',horarios:['12:00','19:00'],mom:{'12:00':'almoco','19:00':'jantar'}}
+    /* demonstração: todos com a bula dentro do app (funciona sem internet). Paroxetina e tramadol: a bula de um fala do outro (aviso de interação). */
+    {id:'a1',principio:'losartana',dose:'50 mg',como:'1 comprimido',horarios:['07:00','19:00'],mom:{'07:00':'cafe','19:00':'jantar'},registro:'100430911',produto:'Losartana potássica'},
+    {id:'a2',principio:'anlodipino',dose:'5 mg',como:'1 comprimido',horarios:['07:00'],mom:{'07:00':'cafe'},registro:'102350536',produto:'Besilato de anlodipino'},
+    {id:'a3',principio:'metformina',dose:'850 mg',como:'1 comprimido',horarios:['12:00','19:00'],mom:{'12:00':'almoco','19:00':'jantar'},registro:'100890193',produto:'Cloridrato de metformina'},
+    {id:'a4',nome:'Paroxetina',apelido:'remédio para depressão e ansiedade',cor:'#7B4FD6',dose:'20 mg',como:'1 comprimido',horarios:['07:00'],mom:{'07:00':'cafe'},registro:'100431268',produto:'Cloridrato de paroxetina',chave:'demo-paroxetina'},
+    {id:'a5',nome:'Tramadol',apelido:'remédio forte para dor',cor:'#B54708',dose:'50 mg',como:'1 comprimido',horarios:['07:00','19:00'],mom:{'07:00':'cafe','19:00':'jantar'},registro:'186100004',produto:'Cloridrato de tramadol',chave:'demo-tramadol',
+      ate:(()=>{ const d=new Date(hoje); d.setDate(d.getDate()+3); return dayKey(d); })()}
   ];
   for(let i=6;i>=1;i--){
     const d=new Date(hoje); d.setDate(d.getDate()-i); const k=dayKey(d);
     agenda.forEach(a=>a.horarios.forEach(h=>{
+      if(a.id==='a5' && i>2) return;   /* o tramadol começou há 2 dias */
       const miss = (i===4 && h==='19:00') || (i===2 && h==='12:00');
       if(!miss) log.push({dia:k,ag:a.id,h,em:h,ok:true});
     }));
@@ -1538,6 +1558,105 @@ async function baixarBulaOficial(registro){
     fonte:'Bula do paciente oficial (Bulário Eletrônico da Anvisa)',secoes};
   guardarBula(b); return b;
 }
+/* ---------- palavras difíceis da bula ----------
+   No resumo, a palavra difícil é trocada pela simples. No texto oficial, nada muda: a palavra fica sublinhada e um toque explica. */
+const GLOS=[['hipersensibilidade','alergia'],['posologia','como tomar'],['via oral','pela boca'],['hipotensão','pressão baixa'],['hipertensão arterial','pressão alta'],['hipertensão','pressão alta'],
+  ['hipoglicemia','açúcar baixo no sangue'],['hiperglicemia','açúcar alto no sangue'],['cefaleia','dor de cabeça'],['cefaléia','dor de cabeça'],['náuseas','enjoos'],['náusea','enjoo'],['êmese','vômito'],
+  ['prurido','coceira'],['eritema','vermelhidão na pele'],['edema','inchaço'],['dispneia','falta de ar'],['dispnéia','falta de ar'],['taquicardia','coração acelerado'],['bradicardia','coração lento'],
+  ['arritmia','batimento irregular do coração'],['palpitações','batimentos fortes do coração'],['vertigem','tontura'],['constipação intestinal','intestino preso'],['constipação','intestino preso'],['obstipação','intestino preso'],
+  ['flatulência','gases'],['dispepsia','má digestão'],['pirose','azia'],['mialgia','dor nos músculos'],['artralgia','dor nas juntas'],['astenia','fraqueza'],['fadiga','cansaço'],
+  ['urticária','manchas vermelhas que coçam'],['exantema','manchas vermelhas na pele'],['erupção cutânea','manchas na pele'],['cutânea','da pele'],['cutâneas','da pele'],
+  ['insuficiência renal','problema nos rins'],['insuficiência hepática','problema no fígado'],['hepática','do fígado'],['hepático','do fígado'],['renal','dos rins'],
+  ['gestantes','grávidas'],['gestação','gravidez'],['lactação','amamentação'],['lactantes','mulheres que amamentam'],['concomitante','ao mesmo tempo'],['concomitantemente','ao mesmo tempo'],
+  ['contraindicado','não deve ser usado'],['contraindicada','não deve ser usada'],['superdose','dose a mais'],['superdosagem','dose a mais'],['reações adversas','efeitos ruins'],['reação adversa','efeito ruim'],
+  ['efeitos adversos','efeitos ruins'],['efeitos colaterais','efeitos ruins'],['angioedema','inchaço no rosto, lábios ou garganta'],['anafilaxia','alergia grave'],['anafilática','alergia grave'],
+  ['hemorragia','sangramento'],['epistaxe','sangramento pelo nariz'],['síncope','desmaio'],['xerostomia','boca seca'],['poliúria','urinar muito'],['disúria','dor ao urinar'],['hematúria','sangue na urina'],
+  ['fotossensibilidade','pele sensível ao sol'],['pediátrico','de crianças'],['geriátrico','de idosos'],['geriátricos','idosos'],['diurético','remédio que faz urinar'],['diuréticos','remédios que fazem urinar'],
+  ['analgésico','remédio para dor'],['antipirético','remédio para febre'],['sonolência','sono'],['ingestão','uso'],['ingerir','tomar'],['administrar','usar'],['administrado','usado'],['administração','uso'],
+  ['interrupção','parada'],['descontinuação','parada'],['icterícia','pele e olhos amarelados'],['sintomatologia','sintomas']];
+const GLOS_MAP={}; GLOS.forEach(([t,v])=>{ GLOS_MAP[t.toLowerCase()]=v; });
+const GLOS_RE=new RegExp('(?<![A-Za-zÀ-ÿ])('+GLOS.map(g=>g[0]).sort((a,b)=>b.length-a.length).map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?![A-Za-zÀ-ÿ])','gi');
+const casar=(m,v)=>m[0]===m[0].toUpperCase()&&m[0]!==m[0].toLowerCase()?v[0].toUpperCase()+v.slice(1):v;
+function simples(t){ return String(t||'').replace(GLOS_RE,m=>casar(m,GLOS_MAP[m.toLowerCase()]||m))
+  .replace(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ ,]{2,50}?) \(\1\)/gi,'$1'); }   /* "pressão alta (pressão alta)" vira uma vez só */
+/* texto oficial com as palavras difíceis sublinhadas (o texto não muda) */
+const parasGlos = t => esc(t).replace(GLOS_RE,m=>{ const v=GLOS_MAP[m.toLowerCase()]; return v?`<button type="button" class="gl" data-gl="${esc(v)}">${m}</button>`:m; })
+  .split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+/* ---------- resumo fácil: frases da própria bula, escolhidas por tópico, com palavras simples ---------- */
+function frasesDe(t){ return String(t||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+(?=[A-ZÀ-Ý0-9•–-])/).map(f=>f.replace(/^[•–-]\s*/,'').trim()).filter(f=>f.length>12); }
+const corta=(f,max)=>{ f=f.replace(/\s*\((ver|veja)[^)]*\)/gi,''); if(f.length<=max) return f; const c=f.slice(0,max), k=Math.max(c.lastIndexOf(', '),c.lastIndexOf('; '));
+  return (k>max*0.5?c.slice(0,k):c.replace(/\s+\S*$/,''))+'…'; };
+function resumoBula(b){
+  const s=(b&&b.secoes)||{}, R=[];
+  const add=(k,tit,frs)=>{ frs=frs.filter(Boolean); if(frs.length) R.push({k,tit,frs:frs.map(f=>simples(corta(f,230)))}); };
+  add('1','Para que serve',frasesDe(s[1]).slice(0,2));
+  add('3','Não use se',frasesDe(s[3]).slice(0,2));
+  add('4','Cuidados importantes',frasesDe(s[4]).filter(f=>/álcool|bebida alco|dirigir|máquinas|gravidez|grávida|amament|idos[oa]s|exposição ao sol|luz solar|não (interrompa|pare)|suspender|sonolên/i.test(f)).slice(0,3));
+  add('6','Como tomar',frasesDe(s[6]).filter(f=>/com água|copo|aliment|refeiç|jejum|mastig|partir|abrir|engol|inteir|esmag|dissolv/i.test(f)).slice(0,2));
+  add('7','Se esquecer uma dose',frasesDe(s[7]).slice(0,2));
+  const f8=frasesDe(s[8]); let ef=f8.find(f=>/muito comu/i.test(f))||f8.find(f=>/\bcomu(m|ns)\b/i.test(f));
+  if(ef){ const i=ef.indexOf(':'); add('8','Efeitos mais comuns',[i>0&&i<ef.length-8?ef.slice(i+1).trim():ef]); } else add('8','Efeitos que podem acontecer',f8.slice(0,1));
+  add('9','Se tomar demais',frasesDe(s[9]).slice(0,1));
+  if(/0800[\s.-]*722[\s.-]*6001/.test(s[9]||'') && R.length && R[R.length-1].k==='9') R[R.length-1].frs.push('Em caso de intoxicação, ligue 0800 722 6001 (Disque-Intoxicação).');
+  return R;
+}
+/* ---------- a bula de um remédio fala de outro que a pessoa também toma ----------
+   O app não decide nada: mostra a frase da bula e manda conversar com o farmacêutico ou o médico. */
+const normTx = t => String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+/* grupos de remédio citados na bula: [quem é do grupo, expressão no texto (sem acento), nome do grupo para mostrar] */
+const CLASSES=[[/^(tramadol|codeina|morfina|oxicodona|metadona|tapentadol)/,'opioides?(?![a-z])|opiaceos?(?![a-z])','opioides'],
+  [/^(alprazolam|clonazepam|diazepam|lorazepam|bromazepam|midazolam)/,'benzodiazepinicos?','benzodiazepínicos'],
+  [/^(zolpidem|eszopiclona|zopiclona)/,'hipnoticos?','hipnóticos'],
+  [/^(paroxetina|sertralina|fluoxetina|citalopram|escitalopram|fluvoxamina)/,'inibidores seletivos da recaptacao de serotonina|\\bisrs\\b|recaptacao (seletiva )?de serotonina|antidepressivos?(?![a-z])(?! tricicl)(?! inibidores da monoamina)','antidepressivos'],
+  [/^(amitriptilina|nortriptilina|imipramina|clomipramina)/,'antidepressivos? tricicl','antidepressivos tricíclicos'],
+  [/^(mirtazapina|venlafaxina|duloxetina|desvenlafaxina|bupropiona|trazodona)/,'antidepressivos?(?![a-z])(?! tricicl)(?! inibidores da monoamina)','antidepressivos'],
+  [/^(ibuprofeno|diclofenaco|naproxeno|nimesulida|cetoprofeno|meloxicam|piroxicam|celecoxibe|acido acetilsalicilico)/,'anti-inflamatorios? nao esteroid|\\baines?\\b','anti-inflamatórios'],
+  [/^(varfarina|rivaroxabana|apixabana|dabigatrana|edoxabana)/,'anticoagulantes?','anticoagulantes'],
+  [/^(metformina|glibenclamida|gliclazida|glimepirida|insulina|empagliflozina|dapagliflozina|sitagliptina)/,'antidiabeticos?|hipoglicemiantes?','remédios para diabetes'],
+  [/^(hidroclorotiazida|furosemida|espironolactona|clortalidona|indapamida)/,'diureticos?','diuréticos'],
+  [/^(risperidona|quetiapina|olanzapina|haloperidol|aripiprazol)/,'antipsicoticos?','antipsicóticos']];
+/* trecho da frase em volta da palavra encontrada (frases de lista são longas) */
+function janela(f,re,lado){ lado=lado||120; let n='', pos=[];
+  for(let i=0;i<f.length;i++){ const c=normTx(f[i]); for(let k=0;k<c.length;k++){ n+=c[k]; pos.push(i); } }
+  const m=re.exec(n); if(!m || f.length<=lado*2+20) return f;
+  const ini=pos[Math.max(0,m.index-lado)]||0, fim=pos[Math.min(n.length-1,m.index+m[0].length+lado)]||f.length;
+  let t=f.slice(ini,fim+1).trim(); if(ini>0) t='…'+t.replace(/^\S*\s/,''); if(fim<f.length-1) t=t.replace(/\s\S*$/,'')+'…'; return t; }
+function nucleosAg(a){
+  const sub = a.principio ? a.principio : (chaveBula(reg9(a.registro||''))||'').split('|')[0];
+  return [...new Set(nucleos(sub).map(normTx).filter(n=>n.length>=5))];
+}
+async function interacoesDe(lista){
+  const out=[], vistos=new Set();
+  for(const a of lista){
+    if(!a.registro) continue;
+    let b=null; try{ b=await bulaDe(a.registro); }catch(e){} if(!b) continue;
+    const frases=frasesDe([b.secoes[3],b.secoes[4]].filter(Boolean).join(' '));
+    for(const o of lista){ if(o===a) continue;
+      const nucs=nucleosAg(o); if(!nucs.length || nucleosAg(a).some(n=>nucs.includes(n))) continue;
+      /* o nome do remédio ou o grupo dele (o nome vale mais) */
+      const termos=nucs.map(n=>({re:new RegExp('(^|[^a-z])'+n+'([^a-z]|$)'),nome:true}));
+      nucs.forEach(n=>CLASSES.forEach(([quem,expr,grupo])=>{ if(quem.test(n)) termos.push({re:new RegExp('(^|[^a-z])('+expr+')'),grupo}); }));
+      let achou=null;
+      /* frase que diz que é seguro usar junto não é aviso */
+      const seguro=/com seguranca|sem (qualquer |nenhuma )?interac|nao (foi|foram) observad|nao (houve|ha) (evidencia|interac)|nao (alterou|altera|afetou|afeta)|nao interfer/;
+      for(const t of termos){ const f=frases.find(f=>{ const n=normTx(f); return t.re.test(n) && !seguro.test(n); }); if(f){ achou={f:janela(f,t.re),porNome:!!t.nome,grupo:t.grupo||''}; break; } }
+      if(!achou) continue;
+      const par=[a.id,o.id].sort().join('|'); if(vistos.has(par)) continue; vistos.add(par);
+      out.push({a,o,frase:achou.f,grupo:achou.grupo,porNome:achou.porNome});
+    }
+  }
+  return out;
+}
+function cartaoInteracoes(lista,titulo){
+  if(!lista.length) return '';
+  return `<section class="inter-card" role="note"><h3>${esc(titulo||'Vale conversar com o farmacêutico')}</h3>
+    ${lista.map(x=>`<p>${x.porNome?`A bula de <b>${esc(med(x.a).nome)}</b> cita <b>${esc(med(x.o).nome)}</b>, que você também toma:`:`A bula de <b>${esc(med(x.a).nome)}</b> cita ${esc(x.grupo)}. <b>${esc(med(x.o).nome)}</b>, que você também toma, é desse grupo:`} <q>${esc(simples(x.frase))}</q></p>
+      <button class="linkbtn lk-azul" type="button" data-bula="${esc(x.a.registro)}" data-perg="4" data-nome="${esc(med(x.a).nome+(x.a.dose?' '+x.a.dose:''))}" data-url="${esc(bulaUrl({registro:x.a.registro}))}">Ler na bula</button>`).join('')}
+    <p class="small"><b>O BULA não decide nada.</b> Não pare nem mude nenhum remédio por conta própria: leve esta tela ao farmacêutico ou ao médico.</p>
+    <button class="btn btn-ghost btn-s" type="button" data-ouvirinter="1">${IC.som}Ouvir</button></section>`;
+}
+const falaInteracoes = l => l.map(x=>x.porNome?`A bula de ${med(x.a).nome} cita ${med(x.o).nome}, que você também toma.`:`A bula de ${med(x.a).nome} cita ${x.grupo}. ${med(x.o).nome}, que você também toma, é desse grupo.`).join(' ')+' O Bula não decide nada. Converse com o farmacêutico ou o médico antes de mudar qualquer remédio.';
+
 /* ---------- bula lida de um texto qualquer (PDF do QR, página, foto) ---------- */
 const TOP_BULA=[/PARA QUE ESTE MEDICAMENTO/i,/COMO ESTE MEDICAMENTO FUNCIONA/i,/QUANDO N[ÃA]O DEVO USAR/i,/INFORMA[ÇC][ÕO]ES AO PACIENTE/i,/O QUE DEVO SABER ANTES/i,/DIZERES LEGAIS/i,/MALES QUE ESTE MEDICAMENTO/i];
 function pareceBula(linhas){ const t=(linhas||[]).join('\n'); return TOP_BULA.filter(r=>r.test(t)).length>=2; }
@@ -1751,15 +1870,30 @@ function renderBula(b,estado){
       <a class="btn btn-ghost" href="${esc(url||'#')}" target="_blank" rel="noopener">Ver no site da Anvisa</a>`;
   } else {
     h+=`${b.outra?`<p class="msg info" role="note"><b>Bula de outra marca com a mesma substância.</b> A bula da sua caixa pode ter pequenas diferenças. Se quiser a dela, use o QR code da caixa${httpPlug()?' ou baixe abaixo':''}.</p>`:''}<p class="small muted">${esc(b.fonte||'Bula do paciente oficial')}, ${b.data?'versão de '+esc(fmtData(b.data)):'baixada em '+esc(fmtData(b.baixada))}. ${b.registro?'Guardada neste celular: funciona sem internet.':''}</p>
-      <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><div><b>A dose é sempre a da receita do médico.</b><br><span class="small">Em caso de dúvida, o farmacêutico pode ajudar. Toque numa pergunta para abrir.</span></div></div>
+      <div class="receita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg><div><b>A dose é sempre a da receita do médico.</b><br><span class="small">Em caso de dúvida, o farmacêutico pode ajudar.</span></div></div>
+      <div id="rbInter"></div>
+      ${(()=>{ const R=resumoBula(b); return R.length?`<section class="resumo-b" aria-labelledby="rbT"><div class="rb-cab"><h3 id="rbT">Resumo fácil</h3><button class="btn btn-main btn-s" type="button" id="bOuvirRes">${IC.som}Ouvir o resumo</button></div>
+        <p class="small muted" style="margin:0">Frases da própria bula, com palavras mais simples. O texto completo e oficial está logo abaixo.</p>
+        ${R.map(x=>`<div class="rb-it"><h4>${esc(x.tit)}</h4>${x.frs.map(f=>`<p>${esc(f)}</p>`).join('')}<button class="linkbtn lk-azul" type="button" data-rbsec="${x.k}">Ler na bula (pergunta ${x.k})</button></div>`).join('')}</section>`:''; })()}
+      <h3 class="bt-oficial">Bula completa (texto oficial)</h3><p class="small muted" style="margin:0">Toque numa pergunta para abrir. Palavras sublinhadas: toque para ver o que querem dizer.</p>
       ${Object.keys(PERG_BULA).filter(n=>b.secoes[n]).map(n=>`<details class="bsec" id="bsec${n}" ${n===abrir?'open':''}><summary><span class="bn">${n}</span><span>${PERG_BULA[n]}</span></summary>
-        <div class="btxt">${paras(b.secoes[n])}</div><button class="btn btn-ghost btn-s" type="button" data-ouvirsec="${n}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir esta parte</button></details>`).join('')}
+        <div class="btxt">${parasGlos(b.secoes[n])}</div><button class="btn btn-ghost btn-s" type="button" data-ouvirsec="${n}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>Ouvir esta parte</button></details>`).join('')}
       ${b.outra?(httpPlug()?`<button class="btn btn-ghost" id="bBaixarBula" type="button">Baixar a bula desta caixa</button>`:'')+`<button class="btn btn-ghost" id="bQR" type="button">${QR_SVG}Ler o QR code da bula na caixa</button><div id="qrBox" aria-live="polite"></div>`
         :httpPlug()&&!b.site?`<button class="btn btn-ghost" id="bAtuBula" type="button">Ver se tem versão nova</button>`:''}`;
   }
   h+=`<button class="btn btn-ghost" id="bFecharBula" type="button">Fechar</button>`;
   $('#bulaIn').innerHTML=h;
   document.querySelectorAll('#bulaIn [data-ouvirsec]').forEach(x=>x.onclick=()=>{ const n=x.dataset.ouvirsec; ouvirLongo(PERG_BULA[n]+' '+b.secoes[n]); });
+  if(b){
+    const bo=$('#bOuvirRes'); if(bo) bo.onclick=()=>ouvirLongo('Resumo fácil da bula. '+resumoBula(b).map(x=>x.tit+'. '+x.frs.join(' ')).join(' ')+' A dose é sempre a da receita do médico.');
+    document.querySelectorAll('#bulaIn [data-rbsec]').forEach(x=>x.onclick=()=>{ const d=$('#bsec'+x.dataset.rbsec); if(d){ d.open=true; d.scrollIntoView({block:'start',behavior:semMovimento()?'auto':'smooth'}); } });
+    document.querySelectorAll('#bulaIn .gl').forEach(x=>x.onclick=()=>{ const t=`${x.textContent}: quer dizer ${x.dataset.gl}.`; toast(t); falar(t); });
+    /* a bula deste remédio fala de outro que a pessoa toma */
+    const aqui=S.agenda.find(a=>a.registro && reg9(a.registro)===reg9(registro||b.registro||''));
+    if(aqui && S.agenda.length>1) interacoesDe([aqui].concat(S.agenda.filter(a=>a!==aqui))).then(l=>{ l=l.filter(x=>x.a===aqui); const box=$('#rbInter'); if(!box||!l.length||bulaAberta===null) return;
+      box.innerHTML=cartaoInteracoes(l,'Esta bula fala de outro remédio seu'); const bi=box.querySelector('[data-ouvirinter]'); if(bi) bi.onclick=()=>ouvir(falaInteracoes(l));
+      box.querySelectorAll('[data-bula]').forEach(z=>z.onclick=()=>{ const d=$('#bsec4'); if(d){ d.open=true; d.scrollIntoView({block:'start'}); } }); });
+  }
   const bq=$('#bQR'); if(bq) bq.onclick=lerQRBula;
   const bb=$('#bBaixarBula'); if(bb) bb.onclick=async()=>{ renderBula(null,'baixando');
     try{ const nb=await baixarBula(registro,nome); renderBula(nb); toast('Pronto. Bula guardada no celular.'); falar('Pronto. A bula foi guardada no celular.'); }
@@ -2507,7 +2641,7 @@ function abrirWizard(it,opc){ opc=opc||{};
     if(ed.ate && !terminou(ed)){ addSel.ate=ed.ate; addSel.prazoAb=true; const r=diasAte(ed.ate); if(!PRAZOS.includes(r)){ addSel.prazoOutro=true; addSel.prazoN=r; } } }
   /* prazo pela classe do remédio (código de barras): antibiótico já abre "por quantos dias", sem nenhum marcado; uso contínuo nem pergunta */
   addSel.tipoPrazo=tipoPrazo(it);
-  if(addSel.tipoPrazo==='prazo' && !addSel.ate){ addSel.prazoAb=true; addSel.prazoPend=true; }
+  if(addSel.tipoPrazo!=='continuo' && !addSel.ate && !wizEditar){ addSel.prazoAb=true; addSel.prazoPend=true; }
   const w=$('#wiz'); w.hidden=false; renderWizard();
   if(AP.vozGuia && vozDisponivel()){ vozSeq++; falarE('Pegue a receita do médico. São 3 perguntas.').then(wizVoz); }
   else falar('Pegue a receita do médico. São 3 perguntas. '+PERGUNTAS[0]+' Toque no que está na receita e depois no botão azul, com o sinal de certo, continuar. Ou toque no botão azul, responder falando.'); }
@@ -2526,8 +2660,11 @@ function erroPasso(it){
 /* pergunta 3: por quanto tempo (só se a receita tiver prazo, como "por 7 dias"; o normal é uso contínuo) */
 const PRAZOS=[7,10,14,30];
 /* classe do remédio pela lista da Anvisa: 'prazo' (costuma ter dias certos), 'continuo' (pressão, diabetes...) ou '' (depende) */
-const GR_PRAZO=/antibi|antiviral|infec|micose|vermes|parasitas|tuberculose/, GR_CONTINUO=/press[aã]o|cora[cç][aã]o|a[cç][uú]car|insulina|colesterol|tireoide|afinar o sangue|coagula|parkinson|convuls|mente|depress|faz urinar|glaucoma|anticoncepcional|pr[oó]stata|asma|mem[oó]ria|gota|ossos/;
-function tipoPrazo(it){ if(!it) return ''; if(it.principio && INFO[it.principio]) return 'continuo';
+const GR_PRAZO=/antibi|antiviral|infec|micose|vermes|parasitas|tuberculose|dor|tosse|gripe|garganta|diarreia|c[oó]lica|relaxante|piolho/, GR_CONTINUO=/press[aã]o|cora[cç][aã]o|a[cç][uú]car|insulina|colesterol|tireoide|afinar o sangue|coagula|parkinson|convuls|mente|depress|faz urinar|glaucoma|anticoncepcional|pr[oó]stata|asma|mem[oó]ria|gota|ossos/;
+/* "Sempre (uso contínuo)" só vem marcado em remédio que o app sabe que é de uso contínuo.
+   Remédio de prazo (antibiótico, dor, tosse...) e todos os que o app não sabe (calmante, controlado...): pergunta, com nada marcado. */
+function tipoPrazo(it){ if(!it) return '';
+  if(it.principio && INFO[it.principio]) return 'continuo';
   const g=String(it.grupo||(it.info&&it.info.apelido)||''); return GR_PRAZO.test(g)?'prazo':GR_CONTINUO.test(g)?'continuo':''; }
 function prazoWizard(){
   /* uso contínuo: sem pergunta de prazo (feedback: não faz sentido para remédio da pressão) */
@@ -2622,7 +2759,7 @@ function renderWizard(erro){
   const seg=$('#wzSeg'); if(seg) seg.onclick=()=>{ document.querySelectorAll('#wiz [data-qo]').forEach(x=>{ addSel.outroQ[x.dataset.qo]=x.value; });
     const e=erroPasso(it); if(e){ renderWizard(e); falar(e); return; }
     addSel.passo++; renderWizard(); $('#wiz').scrollTop=0; const tt=$('#wizT'); if(tt) tt.focus();
-    falar(PERGUNTAS[addSel.passo-1]+'.'+(addSel.passo===3&&addSel.prazoPend?' Este remédio costuma ter prazo. Marque quantos dias a receita diz.':'')); if(addSel.passo===3) avisar(); };
+    falar(PERGUNTAS[addSel.passo-1]+'.'+(addSel.passo===3&&addSel.prazoPend?(addSel.tipoPrazo==='prazo'?' Este remédio costuma ter prazo. Marque quantos dias a receita diz.':' Por quanto tempo? Marque o que a receita diz.'):'')); if(addSel.passo===3) avisar(); };
   const sv=$('#wzSalvar'); if(sv) sv.onclick=()=>{ const e=erroPasso(it); if(e){ renderWizard(e); falar(e); return; } salvarWizard(it); };
   const wf=$('#wzFalar'); if(wf) wf.onclick=wizVoz;
 }
@@ -3122,6 +3259,7 @@ function renderAgenda(){
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><button class="linkbtn" data-foto="${a.id}">${a.foto?'Trocar a foto da caixa':'Tirar foto da caixa'}</button>${gest?'':`<button class="linkbtn" data-del="${a.id}">${removerId===a.id?'Toque de novo para remover':'Remover'}</button>`}</div></div>`).join('');
   $('#view-agenda').innerHTML=`<div class="stack" style="gap:16px">
     <h2>${S.pessoa?'Remédios de '+esc(S.pessoa):'Meus remédios'}</h2>
+    <div id="agInter"></div>
     ${gest?`<div class="cadeado">${IC.fam}<div><b>Quem cuida dos seus remédios é ${esc(nomeGestor())}.</b><p class="small" style="margin:4px 0 0">Para colocar ou mudar um remédio, leia a caixa e toque em “Pedir para ${esc(nomeGestor())} colocar”.</p></div></div>`
       :`<button class="btn btn-pill" data-go="ler" data-scan="1">${IC.ler}Colocar remédio (ler a caixa)</button>`}
     ${itens || '<p class="msg info">Nenhum remédio guardado ainda.</p>'}
@@ -3129,6 +3267,8 @@ function renderAgenda(){
     ${S.agenda.length&&!gest?`<p class="hint">Para mudar a hora do café, almoço, jantar e de dormir: Ajustes → Horários da minha rotina.</p>`:''}
   </div>`;
   ligarEstoque(); ligarPrazo('#view-agenda');
+  if(S.agenda.length>1) interacoesDe(S.agenda).then(l=>{ const box=$('#agInter'); if(!box||atual!=='agenda') return; box.innerHTML=cartaoInteracoes(l);
+    const bi=box.querySelector('[data-ouvirinter]'); if(bi) bi.onclick=()=>ouvir(falaInteracoes(l)); });
   document.querySelectorAll('#view-agenda [data-foto]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.foto); if(a) tirarFoto(f=>{ a.foto=f; save(); renderAgenda(); toast('Pronto. Foto salva.'); }); });
   document.querySelectorAll('#view-agenda [data-del]').forEach(b=>b.onclick=()=>{ const id=b.dataset.del;
     if(removerId!==id){ removerId=id; renderAgenda(); falar('Toque de novo para remover.'); return; }
