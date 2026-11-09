@@ -29,6 +29,15 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Guardar o Gradle entre as execuções (não baixa de novo)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/wrapper/dists
+            ~/.gradle/caches
+          key: gradle-${{ runner.os }}-8.11.1-${{ hashFiles('package-lock.json') }}
+          restore-keys: gradle-${{ runner.os }}-8.11.1-
+
       - name: Estoque dos postos do dia (dados abertos da Prefeitura do Recife)
         continue-on-error: true
         run: |
@@ -53,6 +62,12 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
+          # o servidor do Gradle às vezes falha (timeout, erro 504): tenta baixar até 5 vezes, com pausa
+          for i in 1 2 3 4 5; do
+            ./gradlew --version --no-daemon && break
+            echo "Download do Gradle falhou (tentativa $i de 5). Tentando de novo em 30 s..."
+            sleep 30
+          done
           ./gradlew assembleRelease --no-daemon
 
       - name: Renomear o APK
