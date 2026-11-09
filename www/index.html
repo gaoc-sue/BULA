@@ -1538,6 +1538,42 @@ async function baixarBulaOficial(registro){
     fonte:'Bula do paciente oficial (Bulário Eletrônico da Anvisa)',secoes};
   guardarBula(b); return b;
 }
+/* ---------- bula lida de um texto qualquer (PDF do QR, página, foto) ---------- */
+const TOP_BULA=[/PARA QUE ESTE MEDICAMENTO/i,/COMO ESTE MEDICAMENTO FUNCIONA/i,/QUANDO N[ÃA]O DEVO USAR/i,/INFORMA[ÇC][ÕO]ES AO PACIENTE/i,/O QUE DEVO SABER ANTES/i,/DIZERES LEGAIS/i,/MALES QUE ESTE MEDICAMENTO/i];
+function pareceBula(linhas){ const t=(linhas||[]).join('\n'); return TOP_BULA.filter(r=>r.test(t)).length>=2; }
+/* "Registro M.S. 1.0583.0854.001-1" no fim da bula → registro de 9 números, se existir na lista da Anvisa */
+let REGS_BASE=null;
+function registroNoTexto(linhas){
+  const t=(linhas||[]).join(' '), re=/Reg(?:istro)?\.?\s*(?:no\s+)?(?:M\.?\s?S\.?|MS)\.?\s*(?:n[º°o.]*\s*)?[:\-–]?\s*(1[\d.\s]{8,22})/gi; let m;
+  if(!REGS_BASE){ REGS_BASE=new Set(); ITENS.forEach(x=>{ const r=reg9(x[4]); if(r) REGS_BASE.add(r); }); }
+  while((m=re.exec(t))){ const r=m[1].replace(/\D/g,'').slice(0,9); if(r.length===9 && (REGS_BASE.has(r)||!ITENS.length)) return r; }
+  return '';
+}
+function bulaDeLinhas(linhas,fonte,extra){
+  const secoes=secoesDeLinhas(linhas,''); if(Object.keys(secoes).length<5) return null;
+  return Object.assign({registro:registroNoTexto(linhas),produto:'',data:'',baixada:dayKey(new Date()),fonte:fonte||'Bula do paciente',secoes},extra||{});
+}
+/* abre a bula lida e guarda no remédio certo: o registro escrito nela, o remédio aberto agora ou, se não der, pergunta */
+function abrirBulaLida(b,regAberto,nome){
+  const el=$('#bulaV'); el.hidden=false; el.scrollTop=0;
+  const r=b.registro || reg9(regAberto||'');
+  const mostrar=reg=>{ if(reg){ b.registro=reg; if(!b.produto){ const a=S.agenda.find(x=>reg9(x.registro)===reg); if(a) b.produto=med(a).nome+(a.dose?' '+a.dose:''); } guardarBula(b); }
+    bulaAberta={registro:reg||'',nome:nome||b.produto||'',url:'',perg:''}; renderBula(b);
+    if(reg) toast('Bula guardada no celular. Abre sem internet, sem precisar do QR code.'); };
+  if(r){ mostrar(r); return; }
+  const meus=S.agenda.filter(a=>a.registro);
+  if(!meus.length){ mostrar(''); return; }
+  $('#bulaIn').innerHTML=`<h2 id="bulaT" tabindex="-1">De qual remédio é esta bula?</h2><p>Escolha um dos seus remédios para a bula ficar guardada nele.</p>
+    ${meus.map(a=>`<button class="btn btn-ghost" type="button" data-bulareg="${esc(reg9(a.registro))}">${dotA(a)}${esc(med(a).nome)} ${esc(a.dose||'')}</button>`).join('')}
+    <button class="btn btn-ghost" type="button" data-bulareg="">Só ler agora</button>`;
+  document.querySelectorAll('#bulaIn [data-bulareg]').forEach(x=>x.onclick=()=>mostrar(x.dataset.bulareg));
+  falar('De qual remédio é esta bula? Toque no nome.');
+  const t=$('#bulaT'); if(t) t.focus();
+}
+/* QR com erro de impressão: "site.com.br008" (falta a barra) */
+function consertaUrl(u){ try{ const x=new URL(u); const m=x.hostname.match(/^(.*\.(?:com\.br|far\.br|org\.br|net\.br|gov\.br|ind\.br|com|br))(\d[\w-]*)$/i);
+  if(m){ x.hostname=m[1]; x.pathname='/'+m[2]+(x.pathname==='/'?'':x.pathname); } return x; }catch(e){ return null; } }
+
 /* ---------- bula digital da caixa (QR code) ----------
    Alguns fabricantes publicam a bula do paciente num site próprio, aberto pelo QR da caixa e organizado pelo código de barras.
    Esse site não passa pelo bloqueio contra robôs do Bulário: o app abre a página, acha o PDF da bula do paciente e lê as 9 perguntas.
@@ -1545,35 +1581,67 @@ async function baixarBulaOficial(registro){
 const UA_NAV='Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36';
 const SITE_BULA='https://www.sara.com.br';
 const EAN_SITE_BULA=/^(7896004|7894916)\d{6}$/;   /* caixas do grupo que tem bula digital nesse site */
-async function pegaSite(url,bin){ const r=await httpPlug().request({method:'GET',url,headers:{'User-Agent':UA_NAV,'Accept':bin?'application/pdf,*/*':'text/html,*/*'},responseType:bin?'blob':'text',connectTimeout:20000,readTimeout:60000});
+/* empresa pelo registro (1.XXXX.YYYY): só para saber em que site procurar; o nome nunca aparece no app */
+const SITE_EMPRESA={'0235':'sara','0583':'sara','3569':'sara','6773':'sara','2675':'sara','0381':'sara','0465':'neo','5584':'neo','4381':'cimed'};
+const SAIS_W=/^(cloridrato|maleato|fosfato|sulfato|acetato|citrato|besilato|mesilato|succinato|tartarato|fumarato|bromidrato|dicloridrato|hemifumarato|valerato|propionato|de|da|do|e|s[óo]dic[oa]|pot[áa]ssic[oa]|c[áa]lcic[oa]|magn[ée]sic[oa]|hemi-?hidratad[oa]|monoidratad[oa]|di-?hidratad[oa]|tri-?hidratad[oa]|anidr[oa])$/i;
+const slug = t => String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+function nomesBase(r){ const x=ITENS.find(y=>reg9(y[4])===r); if(!x) return [];
+  const sub=String(BASE.substancias[x[0]]||'').split(';')[0], semSal=sub.split(/\s+/).filter(w=>!SAIS_W.test(w)).join(' ');
+  return [...new Set([slug(x[1]),slug(semSal),slug(sub)].filter(Boolean))]; }
+function sitesSemQR(r){
+  const emp=SITE_EMPRESA[String(r).slice(1,5)], out=[];
+  if(emp==='sara') eansDe(r).slice(0,2).forEach(c=>out.push(SITE_BULA+'/produto/'+c));
+  if(emp==='neo') nomesBase(r).slice(0,2).forEach(n=>{ out.push('https://www.neoquimica.com.br/nossas-marcas/bula/'+n); out.push('https://www.neoquimica.com.br/nossas-marcas/'+n); });
+  if(emp==='cimed') nomesBase(r).slice(0,3).forEach(n=>out.push('https://www.cimedremedios.com.br/remedio/'+n+'/'));
+  return out.slice(0,4);
+}
+async function pegaSite(url,bin){ const r=await httpPlug().request({method:'GET',url,headers:{'User-Agent':UA_NAV,'Accept':'application/pdf,text/html,*/*'},responseType:bin?'blob':'text',connectTimeout:20000,readTimeout:60000});
   if(r.status>=400) throw new Error('http '+r.status); return r; }
 function bytesDe(d){ if(d instanceof ArrayBuffer) return new Uint8Array(d); if(typeof d==='string'){ const bin=atob(d.replace(/^data:[^,]*,/,'')); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; } return null; }
 const ehPdf = u => u && u.length>4 && u[0]===0x25 && u[1]===0x50 && u[2]===0x44 && u[3]===0x46;
-/* links possíveis da bula do paciente numa página */
+/* links possíveis da bula do paciente numa página: o PDF do paciente na frente, nunca o do profissional */
 function linksBula(html,base){
-  const out=[]; const re=/href\s*=\s*["']([^"'#]+)["']/gi; let m;
-  while((m=re.exec(String(html||'')))){ const h=m[1]; if(/bula[^"']*paciente|paciente[^"']*bula|\.pdf(\?|$)/i.test(h) && !/profissional/i.test(h)){ try{ out.push(new URL(h,base).href); }catch(e){} } }
-  return [...new Set(out)];
+  const out=[], doc=new DOMParser().parseFromString(String(html||''),'text/html');
+  const nota=(h,txt)=>{ const t=(h+' '+txt).toLowerCase(); if(/profissional|professional|_vps\b|-vps\b/.test(t)) return -1;
+    return (/paciente|patient|_vp\b|-vp\b/.test(t)?4:0)+(/\.pdf|\/pdf|visualizar-pdf|pdf/.test(t)?3:0)+(/baixar|download|ver bula|visualizar/.test(t)?2:0)+(/bula/.test(t)?1:0); };
+  doc.querySelectorAll('a[href],[data-href],[data-url],iframe[src],embed[src],object[data]').forEach(e=>{
+    const h=e.getAttribute('href')||e.getAttribute('data-href')||e.getAttribute('data-url')||e.getAttribute('src')||e.getAttribute('data')||'';
+    if(!h||/^(#|javascript:|mailto:|tel:)/i.test(h)) return; const n=nota(h,e.textContent||''); if(n>0) try{ out.push([n,new URL(h,base).href]); }catch(x){} });
+  (String(html||'').match(/https?:\/\/[^\s"'<>()]+?(?:\.pdf|visualizar-pdf\/[^\s"'<>()]+)/gi)||[]).forEach(h=>{ const n=nota(h,''); if(n>0) out.push([n+1,h.replace(/&amp;/g,'&')]); });
+  return [...new Set(out.sort((x,y)=>y[0]-x[0]).map(x=>x[1]))];
 }
-function pdfsDe(u){ const x=new URL(u); x.search=''; const b=x.href.replace(/\/$/,''); return /\/pdf$/.test(b)?[b]:[b+'/pdf',b]; }
-async function bulaDoSite(url,registro,nome){
+function textoDaPagina(html){ /* página fora da tela não tem quebra de linha no innerText: cada bloco vira uma linha */
+  const h=String(html||'').replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr|\/section|\/article)\b[^>]*>/gi,'$&\n');
+  const doc=new DOMParser().parseFromString(h,'text/html'); doc.querySelectorAll('script,style,noscript,nav,header,footer').forEach(n=>n.remove());
+  return String(doc.body?doc.body.textContent:'').split(/\n+/).map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean); }
+function pdfsDe(u){ const x=new URL(u); if(/\.pdf$/i.test(x.pathname)) return [x.href]; x.search=''; const b=x.href.replace(/\/$/,''); return /\/pdf$/.test(b)?[b]:[b+'/pdf',b]; }
+async function bulaDoSite(url,registro,nome,nivel){
   if(!httpPlug()) throw new Error('web');
-  let cands=[];
-  const u=new URL(url), ean=(u.pathname.match(/(\d{13})(?:\/pdf)?\/?$/)||u.pathname.match(/-(\d{13})/)||[])[1]||'';
-  if(/bula[^/]*paciente/i.test(u.pathname)) cands=pdfsDe(url);
+  nivel=nivel||0;
+  const u=consertaUrl(url)||new URL(url), ean=(u.pathname.match(/(\d{13})(?:\/pdf)?\/?$/)||u.pathname.match(/-(\d{13})/)||[])[1]||'';
+  const fonte='Bula do paciente digital (site do fabricante)';
+  const extra={ean,produto:nome||'',site:u.hostname};
+  const pronta=b=>{ if(b){ if(!b.registro) b.registro=reg9(registro)||''; return b; } return null; };
+  let cands=[], html='';
+  if(/bula[^/]*paciente/i.test(u.pathname)) cands=pdfsDe(u.href);
   else {
-    const r=await pegaSite(url,false), ct=String((r.headers||{})['Content-Type']||(r.headers||{})['content-type']||'');
-    if(/pdf/i.test(ct)){ cands=[url]; }
-    else linksBula(typeof r.data==='string'?r.data:'',url).forEach(l=>pdfsDe(l).forEach(x=>cands.push(x)));
+    const r=await pegaSite(u.href,true), bytes=bytesDe(r.data);
+    if(ehPdf(bytes)){ const b=bulaDeLinhas(await linhasDoPdf(bytes),fonte,extra); if(pronta(b)) return b; throw new Error('site-sem-bula'); }
+    html=bytes?new TextDecoder('utf-8').decode(bytes):String(r.data||'');
+    const pm=u.pathname.match(/^\/produto\/(.+)-(\d{13})\/?$/); if(pm) cands.push(u.origin+'/bula-do-paciente-'+pm[1]+'/'+pm[2]+'/pdf');
+    linksBula(html,u.href).forEach(l=>cands.push(l));
   }
-  /* página montada no navegador (sem o link no HTML): o endereço da bula segue o da página do produto */
-  const pm=u.pathname.match(/^\/produto\/(.+)-(\d{13})\/?$/); if(pm) cands.push(u.origin+'/bula-do-paciente-'+pm[1]+'/'+pm[2]+'/pdf');
-  for(const c of [...new Set(cands)].slice(0,5)){
-    try{ const r=await pegaSite(c,true), bytes=bytesDe(r.data); if(!ehPdf(bytes)) continue;
-      const secoes=await extrairSecoes(bytes,''); if(Object.keys(secoes).length<6) continue;
-      return {registro:reg9(registro)||'',ean,produto:nome||'',data:'',baixada:dayKey(new Date()),site:new URL(c).hostname,
-        fonte:'Bula do paciente digital (QR code da caixa)',secoes}; }catch(e){}
+  for(const c of [...new Set(cands)].slice(0,6)){
+    try{ const r=await pegaSite(c,true), bytes=bytesDe(r.data); if(!bytes) continue;
+      if(ehPdf(bytes)){ const b=pronta(bulaDeLinhas(await linhasDoPdf(bytes),fonte,Object.assign({},extra,{site:new URL(c).hostname}))); if(b) return b; continue; }
+      /* página intermediária (ex.: "Ver bula" → página da bula): mais um nível */
+      if(nivel<1 && !/\.pdf$/i.test(c)){ const h=new TextDecoder('utf-8').decode(bytes);
+        const t=textoDaPagina(h); if(pareceBula(t)){ const b=pronta(bulaDeLinhas(t,fonte,extra)); if(b) return b; }
+        try{ return await bulaDoSite(c,registro,nome,nivel+1); }catch(e){} }
+    }catch(e){}
   }
+  /* a bula escrita na própria página */
+  if(html){ const t=textoDaPagina(html); if(pareceBula(t)){ const b=pronta(bulaDeLinhas(t,fonte,extra)); if(b) return b; } }
   throw new Error('site-sem-bula');
 }
 /* códigos de barras de um registro */
@@ -1582,9 +1650,9 @@ function eansDe(r){ r=reg9(r); return Object.keys(CODIGOS).filter(c=>ITENS[CODIG
 async function baixarBula(registro,nome){
   try{ return await baixarBulaOficial(registro); }
   catch(e){
-    const ean=eansDe(registro).find(c=>EAN_SITE_BULA.test(c));
-    if(!ean) throw e;
-    const b=await bulaDoSite(SITE_BULA+'/produto/'+ean,registro,nome); guardarBula(b); return b;
+    const r=reg9(registro), sites=sitesSemQR(r);
+    for(const u of sites){ try{ const b=await bulaDoSite(u,r,nome); b.registro=r; guardarBula(b); return b; }catch(x){} }
+    throw e;
   }
 }
 /* leitura do PDF (pdf.js, versão para WebView antigo) */
@@ -1608,8 +1676,8 @@ async function linhasDoPdf(bytes){
 }
 const LIXO_BULA=/(_VPS?\b|VPS?_V\d|_V\d{1,3}\b|^V\d{2,3}$|CNPJ|\bSAC\b|Ltda|\bS\.?\/?A\.?\b|Farm\.?\s*Resp|Respons[áa]vel\s+t[ée]cnic|Registrado\s+(e\s+produzido\s+)?por|Fabricado\s+por|Embalado\s+por|Produzido\s+por|Importado\s+por|www\.|@|Ind[úu]stria\s+Brasileira|^\s*\d+\s*(de|\/)\s*\d+\s*$|^\s*\d{1,3}\s*$)/i;
 const maiusc = t => { const l=t.replace(/[^A-Za-zÀ-ÿ]/g,''); return l.length>5 && l.replace(/[^A-ZÀ-Þ]/g,'').length/l.length>0.8; };
-async function extrairSecoes(bytes, empresa){
-  const ls=await linhasDoPdf(bytes);
+async function extrairSecoes(bytes, empresa){ return secoesDeLinhas(await linhasDoPdf(bytes), empresa); }
+function secoesDeLinhas(ls, empresa){
   if(!empresa){ const capa=ls.slice(0,40).find(x=>/\bLTDA\b|\bS\.?\/?A\.?$|\bEIRELI\b/i.test(x)); if(capa) empresa=capa; }
   const pal=(String(empresa).split(/[^A-Za-zÀ-ÿ]+/).find(w=>w.length>=4 && !/^(LABORAT|FARMAC|IND[UÚ]STRIA|BRASIL|COM[EÉ]RCIO|PRODUTOS)/i.test(w))||'');
   const emp = pal ? new RegExp(pal.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i') : null;
@@ -1619,8 +1687,9 @@ async function extrairSecoes(bytes, empresa){
     let l=ls[i];
     if(/DIZERES LEGAIS|HIST[ÓO]RICO DE ALTERA/i.test(l) || (n>=9 && /^III\s*[-–).]/.test(l))) break;
     const m=/^([1-9])\s*[.)\-–]\s*(.+)$/.exec(l);
-    if(m && +m[1]===n+1 && maiusc(m[2])){
-      let t=m[2]; while(!/\?\s*$/.test(t) && i+1<ls.length && maiusc(ls[i+1]) && t.length<160){ i++; t+=' '+ls[i]; }
+    const perg=x=>/^(para que|como este|quando n[ãa]o|o que devo|onde,? como|como devo|quais os males|o que fazer)/i.test(x);
+    if(m && +m[1]===n+1 && (maiusc(m[2])||perg(m[2]))){
+      let t=m[2]; while(!/\?\s*$/.test(t) && i+1<ls.length && (maiusc(ls[i+1])||(!maiusc(m[2])&&t.length<90&&!/[.:;!]$/.test(t))) && t.length<160){ i++; t+=' '+ls[i]; }
       fecha(); n=+m[1]; continue;
     }
     if(n) buf.push(l);
@@ -2203,8 +2272,8 @@ function tratarCodigoLido(raw){
   const naoE=m=>{ vibrar('erro'); resultado=null; if(res) res.innerHTML=''; msgScan(m,'warn'); falar(m); };
   if(alvo){ naoE('Para conferir a caixa, aponte para o código de barras, as listras.'); return; }
   if(/RF1:\d{6}/.test(t)){ naoE('Este é o quadrado de conectar a família. Ele é lido no celular de quem acompanha, em Família.'); return; }
-  let url=null; try{ const u=new URL(t); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
-  const ehReceita=x=>/receit|prescri|memed|iti\.gov\.br|validar/i.test(x), ehBula=x=>/bula|anvisa\.gov\.br|sara\.com\.br/i.test(x);
+  let url=null; try{ const u=consertaUrl(t); if(u && /^https?:$/.test(u.protocol)) url=u; }catch(e){}
+  const ehReceita=x=>/receit|prescri|memed|iti\.gov\.br|validar/i.test(x), ehBula=x=>/bula|anvisa\.gov\.br|sara\.com\.br|\.far\.br|neoquimica|cimedremedios|pratidonaduzzi|medley/i.test(x);
   msgScan(''); resultado=null;
   if(url){
     if(ehBula(url.href) && !ehReceita(url.href)){ if(res) mostrarQR(url.href,res); return; }
@@ -2228,7 +2297,7 @@ function tratarCodigoLido(raw){
 const QR_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-4M14 18v3"/></svg>';
 function mostrarQR(txt,caixa){
   const box=caixa||$('#qrBox'); if(!box) return;
-  let url=null; try{ const u=new URL(String(txt).trim()); if(/^https?:$/.test(u.protocol)) url=u; }catch(e){}
+  let url=null; try{ const u=consertaUrl(String(txt).trim()); if(u && /^https?:$/.test(u.protocol)) url=u; }catch(e){}
   if(!url){ box.innerHTML='<div class="msg warn">Este QR code não é um link de bula. Procure o QR com a palavra "bula" na caixa, ou use o botão da Anvisa.</div>'; return; }
   vibrar('ok');
   /* lido pelo botão principal (caixa): o QR da bula não diz qual é a caixa, então avisa como colocar o remédio */
@@ -2246,10 +2315,11 @@ async function bulaPeloQR(url,box,caixa){
   const ean=(url.pathname.match(/(\d{13})(?:\/pdf)?\/?$/)||url.pathname.match(/-(\d{13})/)||[])[1]||'';
   try{ await baseOk; }catch(e){}
   const idx=ean&&CODIGOS[ean]!=null?CODIGOS[ean]:null, it=idx!=null?item(idx):null;
+  /* lido de dentro de um remédio aberto (botão "Ler o QR code da bula"): a bula fica nele */
+  const regAberto=(bulaAberta&&bulaAberta.registro)||(resultado&&resultado.registro)||'';
   let b=null; try{ b=await bulaDoSite(url.href,it?it.registro:'',it?it.produto+(it.dose?' '+it.dose:''):''); }catch(e){}
-  if(b && b.registro) guardarBula(b);
-  if(it && caixa){ achou(ean); if(b) toast('Bula guardada no celular. Toque em "Bula completa" para ler.'); return; }
-  if(b){ box.innerHTML=''; const el=$('#bulaV'); el.hidden=false; el.scrollTop=0; bulaAberta={registro:b.registro,nome:b.produto,url:url.href,perg:''}; renderBula(b); return; }
+  if(it && caixa){ if(b){ b.registro=reg9(it.registro); guardarBula(b); } achou(ean); if(b) toast('Bula guardada no celular. Toque em "Bula completa" para ler.'); return; }
+  if(b){ box.innerHTML=''; abrirBulaLida(b,regAberto,b.produto); return; }
   box.innerHTML=`<div class="stack"><div class="msg info">Não consegui trazer a bula para o app. O QR code abre o site <b>${esc(url.hostname)}</b>.</div><button class="btn btn-pill" id="bAbrirQR" type="button">Abrir a bula digital</button></div>`;
   $('#bAbrirQR').onclick=()=>abrirLink(url.href);
   falar('Não consegui trazer a bula para o app. Toque em abrir a bula digital.');
@@ -2684,7 +2754,10 @@ function rxRecorte(c,cx){
 function rxIt(op){ const it=item(op.idx); if(op.dose) it.dose=op.dose; it.rx=op; return it; }
 function rxMontar(linhas){
   if(!RX) return;
+  if(pareceBula(linhas)){ const b=bulaDeLinhas(linhas,'Bula do paciente');
+    if(b){ rxFechar(); vibrar('ok'); falar('Isto é uma bula, não uma receita. Vou abrir a bula.'); abrirBulaLida(b,'',''); return; } }
   const lidos=RFReceita.ler(linhas,BASE);
+  if(lidos.length>15){ vibrar('erro'); rxTela('nada','Isto não parece uma receita: achei nomes de remédio demais. Se for a bula, use o QR code da caixa ou o botão "Bula completa" do remédio.'); return; }
   RX.itens=lidos.map(o=>({o, its:o.opcoes.map(rxIt), escolha:o.alternativa?null:(o.opcoes.length?0:null), resp:{}, status:'pend', ciente:false,
     crop: rxRecorte(RX.canvas,o.caixa)}));
   RX.i=0; RX.canvas=null;  /* a foto sai da memória: ficam só os recortes, até o fim da conferência */
