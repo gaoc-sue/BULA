@@ -18,10 +18,10 @@ final class Canais {
     static final String ALARME = "bula_alarme";
     /** avisos da família e do estoque: versão curta do som do BULA */
     static final String AVISO = "bula_aviso";
-    /** "marcou que tomou": sem som e sem vibrar */
-    static final String TOMOU = "tomou";
+    /** "marcou que tomou": aviso na hora, com o som curto do BULA (o canal antigo "tomou" era sem som) */
+    static final String TOMOU = "tomou_aviso";
     /** canais antigos, sem o som do BULA */
-    private static final String[] ANTIGOS = {"familia"};
+    private static final String[] ANTIGOS = {"familia", "tomou"};
 
     private Canais() {}
 
@@ -53,8 +53,11 @@ final class Canais {
             v.enableVibration(true);
             nm.createNotificationChannel(v);
 
-            NotificationChannel t = new NotificationChannel(TOMOU, "Remédio tomado (sem som)", NotificationManager.IMPORTANCE_LOW);
-            t.setDescription("Quando a pessoa que você acompanha marca que tomou o remédio. Não toca nem vibra.");
+            NotificationChannel t = new NotificationChannel(TOMOU, "Remédio tomado", NotificationManager.IMPORTANCE_DEFAULT);
+            t.setDescription("Chega na hora em que a pessoa que você acompanha marca que tomou o remédio. Toca o som curto do BULA.");
+            t.setSound(som(ctx, "bula_aviso"), new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
             nm.createNotificationChannel(t);
 
             for (String id : ANTIGOS) nm.deleteNotificationChannel(id);

@@ -1,7 +1,12 @@
 package br.com.remediofalado.app;
 
+import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.MediaPlayer;
+import android.os.Handler;
+import android.os.Looper;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -105,5 +110,100 @@ public class EnergiaPlugin extends Plugin {
         JSObject r = new JSObject();
         r.put("aberto", ok);
         call.resolve(r);
+    }
+
+    /* ---------- som do alarme repetindo, no volume de alarme (toca mesmo no silencioso) ---------- */
+    private static MediaPlayer alarme;
+    private static int vez = 0;
+
+    /** Toca o som do BULA em repetição até a pessoa atender (no máximo 2 minutos).
+     *  seBloqueado=true: só toca se o celular estiver bloqueado (a tela cheia abriu sozinha, ninguém tocou na notificação). */
+    @PluginMethod
+    public void tocarAlarme(PluginCall call) {
+        boolean soBloqueado = Boolean.TRUE.equals(call.getBoolean("seBloqueado", false));
+        KeyguardManager km = (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
+        boolean bloqueado = km != null && km.isKeyguardLocked();
+        JSObject r = new JSObject();
+        r.put("bloqueado", bloqueado);
+        if (soBloqueado && !bloqueado) {
+            r.put("tocando", false);
+            call.resolve(r);
+            return;
+        }
+        pararSom();
+        try {
+            MediaPlayer mp = new MediaPlayer();
+            mp.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+            mp.setDataSource(getContext(), Uri.parse("android.resource://" + getContext().getPackageName() + "/raw/bula_alarme"));
+            mp.setLooping(true);
+            mp.prepare();
+            mp.start();
+            alarme = mp;
+            final int esta = ++vez;
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() { if (esta == vez) pararSom(); }
+            }, 120000);
+            r.put("tocando", true);
+        } catch (Exception e) {
+            r.put("tocando", false);
+        }
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void pararAlarme(PluginCall call) {
+        pararSom();
+        call.resolve();
+    }
+
+    /** depois do alarme: o app volta a ficar atrás da tela de bloqueio */
+    @PluginMethod
+    public void liberarTela(PluginCall call) {
+        if (getActivity() != null && Build.VERSION.SDK_INT >= 27) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    getActivity().setShowWhenLocked(false);
+                    getActivity().setTurnScreenOn(false);
+                }
+            });
+        }
+        call.resolve();
+    }
+
+    /** permissão de tela cheia (Android 14+ pode pedir): sem ela, o alarme toca como notificação que repete o som */
+    @PluginMethod
+    public void telaCheia(PluginCall call) {
+        JSObject r = new JSObject();
+        boolean pode = true;
+        if (Build.VERSION.SDK_INT >= 34) {
+            android.app.NotificationManager nm = (android.app.NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            pode = nm == null || nm.canUseFullScreenIntent();
+        }
+        r.put("pode", pode);
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void abrirTelaCheia(PluginCall call) {
+        boolean ok = false;
+        if (Build.VERSION.SDK_INT >= 34) {
+            ok = abrir(new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:" + getContext().getPackageName())));
+        }
+        if (!ok) ok = abrirDetalhes();
+        responder(call, ok);
+    }
+
+    static void pararSom() {
+        try {
+            if (alarme != null) {
+                alarme.stop();
+                alarme.release();
+            }
+        } catch (Exception e) { /* já parado */ }
+        alarme = null;
     }
 }

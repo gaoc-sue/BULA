@@ -1,5 +1,7 @@
 package br.com.remediofalado.app;
 
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
 
@@ -18,6 +20,21 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(EloPlugin.class);
         registerPlugin(ReceitaPlugin.class);
         super.onCreate(savedInstanceState);
+        acordar(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        acordar(intent);
+    }
+
+    /** aberto pela notificação do remédio (tocada ou em tela cheia): aparece por cima da tela de bloqueio e acende a tela */
+    private void acordar(Intent intent) {
+        if (intent != null && intent.hasExtra("LocalNotificationId") && Build.VERSION.SDK_INT >= 27) {
+            setShowWhenLocked(true);
+            setTurnScreenOn(true);
+        }
     }
 
     @Override

@@ -507,7 +507,7 @@ final class Elo {
                     }
                     continue;
                 }
-                // a pessoa marcou TOMEI (ou desfez): notificação sem som, sempre a mesma por pessoa (troca a anterior)
+                // a pessoa marcou TOMEI (ou desfez): aviso na hora, com som curto; sempre a mesma por pessoa (troca a anterior)
                 if ("familia".equals(papel) && "tomou".equals(msg.optString("t"))) {
                     JSONObject inf = msg.optJSONObject("info");
                     if (avisoTomou && inf != null && recente) notificarTomou(ctx, inf.optString("titulo"), inf.optString("texto"), ("tomou:" + topic).hashCode());
@@ -598,7 +598,7 @@ final class Elo {
     static void notificarAlarme(Context ctx, String titulo, String texto, int id) { notificarEm(ctx, Canais.ALARME, titulo, texto, id); }
 
     private static void notificarEm(Context ctx, String canal, String titulo, String texto, int id) {
-        boolean calado = Canais.TOMOU.equals(canal), alarme = Canais.ALARME.equals(canal);
+        boolean tomou = Canais.TOMOU.equals(canal), alarme = Canais.ALARME.equals(canal);
         try {
             NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
@@ -614,10 +614,10 @@ final class Elo {
             if (pi != null) b.setContentIntent(pi);
             if (alarme) b.setCategory(Notification.CATEGORY_ALARM);
             if (Build.VERSION.SDK_INT < 26) {
-                b.setPriority(calado ? Notification.PRIORITY_LOW : Notification.PRIORITY_HIGH);
-                if (!calado) b.setSound(Canais.som(ctx, alarme ? "bula_alarme" : "bula_aviso"));
+                b.setPriority(tomou ? Notification.PRIORITY_DEFAULT : Notification.PRIORITY_HIGH);
+                b.setSound(Canais.som(ctx, alarme ? "bula_alarme" : "bula_aviso"));
             }
-            if (calado) b.setOnlyAlertOnce(true).setShowWhen(true);
+            if (tomou) b.setShowWhen(true);
             nm.notify(id, b.build());
         } catch (Exception e) { /* sem permissão de notificação */ }
     }

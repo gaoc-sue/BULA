@@ -18,7 +18,8 @@ const perms = [
   'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
   'android.permission.INTERNET',
   'android.permission.ACCESS_NETWORK_STATE',
-  'android.permission.RECORD_AUDIO'
+  'android.permission.RECORD_AUDIO',
+  'android.permission.USE_FULL_SCREEN_INTENT'
 ];
 // alarme na hora certa: no Android 13+ vale USE_EXACT_ALARM (dada na instalação, sem tela de configuração);
 // SCHEDULE_EXACT_ALARM fica só para o Android 12 (lá ela já vem ligada)
@@ -156,6 +157,30 @@ if (!g.includes('abiFilters')) {
   g = g.replace(/defaultConfig \{/, "defaultConfig {\n        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }");
   if (!g.includes('abiFilters')) throw new Error('Não achei defaultConfig no build.gradle');
 }
+// alarme do remédio como despertador: a notificação do canal "bula_alarme" abre a tela cheia (mesmo com o celular
+// bloqueado) e o som repete até a pessoa atender (FLAG_INSISTENT). O plugin de notificações não tem essa opção,
+// então o ajuste é feito no código dele, logo depois do npm install. Se o código do plugin mudar, avisa e segue sem o ajuste.
+(function () {
+  const lnm = path.join(__dirname, '..', 'node_modules', '@capacitor', 'local-notifications', 'android', 'src', 'main', 'java',
+    'com', 'capacitorjs', 'plugins', 'localnotifications', 'LocalNotificationManager.java');
+  if (!fs.existsSync(lnm)) { console.warn('AVISO: não achei o plugin de notificações; alarme em tela cheia não foi ativado'); return; }
+  let j = fs.readFileSync(lnm, 'utf8');
+  if (j.includes('BULA_ALARME')) return;
+  const a1 = '        createActionIntents(localNotification, mBuilder);\n';
+  const a2 = '        Notification buildNotification = mBuilder.build();\n';
+  if (!j.includes(a1) || !j.includes(a2)) { console.warn('AVISO: o plugin de notificações mudou; alarme em tela cheia não foi ativado'); return; }
+  j = j.replace(a1, a1 + `        // BULA_ALARME: hora do remédio abre a tela cheia e o som repete até a pessoa atender
+        boolean bulaAlarme = "bula_alarme".equals(channelId);
+        if (bulaAlarme) {
+            mBuilder.setCategory(NotificationCompat.CATEGORY_ALARM).setPriority(NotificationCompat.PRIORITY_MAX);
+            PendingIntent abrirTela = mBuilder.build().contentIntent;
+            if (abrirTela != null) mBuilder.setFullScreenIntent(abrirTela, true);
+        }
+`);
+  j = j.replace(a2, a2 + '        if (bulaAlarme) buildNotification.flags |= Notification.FLAG_INSISTENT;\n');
+  fs.writeFileSync(lnm, j);
+  console.log('Alarme em tela cheia ativado no plugin de notificações.');
+})();
 // número da versão sobe a cada compilação no GitHub
 const run = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
 g = g.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
