@@ -1857,7 +1857,8 @@ async function abrirBula(registro,nome,url,perg){
     }catch(e){}
   }
 }
-function renderBula(b,estado){
+let bulaVista=null;
+function renderBula(b,estado){ bulaVista=b||null;
   const {registro,nome,url,perg}=bulaAberta||{}, abrir=perg&&b&&b.secoes[perg]?String(perg):'1';
   let h=`<h2 id="bulaT" tabindex="-1">Bula completa</h2><p class="wz-med"><b>${esc(nome||(b&&b.produto)||'')}</b></p>`;
   if(!b){
@@ -1885,7 +1886,7 @@ function renderBula(b,estado){
   $('#bulaIn').innerHTML=h;
   document.querySelectorAll('#bulaIn [data-ouvirsec]').forEach(x=>x.onclick=()=>{ const n=x.dataset.ouvirsec; ouvirLongo(PERG_BULA[n]+' '+b.secoes[n]); });
   if(b){
-    const bo=$('#bOuvirRes'); if(bo) bo.onclick=()=>ouvirLongo('Resumo fácil da bula. '+resumoBula(b).map(x=>x.tit+'. '+x.frs.join(' ')).join(' ')+' A dose é sempre a da receita do médico.');
+    const bo=$('#bOuvirRes'); if(bo) bo.onclick=()=>ouvirResumo(b);
     document.querySelectorAll('#bulaIn [data-rbsec]').forEach(x=>x.onclick=()=>{ const d=$('#bsec'+x.dataset.rbsec); if(d){ d.open=true; d.scrollIntoView({block:'start',behavior:semMovimento()?'auto':'smooth'}); } });
     document.querySelectorAll('#bulaIn .gl').forEach(x=>x.onclick=()=>{ const t=`${x.textContent}: quer dizer ${x.dataset.gl}.`; toast(t); falar(t); });
     /* a bula deste remédio fala de outro que a pessoa toma */
@@ -1901,7 +1902,7 @@ function renderBula(b,estado){
   const ba=$('#bAtuBula'); if(ba) ba.onclick=async()=>{ ba.textContent='Conferindo...'; try{ const prod=await produtoAnvisa(reg9(registro)); const nova=String(prod.data||'').slice(0,10);
       if(nova && nova>b.data){ const nb=await baixarBulaOficial(registro); renderBula(nb); toast('A bula foi atualizada para a versão mais nova.'); } else { b.conferida=dayKey(new Date()); guardarBula(b); toast('Esta já é a versão mais nova.'); ba.textContent='Ver se tem versão nova'; } }
     catch(e){ toast('Não consegui conferir agora. Tente com internet.'); ba.textContent='Ver se tem versão nova'; } };
-  $('#bFecharBula').onclick=()=>{ $('#bulaV').hidden=true; pararLongo(); bulaAberta=null; };
+  $('#bFecharBula').onclick=()=>{ $('#bulaV').hidden=true; pararLongo(); bulaAberta=null; bulaVista=null; };
   const t=$('#bulaT'); if(t) t.focus();
   /* aberta numa pergunta (ex.: 3, quando não devo usar): rola até ela */
   if(abrir!=='1'){ const sec=$('#bsec'+abrir); if(sec) sec.scrollIntoView({block:'start',behavior:semMovimento()?'auto':'smooth'}); }
@@ -4883,8 +4884,11 @@ const COMANDOS=[
   ['ajuda',/\b(o que (eu )?(posso|devo|consigo) (falar|dizer)|como (funciona|uso)|comandos|me ensina)\b/],
   ['tomei',/\b(tomei|ja tomei|tomado|ja bebi|bebi|engoli|marca(r)? (que )?(eu )?tomei|marcar o remedio)\b/],
   ['ligar',/\b(liga|ligar|ligue|chama|chamar|telefona|telefonar)\b/],
-  ['ler',/\b(que remedio e (esse|este)|qual e (esse|este) remedio|ler a caixa|le a caixa|ler o codigo|ler|escanear|codigo de barras|caixa)\b/],
+  ['resumo',/\b(resumo|resume|resumir|bula facil|explica a bula|explicar a bula)\b/],
   ['bula',/\b(bula|para que serve)\b/],
+  ['mes',/\b(como foi o mes|como foi (a|essa|esta) semana|como (eu )?fui|meu mes|o mes|meus registros|registros?|calendario|historico)\b/],
+  ['perto',/\b(farmacias? (mais )?perto|perto de mim|perto daqui|onde (eu )?compro|comprar perto|mais perto|perto)\b/],
+  ['ler',/\b(que remedio e (esse|este)|qual e (esse|este) remedio|ler a caixa|le a caixa|ler o codigo|ler|escanear|codigo de barras|caixa)\b/],
   ['mudou',/\b(o que mudou|mudanca|mudancas|mudou|quem mudou|quem colocou)\b/],
   ['agora',/\b(qual (e o )?remedio( de)? agora|que remedio (eu )?tomo|tenho que tomar|qual o proximo|proximo remedio|que horas|horario|agora)\b/],
   ['meus',/\b(meus remedios?|minhas? remedios?|quais (sao )?(os )?meus remedios?|lista)\b/],
@@ -4900,7 +4904,7 @@ const SUGS=[['tomei','Já tomei',CHECK],['agora','Qual remédio agora?',IC.relog
 function telaVoz(estado,texto,disse){
   const sugs=`<div class="sugs">${SUGS.map(([k,t,svg])=>`<button class="sug ${k==='socorro'?'socorro':''}" type="button" data-vcmd="${k}">${svg}${esc(t)}</button>`).join('')}</div>`;
   let corpo='';
-  if(estado==='ouvindo') corpo=`<p class="disse">Pode falar…</p><p class="hint" style="text-align:center">Por exemplo: “já tomei”, “qual remédio agora?”, “liga pra minha filha”.</p>`;
+  if(estado==='ouvindo') corpo=`<p class="disse">Pode falar…</p><p class="hint" style="text-align:center">Por exemplo: “já tomei”, “qual remédio agora?”, “lê a bula da losartana”, “como foi o mês?”, “liga pra minha filha”.</p>`;
   else if(estado==='confirmar') corpo=`<p class="disse">${esc(texto)}</p><div class="sim-nao"><button class="btn btn-ok" type="button" id="vSim">${CHECK}Sim</button><button class="btn btn-ghost" type="button" id="vNao">${XIS}Não</button></div><p class="hint" style="text-align:center">Ou diga “sim” ou “não”.</p>`;
   else if(estado==='socorro') corpo=`<h2 id="vozT" style="text-align:center">Pedir ajuda</h2>
       ${S.whats?`<button class="btn btn-wa" type="button" id="vLigaFam" style="min-height:104px;font-size:1.5rem">${IC.tel}Ligar para ${esc(nomeFam())}</button>`:''}
@@ -5027,10 +5031,16 @@ async function conversar(){
     await executar(k,'voz',ms[0]);
   } finally { conversando=false; }
 }
+/* qual dos remédios da pessoa foi citado na fala ("bula da losartana", "resumo do remédio da pressão") */
+function remedioNaFala(t){ const n=' '+normTx(t)+' ';
+  const tem=x=>x && x.length>=4 && n.includes(' '+x+' ') || (x && x.length>=6 && n.includes(x));
+  return S.agenda.find(a=>tem(normTx(med(a).nome))||nucleosAg(a).some(tem)) || S.agenda.find(a=>tem(normTx(med(a).apelido))) || null; }
+const textoResumo = b => 'Resumo fácil da bula. '+resumoBula(b).map(x=>x.tit+'. '+x.frs.join(' ')).join(' ')+' A dose é sempre a da receita do médico.';
+function ouvirResumo(b){ const R=resumoBula(b); if(!R.length){ ouvirLongo(PERG_BULA[1]+' '+(b.secoes[1]||'')); return; } ouvirLongo(textoResumo(b)); }
 async function executar(k,via,disse){
   const diz = async t => { telaVoz('resposta',t,disse); await falarE(t); };
   if(k==='socorro') return pedirSocorro(via==='voz');
-  if(k==='ajuda') return diz('Você pode falar: já tomei; qual o remédio agora; que remédio é esse; ligar para a família; meus remédios; remédio de graça; ou socorro.');
+  if(k==='ajuda') return diz('Você pode falar: já tomei; qual o remédio agora; que remédio é esse; lê a bula da losartana; lê o resumo; como foi o mês; meus remédios; remédio de graça; farmácia perto; ligar para a família; repete; ou socorro.');
   if(k==='repetir') return diz(ultimaFala||falaHoje());
   if(k==='agora'){ const {ativo,depois}=partesHoje();
     if(!S.agenda.length) return diz('Ainda não tem remédio guardado. Diga: que remédio é esse, e mostre a caixa.');
@@ -5048,8 +5058,22 @@ async function executar(k,via,disse){
     if(ok){ fecharVoz(); abrirLink('tel:'+String(S.whats).replace(/[^\d+]/g,'')); } else if(ok===false) await diz('Tudo bem. Não liguei.');
     return; }
   if(k==='ler'){ fecharVoz(); resultado=null; go('ler'); await falarE('Aponte o celular para o código de barras da caixa do remédio.'); if(SCAN) lerNativo(); return; }
-  if(k==='bula'){ if(resultado && atual==='ler'){ fecharVoz(); abrirBula(resultado.it.registro,resultado.it.produto,bulaUrl(resultado.it)); return; }
-    return diz('Primeiro, mostre a caixa. Diga: que remédio é esse.'); }
+  if(k==='bula'||k==='resumo'){
+    const a=remedioNaFala(disse||'');
+    /* sem nome: a bula aberta agora, ou a da caixa que acabou de ler */
+    if(!a && !$('#bulaV').hidden && bulaVista){ fecharVoz(); return ouvirResumo(bulaVista); }
+    if(!a && resultado && atual==='ler'){ fecharVoz(); await abrirBula(resultado.it.registro,resultado.it.produto,bulaUrl(resultado.it)); if(bulaVista) ouvirResumo(bulaVista); return; }
+    if(a && a.registro){ fecharVoz(); await abrirBula(a.registro,med(a).nome+(a.dose?' '+a.dose:''),bulaUrl({registro:a.registro})); if(bulaVista) ouvirResumo(bulaVista); else falarE('Não tenho a bula deste remédio no celular ainda.'); return; }
+    if(a) return diz(`Não tenho a bula do ${med(a).nome}. Leia a caixa de novo para baixar.`);
+    const ex=S.agenda.find(x=>x.registro);
+    return diz(ex?`De qual remédio? Diga, por exemplo: bula da ${med(ex).nome}.`:'Primeiro, mostre a caixa. Diga: que remédio é esse.'); }
+  if(k==='mes'){
+    calOff=0; calSel='';
+    if(modoFamilia()){ const f=seguidoAtual(); if(!f||!f.estado) return diz('Ainda não chegaram os registros do outro celular.');
+      fecharVoz(); acompTab='semana'; go('acomp'); return falarE(falaMes(stMes(f,stDe(f.estado)),acabaFam,curto(f.nome))); }
+    if(!S.agenda.length) return diz('Ainda não tem remédio guardado, então não tem registro.');
+    fecharVoz(); go('familia'); const c=$('#calMes'); if(c) c.scrollIntoView({block:'start'}); return falarE(falaMes(S,acabaLocal,'')); }
+  if(k==='perto'){ fecharVoz(); gratisAba=/gra[cç]a|gratis|sem pagar/.test(sem(disse||''))?abaGratisPara(S.agenda):'perto'; pertoIt=null; go('gratis'); await falarE(falaTela()); return; }
   if(k==='meus') return diz(falaAgenda());
   if(k==='mudou'){ const ms=(S.mudancas||[]).slice(-3).reverse(); return diz(ms.length?ms.map(m=>m.txt).join(' '):'Nenhuma mudança nos seus remédios.'); }
   if(k==='gratis'){ fecharVoz(); go('gratis'); await falarE(falaTela()); return; }

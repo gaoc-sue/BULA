@@ -98,7 +98,12 @@ Teste sugerido antes da banca: 5 a 8 idosos, "o que acontece se tocar aqui?" em 
   - "meus remédios";
   - "remédio de graça";
   - "o que mudou" (no modo gestor);
-  - "socorro".
+  - "socorro";
+  - "lê a bula da losartana" (abre a bula e fala o resumo fácil; sem nome, lê a bula aberta ou pergunta qual);
+  - "lê o resumo";
+  - "como foi o mês" (abre os registros e fala o mês: dias em que tomou tudo, dias com falta, quando o remédio acaba);
+  - "farmácia perto" / "onde tem de graça perto";
+  - "repete".
 
   O app responde em voz e **confirma antes de agir** ("Vou marcar os remédios do almoço. Diga sim ou não"). Se não entender, mostra 6 botões grandes com desenho.
 - **Cadastro respondendo falando:** no "Colocar nos meus remédios", o botão "Responder falando" pergunta e ouve: em que momento ("de manhã e à noite"), quanto ("dois comprimidos", "meio"), se está igual à receita ("sim") e se quer foto. O nome e o telefone também podem ser ditos.
