@@ -1657,6 +1657,78 @@ function cartaoInteracoes(lista,titulo){
 }
 const falaInteracoes = l => l.map(x=>x.porNome?`A bula de ${med(x.a).nome} cita ${med(x.o).nome}, que você também toma.`:`A bula de ${med(x.a).nome} cita ${x.grupo}. ${med(x.o).nome}, que você também toma, é desse grupo.`).join(' ')+' O Bula não decide nada. Converse com o farmacêutico ou o médico antes de mudar qualquer remédio.';
 
+/* ---------- avisos resumidos: mesma substância em duas caixas e pares de substâncias com risco conhecido ----------
+   Os pares vêm das bulas do paciente (Anvisa) e de alertas públicos de agências de saúde. Lista em validação com farmacêutico.
+   O app nunca decide: avisa e manda conversar com o farmacêutico ou o médico. */
+const GRUPOS_RISCO={
+  opioide:/\b(tramadol|codeina|morfina|oxicodona|metadona|tapentadol|fentanila)\b/,
+  tramadol:/\btramadol\b/,
+  calmante:/\b(alprazolam|clonazepam|diazepam|lorazepam|bromazepam|midazolam|zolpidem|eszopiclona|zopiclona)\b/,
+  antidepressivo:/\b(paroxetina|sertralina|fluoxetina|citalopram|escitalopram|fluvoxamina|venlafaxina|desvenlafaxina|duloxetina|amitriptilina|nortriptilina|imipramina|clomipramina)\b/,
+  aine:/\b(ibuprofeno|diclofenaco|naproxeno|nimesulida|cetoprofeno|meloxicam|piroxicam|celecoxibe|acido acetilsalicilico|aceclofenaco|etoricoxibe)\b/,
+  anticoagulante:/\b(varfarina|rivaroxabana|apixabana|dabigatrana|edoxabana)\b/,
+  pressao:/\b(enalapril|captopril|lisinopril|ramipril|perindopril|losartana|valsartana|olmesartana|irbesartana|telmisartana|candesartana)\b/,
+  poupak:/\b(espironolactona|amilorida)\b/,
+  nitrato:/\b(isossorbida|nitroglicerina)\b/,
+  ide5:/\b(sildenafila|tadalafila|vardenafila)\b/
+};
+const PARES_RISCO=[
+  ['opioide','calmante','Juntos, podem dar muito sono e deixar a respiração fraca.'],
+  ['tramadol','antidepressivo','Juntos, podem aumentar o risco de convulsão e de excesso de serotonina (agitação, tremor, febre).'],
+  ['anticoagulante','aine','Juntos, aumentam o risco de sangramento.'],
+  ['antidepressivo','anticoagulante','Juntos, podem aumentar o risco de sangramento.'],
+  ['antidepressivo','aine','Juntos, podem aumentar o risco de sangramento no estômago.'],
+  ['pressao','poupak','Juntos, podem subir o potássio no sangue.'],
+  ['pressao','aine','O anti-inflamatório pode diminuir o efeito do remédio de pressão e forçar os rins.'],
+  ['aine','aine','Dois anti-inflamatórios juntos aumentam o risco de problemas no estômago e nos rins.'],
+  ['nitrato','ide5','Juntos, podem baixar muito a pressão.']
+];
+const subsTx = a => normTx([a.principio,a.substancia,String(chaveAg(a)||'').replace(/^sub:/,''),String(chaveBula(reg9(a.registro||''))||'').split('|')[0],a.produto,a.nome].filter(Boolean).join(' '));
+const gruposDe = t => Object.keys(GRUPOS_RISCO).filter(g=>GRUPOS_RISCO[g].test(t));
+const substDoGrupo = (t,g) => (t.match(GRUPOS_RISCO[g])||[''])[0];
+/* pares com risco entre "novo" (texto da substância) e a lista de remédios guardados */
+function riscosCom(txNovo,nomeNovo,lista){
+  const out=[], gN=gruposDe(txNovo);
+  if(!gN.length) return out;
+  for(const o of lista){
+    const tO=subsTx(o), gO=gruposDe(tO);
+    for(const [g1,g2,txt] of PARES_RISCO){
+      let ok = (gN.includes(g1)&&gO.includes(g2)) || (gN.includes(g2)&&gO.includes(g1));
+      if(ok && g1===g2 && substDoGrupo(txNovo,g1)===substDoGrupo(tO,g1)) ok=false; /* mesmo remédio é o aviso de "mesma substância" */
+      if(ok){ out.push({nomeA:nomeNovo,nomeB:med(o).nome,txt}); break; }
+    }
+  }
+  return out;
+}
+/* todos os avisos resumidos de uma lista de remédios guardados */
+function avisosResumo(lista){
+  const out=[], vistos=new Set();
+  lista.forEach((a,i)=>{
+    const ingA=ingredientesAg(a);
+    lista.slice(i+1).forEach(o=>{
+      const par=[a.id,o.id].sort().join('|'); if(vistos.has(par)) return;
+      const comum=ingA.filter(x=>ingredientesAg(o).indexOf(x)>=0);
+      if(comum.length){ vistos.add(par);
+        const mA=mgDiaAg(a), mB=mgDiaAg(o), soma = ingA.length===1 && ingredientesAg(o).length===1 && mA!=null && mB!=null ? mA+mB : null;
+        const nd=x=>med(x).nome+(x.dose?' '+x.dose:''); out.push({tipo:'igual',nomeA:nd(a),nomeB:nd(o),subst:listaFala(comum),soma}); return; }
+      const r=riscosCom(subsTx(a),med(a).nome,[o]);
+      if(r.length){ vistos.add(par); out.push(Object.assign({tipo:'par'},r[0])); }
+    });
+  });
+  return out;
+}
+const fraseAviso = x => x.tipo==='igual'
+  ? `${x.nomeA} e ${x.nomeB} têm a mesma substância (${x.subst}). As doses se somam${x.soma!=null?`: juntos dão ${fmtMg(x.soma)} por dia`:''}.`
+  : `${x.nomeA} com ${x.nomeB}: ${x.txt}`;
+function cartaoAvisos(av){
+  if(!av.length) return '';
+  return `<section class="inter-card" role="note"><h3>Converse com o farmacêutico ou o médico</h3>
+    ${av.map(x=>`<p>${x.tipo==='igual'?`<b>${esc(x.nomeA)}</b> e <b>${esc(x.nomeB)}</b> têm a mesma substância (${esc(x.subst)}). As doses se somam${x.soma!=null?`: juntos dão <b>${esc(fmtMg(x.soma))} por dia</b>`:''}.`:`<b>${esc(x.nomeA)}</b> com <b>${esc(x.nomeB)}</b>: ${esc(x.txt)}`}</p>`).join('')}
+    <p class="small">Pode estar certo, se o médico receitou assim. Não pare nem mude nenhum remédio por conta própria. Informação pública das bulas; lista em validação com farmacêutico.</p>
+    <button class="btn btn-ghost btn-s" type="button" data-ouviravisos="1">${IC.som}Ouvir</button></section>`;
+}
+const falaAvisos = av => av.map(fraseAviso).join(' ').replace(/(\d+) mg/g,'$1 miligramas')+' Pode estar certo, se o médico receitou assim. Converse com o farmacêutico ou o médico antes de mudar qualquer remédio.';
+
 /* ---------- bula lida de um texto qualquer (PDF do QR, página, foto) ---------- */
 const TOP_BULA=[/PARA QUE ESTE MEDICAMENTO/i,/COMO ESTE MEDICAMENTO FUNCIONA/i,/QUANDO N[ÃA]O DEVO USAR/i,/INFORMA[ÇC][ÕO]ES AO PACIENTE/i,/O QUE DEVO SABER ANTES/i,/DIZERES LEGAIS/i,/MALES QUE ESTE MEDICAMENTO/i];
 function pareceBula(linhas){ const t=(linhas||[]).join('\n'); return TOP_BULA.filter(r=>r.test(t)).length>=2; }
@@ -2608,11 +2680,13 @@ function totalSel(it){
   const muitos = contavel && maiorVez>4;
   const alertas=[];
   if(acima) alertas.push(`${fmtMg(totalMg)} por dia${outrosMg?' (somando com '+outros.map(a=>med(a).nome).join(' e ')+')':''} passa da maior dose citada na bula (${fmtMg(max)} por dia).`);
+  else if(iguais.length) alertas.push(`Você já toma ${listaFala(iguais.map(a=>med(a).nome))}, com a mesma substância (${listaFala([...new Set(meus)])}). As doses se somam${totalMg!=null&&outrosMg?`: juntos dão ${fmtMg(totalMg)} por dia`:''}.`);
   if(vezAcima) alertas.push(`${fmtMg(maiorVez*mgUn)} de uma vez às ${horaMaior} passa do que a bula diz por dose (${fmtMg(db.dose_mg)}).`);
   if(muitos) alertas.push(`${fmtNum(maiorVez)} ${u[1]} de uma vez às ${horaMaior}. É raro tomar tantos juntos.`);
   const misturas=outros.filter(a=>iguais.indexOf(a)<0);
-  if(misturas.length) alertas.push(`Este remédio tem ${listaFala([...new Set(meus.filter(x=>misturas.some(a=>ingredientesAg(a).indexOf(x)>=0)))])}, como ${listaFala(misturas.map(a=>med(a).nome))}, que já está nos remédios. Pergunte ao farmacêutico se pode tomar os dois.`);
-  return {n: ok? n : null, mg, max, acima, u, outros:iguais, outrosMg, totalMg, alertas, txt: db&&db.txt||'', muitos, vezAcima};
+  if(misturas.length) alertas.push(`Este remédio tem ${listaFala([...new Set(meus.filter(x=>misturas.some(a=>ingredientesAg(a).indexOf(x)>=0)))])}, a mesma substância de ${listaFala(misturas.map(a=>med(a).nome))}, que já está nos remédios. As doses se somam: pergunte ao farmacêutico se pode tomar os dois.`);
+  const riscos=riscosCom(normTx([it.principio,it.substancia,it.produto,it.nome].filter(Boolean).join(' ')),it.nome||(it.principio&&INFO[it.principio]&&INFO[it.principio].nome)||it.produto||'Este remédio',agendaAlvo().filter(a=>a.id!==ed && outros.indexOf(a)<0));
+  return {riscos,n: ok? n : null, mg, max, acima, u, outros:iguais, outrosMg, totalMg, alertas, txt: db&&db.txt||'', muitos, vezAcima};
 }
 function faltaSel(it){ const f=[], hs=horasSel();
   if(!hs.length) f.push('o horário');
@@ -2714,6 +2788,7 @@ function renderWizard(erro){
       ${t.txt&&t.acima?`<span class="alerta-txt small">Segundo a bula: “${esc(t.txt)}”</span>`:''}
       <span class="alerta-txt">Pode estar certo, se o médico receitou assim. Vale conferir a receita; em caso de dúvida, o farmacêutico ou o médico podem confirmar.</span></div>
 `:''}
+    ${t.riscos&&t.riscos.length?cartaoAvisos(t.riscos.map(x=>Object.assign({tipo:'par'},x))):''}
     ${(()=>{ /* uma confirmação só (teste com usuários: duas caixinhas seguidas confundiam). Com aviso, ela vale também para o aviso. */
       const on=t.alertas.length ? (addSel.conferi&&addSel.ciente) : addSel.conferi;
       return `<button type="button" class="conferi" id="bConferi" aria-pressed="${on}"><span class="caixa" aria-hidden="true">${on?'✓':''}</span>${t.alertas.length?'Conferi: é isso mesmo que está na receita':'Conferi com a receita do médico'}</button>`; })()}
@@ -2730,6 +2805,7 @@ function renderWizard(erro){
     ${p<3?`<button class="btn btn-pill" id="wzSeg" type="button">${CHECK}Continuar</button>`:`<button class="btn btn-ok" id="wzSalvar" type="button">${CHECK}Salvar nos meus remédios</button>`}
     <button class="linkbtn wz-voltar" id="wzVoltar" type="button">${p===1?'Cancelar':'Voltar'}</button>`;
   const redesenha=()=>{ const w=$('#wiz'), y=w.scrollTop; renderWizard(); w.scrollTop=y; };
+  { const ba=$('#wiz [data-ouviravisos]'); if(ba) ba.onclick=()=>ouvir(falaAvisos(t.riscos.map(x=>Object.assign({tipo:'par'},x)))); }
   const avisar=()=>{ const t2=totalSel(it); if(t2.alertas.length && !addSel.ciente) falar(`Atenção. ${t2.alertas.join(' ').replace(/(\d+) mg/g,'$1 miligramas')} Vale conferir a receita.`); };
   document.querySelectorAll('#wiz [data-mom]').forEach(b=>b.onclick=()=>{ const k=b.dataset.mom; addSel.mom=addSel.mom.includes(k)?addSel.mom.filter(x=>x!==k):addSel.mom.concat(k); horasDoMom(); addSel.ciente=false; redesenha(); });
   const ho=$('#hOutro'); if(ho) ho.onchange=e=>{ const v=e.target.value, old=addSel.outro; if(old && old!==v && !addSel.h.includes(old)){ delete addSel.q[old]; delete addSel.outroQ[old]; } addSel.outro=v; addSel.ciente=false; redesenha(); };
@@ -3268,8 +3344,18 @@ function renderAgenda(){
     ${S.agenda.length&&!gest?`<p class="hint">Para mudar a hora do café, almoço, jantar e de dormir: Ajustes → Horários da minha rotina.</p>`:''}
   </div>`;
   ligarEstoque(); ligarPrazo('#view-agenda');
-  if(S.agenda.length>1) interacoesDe(S.agenda).then(l=>{ const box=$('#agInter'); if(!box||atual!=='agenda') return; box.innerHTML=cartaoInteracoes(l);
-    const bi=box.querySelector('[data-ouvirinter]'); if(bi) bi.onclick=()=>ouvir(falaInteracoes(l)); });
+  if(S.agenda.length>1){
+    const av=avisosResumo(S.agenda), boxA=$('#agInter');
+    if(boxA){ boxA.innerHTML=`<div id="agAvisos">${cartaoAvisos(av)}</div><div id="agCitas"></div>`; const ba=boxA.querySelector('[data-ouviravisos]'); if(ba) ba.onclick=()=>ouvir(falaAvisos(av)); }
+    interacoesDe(S.agenda).then(l=>{ const box=$('#agCitas'); if(!box||atual!=='agenda') return;
+      /* par que já tem aviso resumido: a frase da bula entra no mesmo cartão, como prova; os outros ganham cartão próprio */
+      const mesmo=(v,x)=>v.tipo==='par' && [v.nomeA,v.nomeB].sort().join('|')===[med(x.a).nome,med(x.o).nome].sort().join('|');
+      const cob=l.filter(x=>av.some(v=>mesmo(v,x))), resto=l.filter(x=>cob.indexOf(x)<0), nota=$('#agAvisos .inter-card > p.small');
+      if(nota) cob.forEach(x=>nota.insertAdjacentHTML('beforebegin',`<p class="small">Na bula de <b>${esc(med(x.a).nome)}</b>: <q>${esc(simples(x.frase))}</q></p>
+        <button class="linkbtn lk-azul" type="button" data-bula="${esc(x.a.registro)}" data-perg="4" data-nome="${esc(med(x.a).nome+(x.a.dose?' '+x.a.dose:''))}" data-url="${esc(bulaUrl({registro:x.a.registro}))}">Ler na bula</button>`));
+      box.innerHTML=cartaoInteracoes(resto);
+      const bi=box.querySelector('[data-ouvirinter]'); if(bi) bi.onclick=()=>ouvir(falaInteracoes(resto)); });
+  }
   document.querySelectorAll('#view-agenda [data-foto]').forEach(b=>b.onclick=()=>{ const a=S.agenda.find(q=>q.id===b.dataset.foto); if(a) tirarFoto(f=>{ a.foto=f; save(); renderAgenda(); toast('Pronto. Foto salva.'); }); });
   document.querySelectorAll('#view-agenda [data-del]').forEach(b=>b.onclick=()=>{ const id=b.dataset.del;
     if(removerId!==id){ removerId=id; renderAgenda(); falar('Toque de novo para remover.'); return; }
@@ -5166,7 +5252,7 @@ async function wizVoz(){
         addSel.passo=3; renderWizard(); continue; }
       if(p===3){ const t=totalSel(it), hs=horasSel();
         const resumo=hs.map(h=>`${nomeHora(h).toLowerCase()}: ${rotuloQ(addSel.q[h],addSel.outroQ[h],u)}`).join('; ');
-        await falarE(`Confira com a receita. ${resumo}.${t.alertas.length?' Atenção: '+t.alertas.join(' ').replace(/(\d+) mg/g,'$1 miligramas')+' Pode estar certo, se o médico receitou assim.':''} Está igual à receita? Diga sim ou não.`); st('Ouvindo…');
+        await falarE(`Confira com a receita. ${resumo}.${t.alertas.length?' Atenção: '+t.alertas.join(' ').replace(/(\d+) mg/g,'$1 miligramas')+' Pode estar certo, se o médico receitou assim.':''}${t.riscos&&t.riscos.length?' '+t.riscos.map(x=>fraseAviso(Object.assign({tipo:'par'},x))).join(' ')+' Vale falar com o farmacêutico.':''} Está igual à receita? Diga sim ou não.`); st('Ouvindo…');
         const ok=simOuNao(await escutar());
         if(ok!==true){ st('Confira e toque em conferi.'); await falarE('Tudo bem. Confira com calma e toque em conferi, na tela.'); break; }
         addSel.conferi=true; if(t.alertas.length) addSel.ciente=true; renderWizard(); salvarWizard(it); break; }
