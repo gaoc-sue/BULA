@@ -911,6 +911,33 @@ nav.tabs button[aria-current="page"]{background:var(--accent-soft);color:var(--a
 @keyframes abCred{to{opacity:.92}}
 @media (prefers-reduced-motion:reduce){.abertura *{animation:none!important;opacity:1!important;transform:none!important}}
 :root[data-calmo="1"] .abertura *{animation:none!important;opacity:1!important;transform:none!important}
+/* aba Farmácias: anúncios de exemplo (só na demonstração) */
+.cupom-t{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7A4300;margin:0 0 -8px}
+.cupom{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:14px 16px;border-radius:20px;background:#FFF4D6;border:2px dashed #C26A00;color:#3B2200;font:inherit;cursor:pointer}
+.cupom .cp-ic{flex:none;width:52px;height:52px;border-radius:999px;background:#E58300;color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.2rem}
+.cupom b{display:block;font-size:1.1rem;line-height:1.2}
+.cupom small{display:block;font-size:.85rem;color:#6B4A12;margin-top:2px}
+.cupom .cp-ver{margin-left:auto;flex:none;font-weight:800;color:#7A4300}
+.cab-pc{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin:2px 0 -6px}
+.cab-pc .linkbtn{font-size:.9rem;white-space:nowrap;padding:4px 0;min-height:0;color:var(--accent);text-decoration:underline}
+.cab-pc .label{margin:0}
+.pc{border:2px solid var(--line);border-radius:20px;background:var(--surface);overflow:hidden;box-shadow:0 2px 8px rgba(17,24,39,.10)}
+.pc-row{display:flex;gap:12px;padding:12px}
+.pc-row img{width:92px;height:92px;object-fit:cover;border-radius:14px;flex:none;background:#CFE3F7}
+.pc-b{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.pc-b .selo-fp{align-self:flex-start;margin:0}
+.pc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pc-tag{font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:#FFF1D6;color:#7A4300;border:1px solid #E58300}
+.pc-n{margin:0;font-size:1.05rem;font-weight:700;line-height:1.2}
+.pc-i{margin:0;font-size:.9rem;color:var(--muted)}
+.pc .btn-row{padding:0 12px 12px}
+.tela-cupom{display:flex;flex-direction:column;gap:16px}
+.tela-cupom .btn-volta{align-self:flex-start;width:auto;padding:0 20px}
+.cp-box{border:3px dashed #C26A00;border-radius:20px;background:#fff;padding:20px;text-align:center;color:#3B2200}
+.cp-cod{font-weight:800;font-size:2.6rem;line-height:1.1;letter-spacing:.12em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.cp-dica{margin-top:8px;color:#6B4A12;font-weight:600}
+:root[data-contraste="1"] .cupom,:root[data-contraste="1"] .cp-box{background:#000;color:#FFE600;border-color:#FFE600}
+:root[data-contraste="1"] .cupom small,:root[data-contraste="1"] .cupom .cp-ver,:root[data-contraste="1"] .cupom-t,:root[data-contraste="1"] .cp-dica{color:#FFE600}
 </style>
 </head>
 <body>
@@ -1347,10 +1374,36 @@ function vibrar(tipo){
 }
 /* fala automática: no modo calmo fica em silêncio (a pessoa toca em Ouvir quando quiser) */
 const paraFala = t => String(t==null?'':t).replace(/\bBULA\b/g,'Bula');
+/* ---------- voz gravada: frases fixas e da demonstração gravadas uma vez com a voz do Google (www/voz, ver scripts/voz)
+   Toca o MP3 quando a frase inteira foi gravada; o resto continua na voz do celular. Funciona sem internet.
+   Nada sai do celular: os áudios já vêm dentro do app. */
+let VOZ_IDX=null, vozAudio=null, vozFim=null;
+const normVoz = t => String(t==null?'':t).replace(/\s+/g,' ').trim();
+function hashVoz(t){ let h=0x811c9dc5; for(const c of new TextEncoder().encode(t)){ h^=c; h=Math.imul(h,0x01000193)>>>0; } return ('0000000'+h.toString(16)).slice(-8); }
+try{ fetch('voz/indice.json').then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.f) VOZ_IDX=j; }).catch(()=>{}); }catch(e){}
+function arquivoVoz(t){ if(!VOZ_IDX || AP.vozGravada===false) return null; const n=normVoz(t), x=VOZ_IDX.f[hashVoz(n)]; return x && x[1]===n ? 'voz/'+x[0] : null; }
+/* para a frase gravada que estiver tocando (quem esperava por ela segue) */
+function pararVozGravada(){ const f=vozFim; vozFim=null; if(vozAudio){ try{ vozAudio.pause(); }catch(e){} vozAudio=null; } if(f) f('parado'); }
+/* toca o MP3; responde true (terminou), 'parado' (outra fala começou) ou false (não tocou: usa a voz do celular) */
+function tocarVozGravada(arq){
+  pararVozGravada();
+  return new Promise(ok=>{
+    let feito=false; const fim=r=>{ if(feito) return; feito=true; if(vozFim===fim) vozFim=null; if(vozAudio===a) vozAudio=null; ok(r); };
+    let a=null;
+    try{ a=new Audio(arq); a.playbackRate=AP.vel||1; vozAudio=a; vozFim=fim;
+      a.onended=()=>fim(true); a.onerror=()=>fim(false);
+      const p=a.play(); if(p&&p.catch) p.catch(()=>fim(false)); }catch(e){ fim(false); }
+  });
+}
 function falar(t){ if(AP.calmo) return; ouvir(t); }
 /* fala pedida pela pessoa: sempre fala */
 function ouvir(t){
   t=paraFala(t);
+  const arq=arquivoVoz(t);
+  if(arq){ calarCelular(); tocarVozGravada(arq).then(r=>{ if(r===false) ouvirCelular(t); }); return; }
+  pararVozGravada(); ouvirCelular(t);
+}
+function ouvirCelular(t){
   const v=vozAtual(), rate=AP.vel||1;
   if(TTS){
     const opc={text:t,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'};
@@ -1586,9 +1639,26 @@ const parasGlos = t => esc(t).replace(GLOS_RE,m=>{ const v=GLOS_MAP[m.toLowerCas
 function frasesDe(t){ return String(t||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+(?=[A-ZÀ-Ý0-9•–-])/).map(f=>f.replace(/^[•–-]\s*/,'').trim()).filter(f=>f.length>12); }
 const corta=(f,max)=>{ f=f.replace(/\s*\((ver|veja)[^)]*\)/gi,''); if(f.length<=max) return f; const c=f.slice(0,max), k=Math.max(c.lastIndexOf(', '),c.lastIndexOf('; '));
   return (k>max*0.5?c.slice(0,k):c.replace(/\s+\S*$/,''))+'…'; };
+/* o resumo não fala nome comercial (marca): troca pela substância. O texto oficial completo fica como está na bula. */
+function marcasDaBula(b){
+  const ch=(chaveBula(reg9((b&&b.registro)||''))||'').split('|')[0], ns=nucleos(ch).filter(n=>n.length>=4), sub=ns.join(' e ')||'este remédio';
+  const p=String((b&&b.produto)||'').trim(), marcas=[];
+  if(p && ns.length && !ns.some(n=>normTx(p).includes(n))) marcas.push(p);
+  return {sub,marcas};
+}
+function semMarca(f,m){
+  const esc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const pats=m.marcas.map(x=>[esc(x).replace(/\s+/g,'\\s+')+'\\s*®?','gi']).concat([['(?:[A-ZÀ-Ú][\\wÀ-ú-]*\\s){0,2}[A-ZÀ-Ú][\\wÀ-ú-]*\\s*®','g']]);
+  let t=String(f||'');
+  for(const [p,fl] of pats){
+    t=t.replace(new RegExp(p+'\\s*\\(([^)]{3,80})\\)',fl),(_,d)=>d.trim());
+    t=t.replace(new RegExp(p,fl),m.sub);
+  }
+  return t.replace(/®/g,'');
+}
 function resumoBula(b){
-  const s=(b&&b.secoes)||{}, R=[];
-  const add=(k,tit,frs)=>{ frs=frs.filter(Boolean); if(frs.length) R.push({k,tit,frs:frs.map(f=>simples(corta(f,230)))}); };
+  const s=(b&&b.secoes)||{}, R=[], mc=marcasDaBula(b);
+  const add=(k,tit,frs)=>{ frs=frs.filter(Boolean); if(frs.length) R.push({k,tit,frs:frs.map(f=>{ const x=simples(corta(semMarca(f,mc),230)); return x.charAt(0).toUpperCase()+x.slice(1); })}); };
   add('1','Para que serve',frasesDe(s[1]).slice(0,2));
   add('3','Não use se',frasesDe(s[3]).slice(0,2));
   add('4','Cuidados importantes',frasesDe(s[4]).filter(f=>/álcool|bebida alco|dirigir|máquinas|gravidez|grávida|amament|idos[oa]s|exposição ao sol|luz solar|não (interrompa|pare)|suspender|sonolên/i.test(f)).slice(0,3));
@@ -1904,7 +1974,9 @@ async function ouvirLongo(t){
   const partes=[]; let at='';
   (String(t).replace(/\n+/g,' ').match(/[^.;:!?]+[.;:!?]*\s*/g)||[]).map(f=>f.trim()).filter(Boolean).forEach(f=>{ if((at+' '+f).length>1100 && at){ partes.push(at); at=f; } else at=at?at+' '+f:f; });
   if(at) partes.push(at);
-  const id=++longoId, v=vozAtual(), rate=AP.vel||1;
+  const id=++longoId, v=vozAtual(), rate=AP.vel||1, arq=arquivoVoz(t);
+  if(arq){ calarCelular(); const r=await tocarVozGravada(arq); if(r!==false || id!==longoId) return; }
+  else pararVozGravada();
   if(TTS){ await TTS.stop().catch(()=>{}); for(const p of partes){ if(id!==longoId) return; const o={text:p,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'}; if(v) o.voice=v.i;
       try{ await TTS.speak(o); }catch(e){ try{ delete o.voice; await TTS.speak(o); }catch(x){ semVoz(); return; } } } return; }
   if(!('speechSynthesis' in window)){ toast('Este aparelho não tem voz. Leia o texto na tela.'); return; }
@@ -2044,7 +2116,8 @@ async function explicar(v){
   const sv = b ? trecho(b.secoes[1]) : i.serve, cu = b ? trecho(b.secoes[7],360) : i.cuidado;
   ouvir(`${i.nome}. É o ${i.apelido}. ${sv?'Para que serve, segundo a bula: '+sv+' ':'Para que serve e os cuidados estão na bula oficial. '}${cu?'Se esquecer uma dose, segundo a bula: '+cu:''}`); }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-fala]'); if(b){ explicar(b.dataset.fala); if((S.dicaNome||0)<3){ S.dicaNome=(S.dicaNome||0)+1; save(); } } });
-function calar(){ if(TTS) TTS.stop().catch(()=>{}); else if('speechSynthesis' in window) speechSynthesis.cancel(); }
+function calarCelular(){ if(TTS) TTS.stop().catch(()=>{}); else if('speechSynthesis' in window) speechSynthesis.cancel(); }
+function calar(){ pararVozGravada(); calarCelular(); }
 let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,Math.min(9000,2600+String(t).length*45)); }
 
 /* ---------- fim do tratamento: "por 7 dias" na receita. a.ate = último dia (AAAA-MM-DD); sem a.ate = uso contínuo ---------- */
@@ -2290,7 +2363,7 @@ function checarEstoque(){ const novos=[];
   if(!novos.length) return;
   save();
   if(S.pareados.length && !S.demo) novos.forEach(({a,f})=>eloAvisar('estoque',{titulo:`O ${med(a).apelido} de ${curto(nomeP())} está acabando`,
-    texto:`${med(a).nome} ${a.dose}: ${quandoAcaba(f)}. Restam uns ${restamTxt(a)}. No BULA, “Remédio de graça” mostra onde tem.`}));
+    texto:`${med(a).nome} ${a.dose}: ${quandoAcaba(f)}. Restam uns ${restamTxt(a)}. No BULA, “Onde pegar o remédio” mostra onde tem.`}));
 }
 
 /* ---------- tela INÍCIO (hoje) ----------
@@ -2368,7 +2441,7 @@ function renderHoje(){
     <div class="atalhos">
       <button class="atalho at-ler" type="button" data-go="ler" data-scan="1">${IC.ler}Ler a caixa</button>
       <button class="atalho at-meus" type="button" data-go="agenda">${IC.meus}Meus remédios</button>
-      <button class="atalho at-gratis" type="button" data-go="gratis">${IC.gratis}Remédio de graça</button>
+      <button class="atalho at-gratis" type="button" data-go="gratis">${IC.gratis}Onde pegar o remédio</button>
       <button class="atalho at-fam" type="button" data-go="${S.seguindo.length&&!S.pareados.length&&!S.agenda.length?'acomp':'familia'}">${IC.fam}Família</button>
     </div>
     ${modoFamilia()?'':`<button class="btn btn-socorro-l" type="button" data-vcmd-hoje="socorro">${IC.socorro}Pedir ajuda</button>`}
@@ -2400,7 +2473,7 @@ function falaHoje(semMud){
   if(depois.length) t+=(ativo?'Depois: ':'O próximo: ')+listaFala(depois.map((x,n)=>`${x.m.nome}, às ${falaHora(x.h)}${n===0&&!ativo&&faltaMin(x.h)>0?', daqui a '+emQuantoFala(faltaMin(x.h)):''}`))+'. ';
   const acab=remediosAcabando();
   if(acab.length) t+='Atenção: '+listaFala(acab.map(x=>`o ${med(x.a).apelido} ${quandoAcaba(x.f).replace(/ \(.*\)/,'')}`))+'. ';
-  return t+'Embaixo tem quatro botões: ler a caixa, meus remédios, remédio de graça e família. Você também pode tocar em falar e dizer o que quer.';
+  return t+'Embaixo tem quatro botões: ler a caixa, meus remédios, onde pegar o remédio e família. Você também pode tocar em falar e dizer o que quer.';
 }
 
 /* ---------- tela LER ---------- */
@@ -3440,7 +3513,10 @@ function subAjustes(){
   if(ajSub==='rx') return t+`<div class="form"><div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-rxt="0" aria-pressed="${AP.rxTeste===false}">Desligado</button><button type="button" data-rxt="1" aria-pressed="${AP.rxTeste!==false}">Ligado</button></div>
       <p class="hint">Ligado, aparece “Fotografar a receita” em Ler a caixa. O app lê a receita impressa (ou o PDF e o QR code da receita digital), separa os remédios e mostra um por um para você conferir: está certo, corrigir ou não colocar. Nada é salvo sem o seu sim. É um teste: o leitor pode errar, e letra de mão ele quase não entende. A foto é lida no próprio celular e não fica guardada.</p></div>`;
   if(ajSub==='calmo') return t+`<div class="form">${segCalmo()}<p class="hint">Sem animações e cores mais suaves. A voz só fala quando você toca em Ouvir, e o alarme toca sem voz. Bom para quem se incomoda com estímulos fortes.</p></div>`;
-  if(ajSub==='voz') return t+`<div class="form"><p class="label">Voz</p>
+  if(ajSub==='voz') return t+`<div class="form">${VOZ_IDX?`<p class="label">Voz do BULA</p>
+      <div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"><button type="button" data-vgrav="0" aria-pressed="${AP.vozGravada===false}">Desligada</button><button type="button" data-vgrav="1" aria-pressed="${AP.vozGravada!==false}">Ligada</button></div>
+      <p class="hint">Uma voz mais natural, gravada dentro do app, nas frases de sempre e na demonstração. Funciona sem internet. O que muda de pessoa para pessoa usa a voz do celular, escolhida abaixo.</p>`:''}
+      <p class="label">${VOZ_IDX?'Voz do celular':'Voz'}</p>
       ${VOZES.length? `<div class="stack">${VOZES.slice(0,6).map((v,n)=>`<button type="button" class="conferi" data-voz="${esc(v.name)}" aria-pressed="${AP.voz===v.name}"><span class="caixa" aria-hidden="true">${AP.voz===v.name?'✓':''}</span><span>Voz ${n+1}<br><span class="small" style="font-weight:400">${v.local?'Funciona sem internet':'Mais natural · precisa de internet'}</span></span></button>`).join('')}</div>
         <p class="hint">Toque numa voz para ouvir e escolher.</p>` : (VOZ_PT===false?'':`<p class="hint">Nenhuma voz em português encontrada neste celular.</p>`)}
       ${VOZ_PT===false?`<div class="msg warn" style="margin:0">A voz em português não está instalada. Sem ela, o app pode ficar mudo sem internet.</div><button class="btn btn-ghost" id="bInstVoz" type="button">Instalar a voz em português</button>`:''}
@@ -3515,8 +3591,9 @@ function ligarSubAjustes(){
   document.querySelectorAll('#view-ajustes [data-vg]').forEach(b=>b.onclick=()=>{ AP.vozGuia=b.dataset.vg==='1'; aplicarAparencia(); renderAjustes(); falarE(AP.vozGuia?'Conversa por voz ligada.':'Conversa por voz desligada.'); });
   document.querySelectorAll('#view-ajustes [data-mcalmo]').forEach(b=>b.onclick=()=>{ AP.calmo=b.dataset.mcalmo==='1'; aplicarAparencia(); renderAjustes(); toast(AP.calmo?'Modo calmo ligado.':'Modo calmo desligado.'); });
   const amostra='Olá! Eu sou o BULA. Está na hora do remédio da pressão.';
-  document.querySelectorAll('#view-ajustes [data-voz]').forEach(b=>b.onclick=()=>{ AP.voz=b.dataset.voz; aplicarAparencia(); renderAjustes(); ouvir(amostra); });
+  document.querySelectorAll('#view-ajustes [data-voz]').forEach(b=>b.onclick=()=>{ AP.voz=b.dataset.voz; aplicarAparencia(); renderAjustes(); pararVozGravada(); ouvirCelular(paraFala(amostra)); });
   document.querySelectorAll('#view-ajustes [data-vel]').forEach(b=>b.onclick=()=>{ AP.vel=+b.dataset.vel; aplicarAparencia(); renderAjustes(); ouvir(amostra); });
+  document.querySelectorAll('#view-ajustes [data-vgrav]').forEach(b=>b.onclick=()=>{ AP.vozGravada=b.dataset.vgrav==='1'; aplicarAparencia(); renderAjustes(); ouvir(AP.vozGravada?'Voz do BULA ligada.':'Voz do BULA desligada.'); });
   document.querySelectorAll('#view-ajustes [data-bipe]').forEach(b=>b.onclick=()=>{ AP.bipe=b.dataset.bipe==='1'; aplicarAparencia(); renderAjustes(); if(AP.bipe) bipeAbre(); });
   on('#bInstVoz','onclick',()=>{ if(TTS&&TTS.openInstall) TTS.openInstall().catch(()=>toast('Abra Configurações → Acessibilidade → Conversão de texto em voz.')); });
   on('#cfgCont','onclick',()=>escolherContato('#cfgFones',(n,f)=>{
@@ -3780,7 +3857,7 @@ function renderGratis(){
   const remTxt=(meus.length||outrosG.length)? meus.map(p=>`${INFO[p].nome} ${(S.agenda.find(a=>a.principio===p)||{}).dose||GRATIS[p]}`).concat(outrosG.map(a=>`${med(a).nome} ${a.dose}`)) : ['losartana 50 mg'];
   const frase=`Olá. Vocês têm ${listaFala(remTxt)} pela Farmácia Popular? Quero retirar de graça.`;
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
-    <h2>Remédio de graça</h2>
+    <h2>Onde pegar o remédio</h2>
     ${abasGratis()}
     ${temCoords?`<button class="btn btn-pill" id="bOrdenar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>${posicao?'Atualizar minha localização':'Mostrar as mais perto de mim'}</button>
       <p class="hint" style="margin-top:-8px">Sua localização fica só no celular. Não é enviada para ninguém.</p>`:''}
@@ -3813,16 +3890,53 @@ function renderGratis(){
 
 function abasGratis(){ return `<div class="seg seg-g" role="tablist">
   <button type="button" role="tab" data-aba="popular" aria-pressed="${gratisAba==='popular'}">Farmácia Popular</button>
-  <button type="button" role="tab" data-aba="sus" aria-pressed="${gratisAba==='sus'}">Posto do SUS</button>
-  <button type="button" role="tab" data-aba="perto" aria-pressed="${gratisAba==='perto'}">Comprar perto</button></div>`; }
-function ligarAbas(){ document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{ gratisAba=b.dataset.aba; bairroSel=''; renderGratis(); }); }
+  <button type="button" role="tab" data-aba="sus" aria-pressed="${gratisAba==='sus'}">Grátis no posto</button>
+  <button type="button" role="tab" data-aba="perto" aria-pressed="${gratisAba==='perto'}">Farmácias</button></div>`; }
+function ligarAbas(){ document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{ gratisAba=b.dataset.aba; bairroSel=''; cupomAberto=false; renderGratis(); }); }
 /* remédio que não é de graça: as farmácias perto (todas) e o mapa do celular. O BULA não indica farmácia. */
+/* "Uma ida só" e a lista do que não é grátis: em espera para o Demoday (aba Farmácias mais simples). Para voltar, troque para true. */
+const FARM_COMPLETO=false;
+/* modelo de negócio: farmácias pagam para aparecer. Ainda não há anunciante: os exemplos aparecem só na demonstração.
+   Nunca anuncia remédio, nunca usa os remédios da pessoa para escolher, e o grátis vem sempre primeiro (outra aba). */
+const PATRO_EX=[{n:'Farmácia Exemplo',d:'450 m',i:'Aberta até as 22h · Entrega em casa',fp:true,img:'img/farmacia-exemplo.svg'},
+  {n:'Drogaria Modelo',d:'700 m',i:'Aberta 24 horas · Estacionamento',fp:false,img:'img/drogaria-modelo.svg'}];
+const CUPOM_EX={t:'Entrega grátis na primeira compra',f:'Farmácia Exemplo',d:'450 m',ate:'30/11',cod:'BULA10'};
+let cupomAberto=false;
+const exemploAnuncio = () => toast('É só um exemplo de anúncio. A farmácia não existe.');
+function blocoAnuncios(){
+  if(!S.demo) return '';
+  return `<p class="cupom-t">Patrocinado · exemplo</p>
+    <button type="button" class="cupom" id="bCupom"><span class="cp-ic" aria-hidden="true">%</span><span class="cp-tx"><b>${esc(CUPOM_EX.t)}</b><small>${esc(CUPOM_EX.f)} · até ${CUPOM_EX.ate} · não vale para remédios</small></span><span class="cp-ver">Ver ›</span></button>
+    <div class="cab-pc"><p class="label">Destaques perto de você <span style="font-weight:400">(exemplos)</span></p><button type="button" class="linkbtn" id="bPorQue">Por que vejo isto?</button></div>
+    ${PATRO_EX.map(p=>`<section class="pc" aria-label="Anúncio de exemplo: ${esc(p.n)}"><div class="pc-row"><img src="${p.img}" alt="Fachada da ${esc(p.n)}" width="92" height="92"><div class="pc-b">
+      <div class="pc-top"><span class="pc-tag">Patrocinado</span><span class="dist">${p.d}</span></div><p class="pc-n">${esc(p.n)}</p>${p.fp?'<span class="selo-fp">Farmácia Popular</span>':''}<p class="pc-i">${esc(p.i)}</p></div></div>
+      <div class="btn-row"><button type="button" class="btn btn-ghost btn-s" data-pcex="1">Como chegar</button><button type="button" class="btn btn-ghost btn-s" data-pcex="1">Ligar</button></div></section>`).join('')}
+    <p class="label" style="margin:4px 0 -6px">Farmácias mais perto</p>`;
+}
+const falaAnuncios = () => S.demo ? `Anúncios de exemplo: ${PATRO_EX.map(p=>p.n+', a '+p.d.replace(' m',' metros').replace(' km',' quilômetros')).join(', e ')}. Cupom de exemplo: ${CUPOM_EX.t.toLowerCase()}, na ${CUPOM_EX.f}. Não vale para remédios. ` : '';
+function renderCupom(){
+  $('#view-gratis').innerHTML=`<div class="tela-cupom">
+    <p class="cupom-t" style="margin:0">Patrocinado · exemplo</p>
+    <h2>${esc(CUPOM_EX.t)}</h2>
+    <p style="margin:0">Na <b>${esc(CUPOM_EX.f)}</b>, a ${CUPOM_EX.d}. Vale para produtos de higiene e cuidado. <b>Não vale para remédios.</b></p>
+    <div class="cp-box"><div class="cp-cod">${CUPOM_EX.cod}</div><div class="cp-dica">Mostre este código no caixa ou diga no WhatsApp</div></div>
+    <p class="small" style="margin:0">Válido até ${CUPOM_EX.ate}. O BULA não usa os seus remédios para escolher ofertas.</p>
+    <button class="btn btn-main" id="bCupomOuvir" type="button">${IC.som}Ouvir o cupom</button>
+    <button class="btn btn-ghost" type="button" data-pcex="1">WhatsApp da farmácia</button>
+    <button class="btn btn-ghost" type="button" data-pcex="1">Como chegar</button>
+    <button class="btn btn-pill" id="bCupomVolta" type="button">Voltar para as farmácias</button></div>`;
+  $('#bCupomVolta').onclick=()=>{ cupomAberto=false; renderPerto(); };
+  $('#bCupomOuvir').onclick=()=>ouvir(`Cupom de exemplo. ${CUPOM_EX.t}, na ${CUPOM_EX.f}. Não vale para remédios. Código: ${CUPOM_EX.cod.split('').join(' ')}. Mostre o código no caixa.`);
+  document.querySelectorAll('#view-gratis [data-pcex]').forEach(b=>b.onclick=exemploAnuncio);
+  window.scrollTo(0,0);
+}
 const MAPA_FARM='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('farmácia');
 let FARM_TODAS=null, pertoN=5;
 const farmTodasOk = () => FARM_TODAS ? Promise.resolve(FARM_TODAS) : fetch('farmacias-todas.json').then(r=>r.json()).then(j=>{ FARM_TODAS=j.farmacias||[]; return FARM_TODAS; }).catch(()=>{ FARM_TODAS=[]; return FARM_TODAS; });
 const rotaUrl = f => `https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}&travelmode=${f.km<1?'walking':'transit'}`;
 const rotaFala = f => f.km<1 ? `A farmácia fica a uns ${Math.max(50,Math.round(f.km*1000/50)*50)} metros, cerca de ${Math.max(1,Math.round(f.km*1000/75))} minutos a pé.` : `A farmácia fica a uns ${fmtNum(Math.round(f.km*10)/10)} quilômetros. O mapa mostra o caminho de ônibus.`;
 function renderPerto(){
+  if(cupomAberto) return renderCupom();
   if(!$('#view-gratis .fp-lista')) pertoN=5;
   if(FARM_TODAS===null){ farmTodasOk().then(()=>{ if(atual==='gratis'&&gratisAba==='perto') renderPerto(); }); }
   const lin=[];
@@ -3844,18 +3958,19 @@ function renderPerto(){
     const parte=(cls,rot,l)=>l.length?`<span class="fp-bol ${cls}" aria-label="${rot}: ${esc(listaFala(l.map(x=>x.nome)))}"><small>${rot}</small>${l.map(x=>x.dot).join('')}</span>`:'';
     return (g.length||pg.length)?`<span class="fp-bols">${parte('gr','Grátis',g)}${parte('pg','Pago',pg)}</span>`:''; };
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
-    <h2>Comprar perto de casa</h2>
+    <h2>Onde pegar o remédio</h2>
     ${abasGratis()}
-    ${lin.length?`<div class="free"><p class="label">${lin.length>1?'Não são dados de graça pela Farmácia Popular':'Não é dado de graça pela Farmácia Popular'}</p>
+    ${!FARM_COMPLETO?'':lin.length?`<div class="free"><p class="label">${lin.length>1?'Não são dados de graça pela Farmácia Popular':'Não é dado de graça pela Farmácia Popular'}</p>
       ${lin.map(x=>`<div class="preco-l"><p style="margin:0"><b>${esc(x.nome)}${x.dose?' '+esc(x.dose):''}</b></p>
         ${x.g.st==='outra'?`<p class="small" style="margin:0">De graça só na dose ${esc(x.g.doses)}.</p>`:''}
         ${x.preta?'<p class="small" style="margin:0"><b>Tarja preta:</b> leve a receita especial.</p>':''}</div>`).join('')}
       <p class="small" style="margin:0">No posto de saúde, vale perguntar.</p></div>`
      :`<p class="msg info">Seus remédios são dados de graça. Esta parte é para quando o remédio não é.</p>`}
+    ${blocoAnuncios()}
     ${!posicao?`<div class="farm"><p style="margin:0">Para mostrar as farmácias mais perto, o BULA usa a sua localização só neste celular.</p>
         <button class="btn btn-pill" id="bPertoLoc" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>Mostrar farmácias perto de mim</button></div>`
      : !FARM_TODAS ? '<p class="msg info">Carregando as farmácias…</p>'
-     : `${fpPerto&&grat.length&&lin.length?`<section class="al-card info"><h3>Uma ida só</h3><p style="margin:0">Na farmácia credenciada da Farmácia Popular${fpPerto.n?' <b>'+esc(fpPerto.n)+'</b>,':''} a <b>${fmtKm(fpPerto.km)}</b>, você pega <b>${esc(listaFala(grat.map(a=>med(a).nome)))}</b> de graça e pode comprar <b>${esc(listaFala(lin.map(x=>x.nome)))}</b>. Ligue antes e pergunte se tem.</p>
+     : `${FARM_COMPLETO&&fpPerto&&grat.length&&lin.length?`<section class="al-card info"><h3>Uma ida só</h3><p style="margin:0">Na farmácia credenciada da Farmácia Popular${fpPerto.n?' <b>'+esc(fpPerto.n)+'</b>,':''} a <b>${fmtKm(fpPerto.km)}</b>, você pega <b>${esc(listaFala(grat.map(a=>med(a).nome)))}</b> de graça e pode comprar <b>${esc(listaFala(lin.map(x=>x.nome)))}</b>. Ligue antes e pergunte se tem.</p>
          <a class="btn btn-pill" href="${rotaUrl(fpPerto)}" id="bUmaIda" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>Como chegar</a></section>`:''}
        <div class="fp-lista">${mostrar.map((f,i)=>`<details class="fp-l f-perto" data-i="${i}"><summary>
            <span class="fp-nome"><b>${esc(nm(f))}</b>${f.fp?'<span class="selo-fp">Farmácia Popular</span>':''}
@@ -3884,7 +3999,10 @@ function renderPerto(){
   document.querySelectorAll('#view-gratis [data-rota]').forEach(a=>a.addEventListener('click',()=>{ const f=lista[+a.dataset.rota]; if(f) falar(rotaFala(f)); }));
   document.querySelectorAll('#view-gratis [data-farmp]').forEach(b=>b.onclick=()=>{ const f=lista[+b.dataset.farmp]; ouvir(`${nm(f)}${f.fp?', da Farmácia Popular':''}. ${f.r?'Fica na '+f.r+'. ':''}${rotaFala(f)}`); });
   $('#bFrasePerto').onclick=()=>ouvir(frase);
-  $('#bOuvirPerto').onclick=()=>ouvir((lin.length?lin.map(x=>`${x.nome}${x.dose?', '+x.dose.replace('mg','miligramas'):''}: não é dado de graça pela Farmácia Popular.`).join(' ')+' No posto de saúde, vale perguntar. ':'')
+  const bc=$('#bCupom'); if(bc) bc.onclick=()=>{ cupomAberto=true; renderCupom(); falar('Cupom de exemplo. Mostre o código no caixa.'); };
+  const bpq=$('#bPorQue'); if(bpq) bpq.onclick=()=>{ const t='São farmácias perto de você que pagam para aparecer aqui. O BULA não usa os seus remédios para escolher anúncios e nunca anuncia remédio. Estes são exemplos.'; toast(t); falar(t); };
+  document.querySelectorAll('#view-gratis [data-pcex]').forEach(b=>b.onclick=exemploAnuncio);
+  $('#bOuvirPerto').onclick=()=>ouvir(falaAnuncios()+(FARM_COMPLETO&&lin.length?lin.map(x=>`${x.nome}${x.dose?', '+x.dose.replace('mg','miligramas'):''}: não é dado de graça pela Farmácia Popular.`).join(' ')+' No posto de saúde, vale perguntar. ':'')
     +(lista.length?`A farmácia mais perto fica a ${fmtKm(lista[0].km).replace('km','quilômetros').replace(' m',' metros')}. Toque em como chegar para ver o caminho.`:'Toque no botão azul para ver as farmácias perto de você.')+' Antes de ir, ligue e pergunte se tem o remédio e o preço.');
 }
 const NOMES_P = ps => ps.filter(p=>INFO[p]).map(p=>INFO[p].nome);
@@ -3906,7 +4024,7 @@ function renderPostos(){
   const telBtn = f => f.fone ? `<a class="btn btn-ghost" href="tel:${esc(String(f.fone).replace(/[^\d+]/g,''))}">Ligar</a>` : '';
   const mapaP = f => f.lat ? `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.nome+', '+(f.rua||'')+', '+(f.bairro||'')+', Recife')}`;
   $('#view-gratis').innerHTML=`<div style="display:flex;flex-direction:column;gap:16px">
-    <h2>Remédio de graça</h2>
+    <h2>Onde pegar o remédio</h2>
     ${abasGratis()}
     ${qd?`<div class="estq-data${qd.hoje?'':' velha'}" role="status">${IC.relogio}<div>${qd.hoje?`<b>Estoque ${qd.consultado?'consultado ':'de '}${esc(qd.txt)}</b><span>Lista da Prefeitura do Recife. Muda durante o dia: ligue antes de ir.</span>`
       :`<b>Lista de ${esc(qd.txt)}, pode ter mudado</b><span>${vivoBuscando?'Conferindo o estoque de hoje na Prefeitura...':'Não consegui o estoque de hoje. Ligue antes de ir.'}</span>`}</div></div>`:''}
@@ -4205,7 +4323,7 @@ function renderBV(){
 
 /* ---------- navegação: tela inicial + telas com "Voltar" escrito (Grindrod et al. 2014; Gomez-Hernandez et al. 2023: saída segura em toda tela) ---------- */
 const LOGO_SVG='<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1E4FD0"/><g transform="translate(14.36 9.46) scale(0.98)"><path d="M6 0H22C29.5 0 34 4.2 34 10C34 13.4 32.3 16.2 29.6 17.7C33.8 19.3 36 22.8 36 27C36 34.2 30.6 39 23 39H11.5L3.4 45.3C1.9 46.4 0 45.7 0 43.8V6C0 2.7 2.7 0 6 0Z" fill="#FFFFFF"/><rect x="7" y="12.6" width="16.5" height="4.8" rx="2.4" fill="#1E4FD0"/><rect x="7" y="21.2" width="11" height="4.8" rx="2.4" fill="#1E4FD0"/></g></svg>';
-const TITULOS={ler:'Ler a caixa',agenda:'Meus remédios',familia:'Família',gratis:'Remédio de graça',ajustes:'Ajustes',acomp:'Família'};
+const TITULOS={ler:'Ler a caixa',agenda:'Meus remédios',familia:'Família',gratis:'Onde pegar o remédio',ajustes:'Ajustes',acomp:'Família'};
 /* quem acompanha passa a usar a caixinha para os próprios remédios: aceite próprio, nome e, depois, o primeiro remédio */
 function comecarMeus(){
   const seguir=()=>{ S.papel='idoso'; if(!S.pessoa) S.pessoa=limparNome(String(S.eu||'').replace(/\(.*?\)/g,''),false).trim(); save(); configurarNativo();
@@ -4235,7 +4353,7 @@ function falaTela(){
   if(atual==='ler') return resultado ? textoFala(resultado.it) : 'Ler a caixa. Toque em ler código de barras e aponte o celular para as barras da caixa do remédio.';
   if(atual==='agenda') return falaAgenda();
   if(atual==='familia') return falaFamilia();
-  if(atual==='gratis') return 'Remédio de graça. Os remédios da pressão e do diabetes são de graça na Farmácia Popular e nos postos de saúde. Leve a receita, um documento com foto e o CPF.';
+  if(atual==='gratis') return 'Onde pegar o remédio. Os remédios da pressão e do diabetes são de graça na Farmácia Popular e nos postos de saúde. Leve a receita, um documento com foto e o CPF.';
   if(atual==='ajustes') return ajSub ? (TIT_AJ[ajSub]||'Ajustes')+'.' : 'Ajustes. São as configurações do app, para a família ou quem ajuda a configurar. Toque no que quer mudar.';
   if(atual==='acomp') return falaAcomp();
   return '';
@@ -4245,6 +4363,7 @@ function go(v,opc){
   if(v==='hoje' && modoFamilia()) v='acomp';
   if(atual==='ler' && v!=='ler'){ parar(); alvo=null; gestorAlvo=null; }
   if(v!=='ajustes') ajSub='';
+  if(v!=='gratis') cupomAberto=false;
   if(v!=='acomp') acompPrevia=false;
   atual=v; removerId=''; confirma=''; ligarAberto=false;
   document.querySelectorAll('.view').forEach(x=>x.hidden = x.id!=='view-'+v);
@@ -4915,6 +5034,11 @@ let ultimaFala='';
 /* fala e espera terminar (para ouvir a resposta logo depois, sem o microfone pegar a voz do app) */
 function falarE(t){
   t=paraFala(t); ultimaFala=t;
+  const arq=arquivoVoz(t);
+  if(arq){ calarCelular(); return tocarVozGravada(arq).then(r=>r===false?falarCelularE(t):undefined); }
+  pararVozGravada(); return falarCelularE(t);
+}
+function falarCelularE(t){
   return new Promise(ok=>{
     const v=vozAtual(), rate=AP.vel||1;
     if(TTS){ const o={text:t,lang:'pt-BR',rate,pitch:1,volume:1,category:'playback'}; if(v) o.voice=v.i;
@@ -4978,7 +5102,7 @@ const COMANDOS=[
   ['mudou',/\b(o que mudou|mudanca|mudancas|mudou|quem mudou|quem colocou)\b/],
   ['agora',/\b(qual (e o )?remedio( de)? agora|que remedio (eu )?tomo|tenho que tomar|qual o proximo|proximo remedio|que horas|horario|agora)\b/],
   ['meus',/\b(meus remedios?|minhas? remedios?|quais (sao )?(os )?meus remedios?|lista)\b/],
-  ['gratis',/\b(gratis|de graca|farmacia popular|posto de saude|sem pagar)\b/],
+  ['gratis',/\b(gratis|de graca|farmacia popular|posto de saude|sem pagar|onde (eu )?pego|onde pegar)\b/],
   ['repetir',/\b(repete|repetir|de novo|nao entendi|fala de novo|outra vez)\b/],
   ['familia',/\b(familia|filha|filho)\b/]];
 function entender(ms){ for(const t of ms.map(ouvido)) for(const [k,re] of COMANDOS) if(re.test(t)) return k; return ''; }
@@ -5126,7 +5250,7 @@ function ouvirResumo(b){ const R=resumoBula(b); if(!R.length){ ouvirLongo(PERG_B
 async function executar(k,via,disse){
   const diz = async t => { telaVoz('resposta',t,disse); await falarE(t); };
   if(k==='socorro') return pedirSocorro(via==='voz');
-  if(k==='ajuda') return diz('Você pode falar: já tomei; qual o remédio agora; que remédio é esse; lê a bula da losartana; lê o resumo; como foi o mês; meus remédios; remédio de graça; farmácia perto; ligar para a família; repete; ou socorro.');
+  if(k==='ajuda') return diz('Você pode falar: já tomei; qual o remédio agora; que remédio é esse; lê a bula da losartana; lê o resumo; como foi o mês; meus remédios; onde pegar o remédio; farmácia perto; ligar para a família; repete; ou socorro.');
   if(k==='repetir') return diz(ultimaFala||falaHoje());
   if(k==='agora'){ const {ativo,depois}=partesHoje();
     if(!S.agenda.length) return diz('Ainda não tem remédio guardado. Diga: que remédio é esse, e mostre a caixa.');

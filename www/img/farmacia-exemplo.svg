@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="#CFE3F7"/><rect y="150" width="320" height="30" fill="#B9BEC7"/>
+<rect x="20" y="30" width="280" height="122" fill="#F4F1EA"/><rect x="20" y="30" width="280" height="34" fill="#0A7F4F"/>
+<text x="150" y="53" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">FARMÁCIA EXEMPLO</text>
+<g transform="translate(278,47)"><rect x="-8" y="-3" width="16" height="6" fill="#fff"/><rect x="-3" y="-8" width="6" height="16" fill="#fff"/></g>
+<path d="M20 64h280l-10 14H30z" fill="#E58300"/><rect x="40" y="88" width="90" height="56" rx="3" fill="#9CC9E8"/><rect x="190" y="88" width="90" height="56" rx="3" fill="#9CC9E8"/>
+<rect x="138" y="86" width="44" height="64" rx="3" fill="#5B6B80"/></svg>

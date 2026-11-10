@@ -1,0 +1,477 @@
+[
+ {
+  "id": "f001",
+  "grupo": "fixa",
+  "texto": "Achei o QR code da bula. Um momento."
+ },
+ {
+  "id": "f002",
+  "grupo": "fixa",
+  "texto": "Achei um QR code. Ele está na caixa do remédio, ou na receita do médico? Toque na resposta."
+ },
+ {
+  "id": "f003",
+  "grupo": "fixa",
+  "texto": "Agora o celular vai perguntar se o Bula pode avisar a hora do remédio. Toque em permitir."
+ },
+ {
+  "id": "f004",
+  "grupo": "fixa",
+  "texto": "Ainda não chegaram os registros do outro celular."
+ },
+ {
+  "id": "f005",
+  "grupo": "fixa",
+  "texto": "Ainda não tem o telefone da família. Peça para alguém colocar em Ajustes, Meus dados."
+ },
+ {
+  "id": "f006",
+  "grupo": "fixa",
+  "texto": "Ainda não tem remédio guardado, então não tem registro."
+ },
+ {
+  "id": "f007",
+  "grupo": "fixa",
+  "texto": "Ainda não tem remédio guardado. Diga: que remédio é esse, e mostre a caixa."
+ },
+ {
+  "id": "f008",
+  "grupo": "fixa",
+  "texto": "Alarme em tela cheia. Para o alarme aparecer na tela toda, mesmo com o celular bloqueado, ligue a opção do Bula na tela que vou abrir. Depois, volte para o Bula."
+ },
+ {
+  "id": "f009",
+  "grupo": "fixa",
+  "texto": "Aponte o celular para o código de barras da caixa do remédio."
+ },
+ {
+  "id": "f010",
+  "grupo": "fixa",
+  "texto": "Arrumando o celular de outra pessoa. Chame a pessoa que vai usar o celular: ela precisa concordar com os termos."
+ },
+ {
+  "id": "f011",
+  "grupo": "fixa",
+  "texto": "Arrumando o celular de outra pessoa. Chame a pessoa que vai usar o celular: ela precisa concordar com os termos. Depois, toque em: a pessoa está aqui comigo."
+ },
+ {
+  "id": "f012",
+  "grupo": "fixa",
+  "texto": "Atenção. A dose passa da maior dose citada na bula. Se estiver igual à receita, é só tocar em salvar de novo."
+ },
+ {
+  "id": "f013",
+  "grupo": "fixa",
+  "texto": "Confira com a receita."
+ },
+ {
+  "id": "f014",
+  "grupo": "fixa",
+  "texto": "Confira com a receita. Este remédio costuma ter prazo. Marque quantos dias a receita diz."
+ },
+ {
+  "id": "f015",
+  "grupo": "fixa",
+  "texto": "Confira com a receita. Por quanto tempo? Marque o que a receita diz."
+ },
+ {
+  "id": "f016",
+  "grupo": "fixa",
+  "texto": "De qual remédio é esta bula? Toque no nome."
+ },
+ {
+  "id": "f017",
+  "grupo": "fixa",
+  "texto": "De qual remédio? Diga, por exemplo: bula da Losartana."
+ },
+ {
+  "id": "f018",
+  "grupo": "fixa",
+  "texto": "Desfeito. A dose voltou a ficar para marcar."
+ },
+ {
+  "id": "f019",
+  "grupo": "fixa",
+  "texto": "Diga ou escreva o nome de quem da família recebe os avisos, e o telefone. Depois, toque em salvar."
+ },
+ {
+  "id": "f020",
+  "grupo": "fixa",
+  "texto": "E este, lá em cima, com o alto-falante, é para eu falar de novo. Ele fica no mesmo lugar em todas as telas."
+ },
+ {
+  "id": "f021",
+  "grupo": "fixa",
+  "texto": "Em que momento a receita manda tomar? Por exemplo: de manhã e à noite."
+ },
+ {
+  "id": "f022",
+  "grupo": "fixa",
+  "texto": "Esta é a demonstração, com a Dona Lúcia."
+ },
+ {
+  "id": "f023",
+  "grupo": "fixa",
+  "texto": "Este contato tem mais de um número. Escolha o celular com WhatsApp."
+ },
+ {
+  "id": "f024",
+  "grupo": "fixa",
+  "texto": "Este código não é o das listras. Aponte para o código de barras da caixa."
+ },
+ {
+  "id": "f025",
+  "grupo": "fixa",
+  "texto": "Isto é uma bula, não uma receita. Vou abrir a bula."
+ },
+ {
+  "id": "f026",
+  "grupo": "fixa",
+  "texto": "Mais um ajuste. Vou abrir uma tela do celular para o Bula não ser fechado e o alarme tocar sempre. Toque em Permitir. Depois, o Bula volta sozinho."
+ },
+ {
+  "id": "f027",
+  "grupo": "fixa",
+  "texto": "Marque por quantos dias, como está na receita."
+ },
+ {
+  "id": "f028",
+  "grupo": "fixa",
+  "texto": "Não achei este código. Confira o nome escrito na caixa."
+ },
+ {
+  "id": "f029",
+  "grupo": "fixa",
+  "texto": "Não consegui ler. Chegue o celular mais perto do código de barras e tente de novo."
+ },
+ {
+  "id": "f030",
+  "grupo": "fixa",
+  "texto": "Não consegui trazer a bula para o app. Toque em abrir a bula digital."
+ },
+ {
+  "id": "f031",
+  "grupo": "fixa",
+  "texto": "Não entendi o número. Fale devagar, com o DDD."
+ },
+ {
+  "id": "f032",
+  "grupo": "fixa",
+  "texto": "Não entendi. Toque em sim ou em não, na tela."
+ },
+ {
+  "id": "f033",
+  "grupo": "fixa",
+  "texto": "Não entendi. Toque na quantidade na tela."
+ },
+ {
+  "id": "f034",
+  "grupo": "fixa",
+  "texto": "Não entendi. Toque no botão da tela."
+ },
+ {
+  "id": "f035",
+  "grupo": "fixa",
+  "texto": "Não entendi. Toque nos momentos na tela, ou toque em responder falando."
+ },
+ {
+  "id": "f036",
+  "grupo": "fixa",
+  "texto": "Não ouvi. Tente de novo."
+ },
+ {
+  "id": "f037",
+  "grupo": "fixa",
+  "texto": "Não ouvi. Toque no botão da tela."
+ },
+ {
+  "id": "f038",
+  "grupo": "fixa",
+  "texto": "Não reconheci este remédio. Peça ajuda ao farmacêutico ou a alguém da família."
+ },
+ {
+  "id": "f039",
+  "grupo": "fixa",
+  "texto": "Não tenho a bula deste remédio no celular ainda."
+ },
+ {
+  "id": "f040",
+  "grupo": "fixa",
+  "texto": "O celular vai perguntar se eu posso usar o microfone. Toque na opção: durante o uso do app."
+ },
+ {
+  "id": "f041",
+  "grupo": "fixa",
+  "texto": "Olá! Eu sou o Bula. Eu leio a caixa do remédio, falo para que serve e lembro a hora de tomar. Eu não indico dose: a dose é sempre a da receita do médico."
+ },
+ {
+  "id": "f042",
+  "grupo": "fixa",
+  "texto": "Os remédios da pressão e do diabetes também são de graça nos postos de saúde do Recife. Leve a receita, o cartão do SUS e um documento com foto. Pergunte no posto se aceitam receita de médico particular. Ligue antes de ir, porque o estoque muda."
+ },
+ {
+  "id": "f043",
+  "grupo": "fixa",
+  "texto": "Para lembrar seus remédios, o app guarda os remédios e os horários só neste celular. A família só vê se você conectar o celular dela. Você pode apagar tudo quando quiser. Se concorda, toque no botão azul, concordo."
+ },
+ {
+  "id": "f044",
+  "grupo": "fixa",
+  "texto": "Pegue a receita do médico. São 3 perguntas."
+ },
+ {
+  "id": "f045",
+  "grupo": "fixa",
+  "texto": "Pegue a receita do médico. São 3 perguntas. Em que momento a receita manda tomar? Toque no que está na receita e depois no botão azul, com o sinal de certo, continuar. Ou toque no botão azul, responder falando."
+ },
+ {
+  "id": "f046",
+  "grupo": "fixa",
+  "texto": "Por quanto tempo? Copie da receita."
+ },
+ {
+  "id": "f047",
+  "grupo": "fixa",
+  "texto": "Privacidade e termos. Um: o Bula é um lembrete. Não indica nem muda dose e não substitui o médico. A dose é sempre a da receita. Dois: seus dados ficam só neste celular, criptografados. O Squad 4 não recebe nada. Três: se você conectar o celular de alguém da família, essa pessoa vê seus remédios, os horários e o que você marcou. Não vê fotos, contatos nem onde você está. As mensagens vão embaralhadas, de ponta a ponta. Quatro: a câmera, o microfone, os contatos e a localização só são usados quando você toca no botão. O app não grava sua voz. Cinco: no WhatsApp, quem envia a mensagem é você. Seis: as informações vêm da Anvisa e das bulas, e podem ter erros. Em dúvida, pergunte ao farmacêutico. Sete: para apagar tudo, use Ajustes, retirar consentimento e apagar tudo, ou desinstale o app."
+ },
+ {
+  "id": "f048",
+  "grupo": "fixa",
+  "texto": "Pronto. A bula foi guardada no celular."
+ },
+ {
+  "id": "f049",
+  "grupo": "fixa",
+  "texto": "Pronto. Agora feche o app e espere um minuto."
+ },
+ {
+  "id": "f050",
+  "grupo": "fixa",
+  "texto": "Pronto. Agora toque em salvar."
+ },
+ {
+  "id": "f051",
+  "grupo": "fixa",
+  "texto": "Pronto. Os lembretes foram mudados para os novos horários."
+ },
+ {
+  "id": "f052",
+  "grupo": "fixa",
+  "texto": "Pronto. Salvei o contato."
+ },
+ {
+  "id": "f053",
+  "grupo": "fixa",
+  "texto": "Pronto. Vou falar com você em cada tela e ouvir a sua resposta. Quando eu terminar de falar, responda."
+ },
+ {
+  "id": "f054",
+  "grupo": "fixa",
+  "texto": "Qual é o nome de quem vai usar este celular? Escreva, ou toque no botão roxo, falar, e diga o nome. Depois, toque no botão azul, continuar."
+ },
+ {
+  "id": "f055",
+  "grupo": "fixa",
+  "texto": "Qual é o seu nome? Toque no botão roxo, falar, e diga seu nome. Depois, toque no botão azul, com o sinal de certo, continuar."
+ },
+ {
+  "id": "f056",
+  "grupo": "fixa",
+  "texto": "Quanto tomar em cada momento, pela receita?."
+ },
+ {
+  "id": "f057",
+  "grupo": "fixa",
+  "texto": "Quem da família recebe os avisos? Pode ser você. Diga o nome e o telefone, ou toque em pular."
+ },
+ {
+  "id": "f058",
+  "grupo": "fixa",
+  "texto": "Quem da família vai receber os avisos? Toque no botão roxo, falar, e diga o nome. Depois, o telefone. Se preferir, toque em pular."
+ },
+ {
+  "id": "f059",
+  "grupo": "fixa",
+  "texto": "Remédio de graça. Os remédios da pressão e do diabetes são de graça na Farmácia Popular e nos postos de saúde. Leve a receita, um documento com foto e o CPF."
+ },
+ {
+  "id": "f060",
+  "grupo": "fixa",
+  "texto": "Salvo."
+ },
+ {
+  "id": "f061",
+  "grupo": "fixa",
+  "texto": "Se for urgente, toque no botão vermelho para ligar para o SAMU 1 9 2."
+ },
+ {
+  "id": "f062",
+  "grupo": "fixa",
+  "texto": "Se você cuida de alguém da família, toque neste: cuido de alguém da família."
+ },
+ {
+  "id": "f063",
+  "grupo": "fixa",
+  "texto": "Se você está arrumando o celular de outra pessoa, toque aqui."
+ },
+ {
+  "id": "f064",
+  "grupo": "fixa",
+  "texto": "Se é você quem toma os remédios, toque neste botão branco: eu tomo os remédios."
+ },
+ {
+  "id": "f065",
+  "grupo": "fixa",
+  "texto": "Sem internet, não consegui avisar a família. Ligue para o 1 9 2 ou para a família."
+ },
+ {
+  "id": "f066",
+  "grupo": "fixa",
+  "texto": "Sempre. O alarme toca todo dia."
+ },
+ {
+  "id": "f067",
+  "grupo": "fixa",
+  "texto": "Toque de novo para apagar."
+ },
+ {
+  "id": "f068",
+  "grupo": "fixa",
+  "texto": "Toque de novo para confirmar."
+ },
+ {
+  "id": "f069",
+  "grupo": "fixa",
+  "texto": "Toque de novo para remover."
+ },
+ {
+  "id": "f070",
+  "grupo": "fixa",
+  "texto": "Toque no que você quer."
+ },
+ {
+  "id": "f071",
+  "grupo": "fixa",
+  "texto": "Tudo bem."
+ },
+ {
+  "id": "f072",
+  "grupo": "fixa",
+  "texto": "Tudo bem. Confira com calma e toque em conferi, na tela."
+ },
+ {
+  "id": "f073",
+  "grupo": "fixa",
+  "texto": "Tudo bem. Não guardei."
+ },
+ {
+  "id": "f074",
+  "grupo": "fixa",
+  "texto": "Tudo bem. Não liguei."
+ },
+ {
+  "id": "f075",
+  "grupo": "fixa",
+  "texto": "Tudo bem. Não marquei nada."
+ },
+ {
+  "id": "f076",
+  "grupo": "fixa",
+  "texto": "Tudo bem. Não vou lembrar de novo deste horário. Quando tomar, marque na tela inicial."
+ },
+ {
+  "id": "f077",
+  "grupo": "fixa",
+  "texto": "Vamos colocar o primeiro remédio? Pegue a caixa e a receita do médico, e toque no botão azul, com o sinal de certo, ler a caixa do remédio."
+ },
+ {
+  "id": "f078",
+  "grupo": "fixa",
+  "texto": "Vamos colocar o primeiro remédio? Pegue a caixa e a receita, e toque no botão azul, ler a caixa do remédio."
+ },
+ {
+  "id": "f079",
+  "grupo": "fixa",
+  "texto": "Você pode falar: já tomei; qual o remédio agora; que remédio é esse; lê a bula da losartana; lê o resumo; como foi o mês; meus remédios; remédio de graça; farmácia perto; ligar para a família; repete; ou socorro."
+ },
+ {
+  "id": "d001",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário do remédio do açúcar no sangue: Metformina, 1 comprimido, conforme a receita. O botão tomei registra a dose."
+ },
+ {
+  "id": "d002",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário do remédio do açúcar no sangue: Metformina, 1 comprimido, conforme a receita. O botão tomei registra a dose. Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei."
+ },
+ {
+  "id": "d003",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário do remédio do açúcar no sangue: Metformina, 1 comprimido, conforme a receita. O botão tomei registra a dose. Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei. Já tomou? Diga sim quando tomar, ou diga depois."
+ },
+ {
+  "id": "d004",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário dos remédios do café da manhã: Losartana, 1 comprimido, Anlodipino, 1 comprimido, Paroxetina, 1 comprimido e Tramadol, 1 comprimido, conforme a receita. O botão tomei registra as doses."
+ },
+ {
+  "id": "d005",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário dos remédios do café da manhã: Losartana, 1 comprimido, Anlodipino, 1 comprimido, Paroxetina, 1 comprimido e Tramadol, 1 comprimido, conforme a receita. O botão tomei registra as doses. Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei."
+ },
+ {
+  "id": "d006",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário dos remédios do café da manhã: Losartana, 1 comprimido, Anlodipino, 1 comprimido, Paroxetina, 1 comprimido e Tramadol, 1 comprimido, conforme a receita. O botão tomei registra as doses. Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei. Já tomou? Diga sim quando tomar, ou diga depois."
+ },
+ {
+  "id": "d007",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário dos remédios do jantar: Losartana, 1 comprimido, Metformina, 1 comprimido e Tramadol, 1 comprimido, conforme a receita. O botão tomei registra as doses."
+ },
+ {
+  "id": "d008",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário dos remédios do jantar: Losartana, 1 comprimido, Metformina, 1 comprimido e Tramadol, 1 comprimido, conforme a receita. O botão tomei registra as doses. Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei."
+ },
+ {
+  "id": "d009",
+  "grupo": "demo",
+  "texto": "Dona Lúcia, horário dos remédios do jantar: Losartana, 1 comprimido, Metformina, 1 comprimido e Tramadol, 1 comprimido, conforme a receita. O botão tomei registra as doses. Quando tomar, toque no botão verde, com o sinal de certo, escrito tomei. Já tomou? Diga sim quando tomar, ou diga depois."
+ },
+ {
+  "id": "d010",
+  "grupo": "demo",
+  "texto": "Os remédios da pressão e do diabetes são de graça na Farmácia Popular. Os seus são: Losartana, Anlodipino e Metformina. Leve um documento com foto e CPF e a receita do médico."
+ },
+ {
+  "id": "d011",
+  "grupo": "demo",
+  "texto": "Paroxetina com Tramadol: Juntos, podem aumentar o risco de convulsão e de excesso de serotonina (agitação, tremor, febre). Pode estar certo, se o médico receitou assim. Converse com o farmacêutico ou o médico antes de mudar qualquer remédio."
+ },
+ {
+  "id": "d012",
+  "grupo": "demo",
+  "texto": "Resumo fácil da bula. Para que serve. Cloridrato de paroxetina deve ser usado por ADULTOS que apresentam algumas das situações abaixo: - depressão (mesmo que anteriormente outros antidepressivos não tenham sido eficazes); - ataques de pânico… Não use se. Em caso de ocorrência de alguma situação abaixo, não tome cloridrato de paroxetina antes de consultar seu médico: - Se for alérgico a paroxetina ou a qualquer componente de sua fórmula… Leia atentamente o item Interações Medicamentosas, em 4. Cuidados importantes. Você está grávida, com suspeita de gravidez ou amamentando? Hiponatremia (alteração nos níveis de sódio no sangue) Se você tem mais de 65 anos, cloridrato de paroxetina, pode reduzir a concentração de sódio do seu sangue, o que pode causar sono e fraqueza. Bebidas alcoólicas e cloridrato de paroxetina Embora a paroxetina não potencialize a redução da capacidade motora e mental causada pelo álcool, o uso ao mesmo tempo de paroxetina e álcool não é indicado. Como tomar. Cloridrato de paroxetina é um comprimido revestido, para uso oral, e deve ser ingerido em dose única pela manhã com ou sem alimentos. Os comprimidos devem ser engolidos inteiros, de preferência com água. Se esquecer uma dose. Se você se esquecer de tomar uma dose: aguarde e tome cloridrato de paroxetina no horário normal na manhã seguinte; não administre duas doses ao mesmo tempo. Em caso de dúvidas, procure orientação do farmacêutico ou de seu médico ou cirurgião-dentista. Efeitos mais comuns. Reações muito comuns (ocorrem em mais de 10% dos pacientes que utilizam este medicamento): - Sensação de enjoo (utilizar seu medicamento de manhã durante a alimentação pode reduzir a chance de isso acontecer)… Se tomar demais. Sintomas e Sinais As experiências com dose a mais de cloridrato de paroxetina demonstraram os seguintes sintomas: febre, alterações da pressão sanguíneas, contrações involuntárias nos músculos… A dose é sempre a da receita do médico."
+ },
+ {
+  "id": "d013",
+  "grupo": "demo",
+  "texto": "Resumo fácil da bula. Para que serve. Cloridrato de tramadol é indicado para o alívio da dor de intensidade moderada a grave. Não use se. Não tome tramadol- se você é alérgico ao tramadol ou a qualquer componente do medicamento - em intoxicação aguda com álcool, pílulas para dormir… Este medicamento é não deve ser usado durante o aleitamento ou doação de leite, pois é excretado no leite humano e pode causar reações indesejáveis no bebê. Cuidados importantes. Você pode ter um risco maior de se tornar dependente ou adicto em tramadolse: - Você ou alguém de sua família tiver histórico de abuso ou dependência de álcool, medicamentos prescritos ou substâncias ilícitas (“dependência”). O risco de efeitos ruins aumenta: - se você estiver tomando tranquilizantes, pílulas para dormir, outros analgésicos tais como morfina e codeína (também um medicamento para tosse)… Você pode sentir sono ou sentir que você pode desmaiar. Como tomar. Como tomar A menos que prescrito o contrário pelo seu médico a dose usual é: Adultos e adolescentes a partir de 12 anos de idade Um comprimido de tramadol50 mg duas vezes ao dia (equivalente a 100 mg de cloridrato de tramadol por… Sempre engula os comprimidos de liberação prolongada de tramadolinteiros, não divididos ou mastigados, com líquido suficiente, preferivelmente de manhã e à noite. Se esquecer uma dose. Se você esquecer de tomar os comprimidos é provável que a dor volte. Não tome uma dose dupla para compensar as doses individuais esquecidas, simplesmente continue tomando os comprimidos como antes. Efeitos mais comuns. Reação muito comum (ocorre em 10% ou mais dos pacientes que utilizam este medicamento). Se tomar demais. Se você tiver tomado uma dose adicional por engano, esta geralmente não tem efeitos negativos. Em caso de intoxicação, ligue 0800 722 6001 (Disque-Intoxicação). A dose é sempre a da receita do médico."
+ },
+ {
+  "id": "d014",
+  "grupo": "demo",
+  "texto": "Resumo fácil da bula. Para que serve. O besilato de anlodipino é indicado como medicamento de primeira escolha no tratamento da pressão alta e angina de peito (dor no peito… O besilato de anlodipino pode ser usado isoladamente ou em combinação com outros medicamentos para tratar as mesmas indicações acima. Não use se. Não use o besilato de anlodipino se você tem alergia às diidropiridinas* (classe de medicamentos a que pertence o anlodipino… Este medicamento não deve ser utilizado por mulheres grávidas sem orientação médica ou do cirurgião- -dentista. Cuidados importantes. Efeitos na Habilidade de Dirigir e/ou Operar Máquinas: é improvável o comprometimento da sua habilidade de dirigir ou operar máquinas. Uso Durante a Gravidez e Amamentação: a segurança do anlodipino na gravidez humana ou amamentação não foi estabelecida. Não utilize besilato de anlodipino durante a amamentação sem orientação médica. Como tomar. O besilato de anlodipino deve ser ingerido com quantidade de líquido suficiente para deglutição, com ou sem alimentos. Este medicamento não deve ser partido, aberto ou mastigado. Se esquecer uma dose. Caso você se esqueça de tomar o besilato de anlodipino no horário estabelecido pelo seu médico, tome-o assim que lembrar. Entretanto, se já estiver perto do horário de tomar a próxima dose, pule a dose esquecida e tome a próxima, continuando normalmente o esquema de doses recomendado pelo seu médico. Efeitos que podem acontecer. O besilato de anlodipino é bem tolerado. Se tomar demais. Se você tomar uma dose excessiva do besilato de anlodipino, pode ocorrer uma grande vasodilatação periférica (dilatação dos vasos sanguíneos) e possível coração acelerado reflexa (batimento rápido do coração). Em caso de intoxicação, ligue 0800 722 6001 (Disque-Intoxicação). A dose é sempre a da receita do médico."
+ },
+ {
+  "id": "d015",
+  "grupo": "demo",
+  "texto": "Resumo fácil da bula. Para que serve. O seu médico receitou losartana potássica para tratar a sua pressão alta ou por você ter uma doença conhecida como insuficiência cardíaca (enfraquecimento do coração). Em pacientes com pressão alta e hipertrofia ventricular esquerda, losartana potássica reduziu o risco de derrame (acidente vascular cerebral) e de ataque cardíaco (infarto do miocárdio) e ajudou esses pacientes a viverem mais… Não use se. Você não deve tomar losartana potássica se: - for alérgico a losartana ou a qualquer outro componente deste medicamento; - sua função do fígado estiver seriamente prejudicada; - você estiver com mais de 3 meses de gravidez. O uso de losartana potássica também deve ser evitado no início da gravidez (ver item 4. Cuidados importantes. Gravidez e amamentação: Informe o seu médico se você suspeitar que esteja grávida (ou que pode engravidar). O seu médico recomendará que você pare de tomar losartana potássica antes de engravidar ou assim que souber que está grávida, e lhe aconselhará a tomar outro medicamento. Informe ao seu médico se você está amamentando ou prestes a iniciar a amamentação. Como tomar. A losartana potássica pode ser tomada com ou sem alimentos. Este medicamento não deve ser partido ou mastigado. Se esquecer uma dose. Tente tomar losartana potássica conforme seu médico prescreveu. Entretanto, se você deixou de tomar uma dose, não deverá tomar uma dose extra. Efeitos mais comuns. Comuns (podem ocorrer em 1 a cada 10 pessoas): - tontura; - pressão sanguínea baixa (especialmente após a perda excessiva de água do corpo dos vasos sanguíneos… Se tomar demais. Em caso de dose a mais, avise ao seu médico imediatamente para que ele possa prestar atendimento de urgência. Em caso de intoxicação, ligue 0800 722 6001 (Disque-Intoxicação). A dose é sempre a da receita do médico."
+ },
+ {
+  "id": "d016",
+  "grupo": "demo",
+  "texto": "Resumo fácil da bula. Para que serve. Uso Adulto e De crianças acima de 10 anos metformina é um medicamento antidiabético de uso oral, que associado a uma dieta apropriada, é utilizado para o tratamento do diabetes tipo 2… Uso Adulto metformina pode ser utilizado também para o tratamento do diabetes tipo 1 em complementação à insulinoterapia. Não use se. Você não deve tomar metformina: − se tiver alergia à metformina ou aos outros componentes da fórmula; − se estiver com problema de funcionamento do fígado… A cetoacidose é uma condição na qual substâncias denominadas “corpos cetônicos” se acumulam no sangue. Cuidados importantes. A diminuição da função dos rins em pacientes idosos é frequente e assintomática. Gravidez e amamentação Este medicamento não deve ser utilizado por mulheres grávidas sem orientação médica ou do cirurgião-dentista. Durante a gravidez, o pré-diabetes e o diabetes devem ser tratados com insulina. Como tomar. Tome os comprimidos, pela boca, durante ou depois de uma refeição, iniciando o tratamento com doses pequenas que podem ser gradualmente aumentadas. Engula cada comprimido com um copo de água. Se esquecer uma dose. Não tome uma dose dobrada para compensar uma dose que se esqueceu de tomar. Tome a dose seguinte na hora habitual. Efeitos mais comuns. − Reações muito comuns (ocorrem em mais de 10% dos pacientes que utilizam este medicamento): problemas digestivos como enjoo, vômito, diarreia, dor na barriga, perda de apetite. Se tomar demais. Se você tomar mais comprimidos de metformina do que deveria poderá desenvolver acidose láctica. Em caso de intoxicação, ligue 0800 722 6001 (Disque-Intoxicação). A dose é sempre a da receita do médico."
+ }
+]
