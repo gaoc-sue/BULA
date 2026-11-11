@@ -178,23 +178,18 @@ scripts/              cópia de bibliotecas, ajustes do Android e conversão dos
 .github/workflows/    geração automática do APK e publicação do carteiro
 ```
 
+## Robustez (revisão de 11/11/2026)
+
+- **Dados guardados sempre válidos:** ao abrir, o app confere o que está salvo (`normalizar()`): item de remédio ou registro estragado é descartado em vez de travar a tela. Teste com dados corrompidos de propósito.
+- **Alarme com vários remédios:** a tela rola quando precisa, o topo encolhe e o botão TOMEI fica sempre à vista, acima do botão Falar. Vale para telas pequenas (360 × 640).
+- **Conferir a caixa no alarme:** um botão só ("Conferir as caixas com a câmera"); a câmera reconhece de qual remédio é a caixa e marca "Caixa conferida" na linha certa.
+- **Código enxuto:** funções e estilos sem uso foram removidos (9 funções, 29 classes de CSS) e a voz gravada, que não foi adotada, saiu do app.
+
 ## Onde pegar o remédio (Demoday)
 
 O botão "Remédio de graça" virou "Onde pegar o remédio", com as abas Farmácia Popular, Grátis no posto e Farmácias.
 - A aba Farmácias ficou mais simples: só as farmácias mais perto. "Uma ida só" e a lista do que não é grátis estão em espera: no `index.html`, troque `FARM_COMPLETO=false` para `true` para voltar com os dois.
 - Modelo de negócio: farmácias pagam para aparecer. Como ainda não há anunciante, dois destaques e um cupom aparecem **só na demonstração**, marcados "Patrocinado · exemplo", com farmácias inventadas (`PATRO_EX` e `CUPOM_EX`). O cupom nunca vale para remédio, nenhum anúncio usa os remédios da pessoa e a voz diz "Anúncios de exemplo".
-
-## Voz do BULA (áudios gravados)
-
-As frases fixas do app (boas-vindas, termos, perguntas, avisos, ajuda) e as da demonstração (alarmes da Dona Lúcia e o resumo das 5 bulas) podem tocar com uma voz natural do Google Cloud Text-to-Speech (Chirp 3: HD), gravada uma vez e guardada em `www/voz`. O app toca o MP3 quando a frase inteira foi gravada; o resto continua na voz do celular. Funciona sem internet e nada sai do celular. Dá para desligar em Ajustes → Voz e velocidade → Voz do BULA.
-
-- `scripts/voz/frases.json`: a lista de frases (geradas a partir dos textos do app).
-- `scripts/voz/gerar-voz.js`: gera os MP3 e o `www/voz/indice.json`. Roda no computador, com a chave só na variável `GOOGLE_TTS_KEY`.
-  - `node scripts/voz/gerar-voz.js --amostras`: a mesma frase em 10 vozes, para escolher (`scripts/voz/amostras`, fora do Git).
-  - `node scripts/voz/gerar-voz.js --teste --voz pt-BR-Chirp3-HD-Kore`: uma frase só, para conferir a chave.
-  - `node scripts/voz/gerar-voz.js --voz pt-BR-Chirp3-HD-Kore`: todas (cerca de 18 mil caracteres; o limite grátis é 1 milhão por mês). Rodar de novo só gera o que mudou.
-- Se um texto do app mudar, a frase antiga deixa de bater e o app usa a voz do celular até gerar de novo.
-- O resumo da bula troca o nome comercial pela substância (o texto oficial completo continua igual ao da bula).
 
 ## Bulas que vêm dentro do app
 
