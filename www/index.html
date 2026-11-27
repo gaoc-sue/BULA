@@ -110,6 +110,17 @@ body.com-falar #rx .bv-in-wrap,body.com-falar #wiz .bv-in-wrap,body.com-falar #c
 .manual{display:flex;gap:8px}
 .manual input{flex:1;min-width:0;min-height:56px;padding:10px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-variant-numeric:tabular-nums;letter-spacing:.04em}
 .manual .btn{width:auto;min-height:56px}
+.busca-nome{display:flex;flex-direction:column;gap:8px}
+.sug-lista{display:flex;flex-direction:column;gap:8px}
+.sg-op{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-size:1.1rem;text-align:left;cursor:pointer}
+.sg-op .sg-n{display:block;font-weight:400}.sg-op .sg-n b{font-weight:800}
+.sg-op small{display:block;color:var(--muted);font-size:.9rem;margin-top:2px}
+.sg-op:focus-visible,.sg-dose:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sg-doses{display:flex;flex-wrap:wrap;gap:8px}
+.sg-dose{min-height:56px;padding:10px 18px;border-radius:999px;border:2px solid var(--accent);background:var(--surface);color:var(--fg);font:inherit;font-weight:700;font-size:1.05rem;cursor:pointer}
+.sg-dose.nao{border-color:var(--line);font-weight:400}
+.sug-vazio{margin:0;padding:12px 14px;border-radius:12px;background:var(--sunk)}
+:root[data-contraste="1"] .sg-op,:root[data-contraste="1"] .sg-dose{background:#000;color:#fff;border-color:#fff}
 details.demo{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
 details.demo summary{cursor:pointer;font-weight:700}
 .samples{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
@@ -257,7 +268,8 @@ a.btn{text-decoration:none}
 .fp-nome{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
 .fp-nome .selo-fp{margin-left:0}
 .fp-bols{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px 10px}
-.fp-bol{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 4px;border-radius:999px}
+.fp-bol{display:inline-flex;flex-wrap:wrap;max-width:100%;align-items:center;gap:4px;padding:2px 8px 2px 4px;border-radius:18px}
+.fp-l summary .dist{flex:none}
 .fp-bol small{font-size:.75rem;font-weight:700;margin:0 4px}
 .fp-bol.gr{background:var(--ok-soft);color:var(--ok)}
 .fp-bol.pg{background:var(--sunk,#EEF1F6);color:var(--fg)}
@@ -2441,7 +2453,11 @@ function renderLer(){
       <button class="btn btn-ghost" id="bVivo" ${SCAN?'hidden':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Usar câmera ao vivo</button>
       <div class="video-box" id="vBox" hidden><video id="video" playsinline muted></video><div class="aim"></div></div>
       <div id="scanMsg"></div>
-      <form class="manual" id="fManual"><input id="code" inputmode="numeric" autocomplete="off" placeholder="Ou digite o número" aria-label="Número do código de barras"><button class="btn btn-pill" type="submit">Buscar</button></form>
+      ${alvo?`<form class="manual" id="fManual"><input id="code" inputmode="numeric" autocomplete="off" placeholder="Ou digite o número" aria-label="Número do código de barras"><button class="btn btn-pill" type="submit">Buscar</button></form>`
+       :`<div class="busca-nome"><label class="label" for="code">Sem a caixa? Digite o nome do remédio</label>
+         <form class="manual" id="fManual" role="search"><input id="code" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Ex.: losartana" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sugLista"><button class="btn btn-pill" type="submit">Buscar</button></form>
+         <p class="fine" style="margin:0">Também aceita o número embaixo das barras da caixa.</p>
+         <div id="sugLista" class="sug-lista" role="listbox" aria-label="Sugestões de remédio" hidden></div></div>`}
     </div>
     ${rxLigado()&&!alvo&&!gestorAtivo()?`<section class="rx-ent" aria-labelledby="rxEntT"><div class="rx-ent-cab">${RX_SVG}<div><h3 id="rxEntT">Tem a receita do médico?</h3><p class="small muted" style="margin:2px 0 0">Eu leio os remédios da receita e você confere um por um.</p></div><span class="selo-t">Teste</span></div>
       ${RECEITA?`<button class="btn btn-pill" id="bRx" type="button">${CAM_SVG}Fotografar a receita</button>`:`<button class="btn btn-pill" id="bRxEx" type="button">${RX_SVG}Ver com uma receita de exemplo</button><p class="fine" style="margin:0">Aqui no navegador a foto não é lida. No app instalado, a foto é lida no próprio celular, sem internet.</p>`}
@@ -2454,7 +2470,9 @@ function renderLer(){
   $('#bVivo').onclick=vivo;
   [['bRx','foto'],['bRxEx','exemplo'],['bRxDig','digital']].forEach(([id,f])=>{ const b=$('#'+id); if(b) b.onclick=()=>rxComecar(f); });
   if(SCAN) $('#bScan').onclick=lerNativo;
-  $('#fManual').onsubmit=e=>{ e.preventDefault(); achou($('#code').value); };
+  $('#fManual').onsubmit=e=>{ e.preventDefault(); clearTimeout(sugT); const v=$('#code').value.trim();
+    if(alvo || /^[\d\s.-]+$/.test(v)) achou(v); else buscarNomeEnter(v); };
+  if(!alvo){ const inp=$('#code'); inp.oninput=()=>{ clearTimeout(sugT); sugT=setTimeout(()=>mostrarSugestoes(inp.value),120); }; }
   document.querySelectorAll('.sample').forEach(b=>b.onclick=()=>achou(b.dataset.code));
   if(resultado) mostrarResultado(resultado.it, resultado.code);
 }
@@ -2605,6 +2623,79 @@ async function vivo(){
 }
 function parar(){ lendo=false; try{ reader&&reader.reset(); }catch(e){} const vb=$('#vBox'); if(vb) vb.hidden=true; const b=$('#bVivo'); if(b) b.lastChild.textContent='Usar câmera ao vivo'; }
 
+/* ---------- sem a caixa: digitar o nome e escolher numa lista de sugestões, como o mapa faz com endereços.
+   A lista mostra só o nome da substância, nunca marca. A marca digitada também encontra a substância. ---------- */
+let SUBIDX=null, sugT=0, CODIGO_DE=null;
+function indiceSubst(){
+  if(SUBIDX) return SUBIDX;
+  const m=new Map();
+  ITENS.forEach((r,idx)=>{ if(r[6]) return;   /* uso hospitalar fica de fora */
+    const si=r[0]; let e=m.get(si);
+    if(!e){ const bruto=BASE.substancias[si]||''; e={si,nome:nomeSub(bruto),n:sem(bruto),marcas:[],qtd:0,itens:[],princ:r[5]||''}; m.set(si,e); }
+    e.qtd++; e.itens.push(idx); const pr=sem(r[1]); if(pr && pr!==e.n && !e.marcas.includes(pr)) e.marcas.push(pr); });
+  SUBIDX=[...m.values()].filter(e=>e.n); return SUBIDX;
+}
+function sugerirSubst(txt){
+  const q=sem(txt); if(q.length<2) return [];
+  const out=[];
+  for(const e of indiceSubst()){
+    let pts=0, marca=false;
+    if(e.n.startsWith(q)) pts=4; else if((' '+e.n).includes(' '+q)) pts=3; else if(q.length>=3 && e.n.includes(q)) pts=2;
+    else if(e.marcas.some(m=>m.startsWith(q)||(' '+m).includes(' '+q))){ pts=1.5; marca=true; }
+    if(pts) out.push({e,marca,p:pts+(e.princ&&INFO[e.princ]?0.6:0)+Math.min(e.qtd,300)/1000});
+  }
+  return out.sort((a,b)=>b.p-a.p).slice(0,6);
+}
+function marcarBusca(nome,q){
+  const base=[...nome].map(c=>c.normalize('NFD')[0].toLowerCase()).join(''), i=q?base.indexOf(q):-1;
+  return i<0 ? esc(nome) : esc(nome.slice(0,i))+'<b>'+esc(nome.slice(i,i+q.length))+'</b>'+esc(nome.slice(i+q.length));
+}
+async function mostrarSugestoes(v){
+  const box=$('#sugLista'), inp=$('#code'); if(!box) return;
+  const q=sem(v);
+  if(q.length<2 || /^[\d ]+$/.test(q)){ box.hidden=true; box.innerHTML=''; inp.setAttribute('aria-expanded','false'); return; }
+  if(!ITENS.length){ box.hidden=false; box.innerHTML='<p class="sug-vazio">Carregando a lista de remédios…</p>'; await baseOk; if(sem($('#code').value)!==q) return; }
+  const l=sugerirSubst(v);
+  box.hidden=false; inp.setAttribute('aria-expanded','true');
+  if(!l.length){ box.innerHTML=`<p class="sug-vazio">Não achei “${esc(v.trim())}”. Confira como está escrito na receita ou na caixa.</p>`; return; }
+  box.innerHTML=l.map((x,k)=>{ const i=item(x.e.itens[0]).info;
+    return `<button type="button" class="sg-op" role="option" data-sg="${k}">${bolinha(i.cor||GENERICO_COR,x.e.nome)}<span><span class="sg-n">${marcarBusca(x.e.nome,q)}</span>
+      <small>${esc(cap(i.apelido||'remédio'))}${x.marca?' · tem o mesmo remédio do nome digitado':''}</small></span></button>`; }).join('');
+  box.querySelectorAll('[data-sg]').forEach(b=>b.onclick=()=>escolherSubst(l[+b.dataset.sg].e));
+}
+function buscarNomeEnter(v){
+  if(sem(v).length<2){ msgScan('Digite pelo menos 2 letras do nome do remédio.','warn'); return; }
+  const l=sugerirSubst(v);
+  if(!l.length){ mostrarSugestoes(v); falar('Não achei este nome. Confira como está escrito na receita.'); return; }
+  if(l.length===1 || sem(v)===l[0].e.n) escolherSubst(l[0].e); else { mostrarSugestoes(v); falar('Toque no remédio certo da lista.'); }
+}
+/* dose e forma (comprimido, gotas...) que existem para a substância, da mais comum para a menos comum */
+function opcoesDose(e){
+  const g=new Map();
+  e.itens.forEach(idx=>{ const it=item(idx), forma=unidade(it.apres)[0], f=forma==='dose'?'':forma==='medida'?'líquido':forma;
+    const k=(it.dose||'')+'|'+f; let o=g.get(k); if(!o){ o={dose:it.dose,forma:f,n:0,idxs:[]}; g.set(k,o); } o.n++; o.idxs.push(idx); });
+  return [...g.values()].filter(o=>o.dose||o.forma).sort((a,b)=>b.n-a.n).slice(0,8);
+}
+function escolherSubst(e){
+  const box=$('#sugLista'), inp=$('#code'); if(inp){ inp.value=e.nome; inp.setAttribute('aria-expanded','false'); }
+  const ops=opcoesDose(e);
+  if(ops.length<=1){ abrirPeloNome(e,ops[0]?ops[0].idxs:e.itens); return; }
+  box.hidden=false;
+  box.innerHTML=`<p class="label" style="margin:4px 0 0">${esc(e.nome)}: qual está na receita?</p>
+    <div class="sg-doses">${ops.map((o,k)=>`<button type="button" class="sg-dose" data-dz="${k}">${esc([o.dose,o.forma].filter(Boolean).join(' · '))}</button>`).join('')}
+    <button type="button" class="sg-dose nao" data-dz="-1">Não sei</button></div>`;
+  box.querySelectorAll('[data-dz]').forEach(b=>b.onclick=()=>{ const k=+b.dataset.dz; abrirPeloNome(e, k<0?e.itens:ops[k].idxs, k<0); });
+  falar(`${e.nome}. Qual está na receita? ${listaFala(ops.slice(0,4).map(o=>[o.dose&&o.dose.replace('mg','miligramas'),o.forma].filter(Boolean).join(' ')))}, ou não sei.`);
+}
+async function abrirPeloNome(e,idxs,semDose){
+  /* de preferência o genérico, que tem o nome da substância na caixa */
+  const idx=idxs.find(i=>sem(ITENS[i][1])===e.n) ?? idxs[0];
+  const it=item(idx); it.produto=e.nome; if(semDose) it.dose='';
+  const box=$('#sugLista'); if(box){ box.hidden=true; box.innerHTML=''; }
+  cxSomada=''; vibrar('ok');
+  try{ it.bulaInfo = await bulaDe(it.registro); }catch(err){ it.bulaInfo=null; }
+  resultado={it,code:''}; addSel=null; mostrarResultado(it,'',true);
+}
 async function achou(code){
   code=String(code).replace(/\D/g,''); cxSomada='';
   await baseOk;
@@ -3239,6 +3330,7 @@ function mostrarResultado(it,code,falarAgora){
   const fotoAg = ag && ag.foto ? fotoDe(ag) : bolinha(i.cor,i.nome);
   $('#resBox').innerHTML=`<article class="result" aria-live="polite">
     ${conf}
+    ${!code&&!alvo?`<div class="msg info">Você escolheu pelo nome. Confira com a receita se a dose é a mesma.</div>`:''}
     ${falarAgora && !AP.calmo?`<div class="falando">${IC.som}<span>Falando agora…<br><span class="small" style="font-weight:400">Toque em 1 para ouvir de novo.</span></span></div>`:''}
     <div class="res-cab">${fotoAg}<div><p class="small muted" style="margin:0">Este é o</p><div class="big-name">${esc(cap(i.apelido))}</div>
       <p class="prod" style="margin:0">${esc(i.nome)}${it.dose?' '+esc(it.dose):''}</p></div></div>
@@ -3255,7 +3347,7 @@ function mostrarResultado(it,code,falarAgora){
       ${txCuid(it)?`<div class="warnbox block"><p class="label">Se esquecer uma dose, segundo a bula</p><p>“${esc(txCuid(it))}”</p></div>`
         :`<div class="warnbox block"><p class="label">Cuidados</p><p>${i.cuidado?esc(i.cuidado)+' ':''}Os outros cuidados estão na bula oficial: perguntas 4 e 8.</p></div>`}
       <p class="small">${esc(it.produto)}${it.qtd?' · '+it.qtd+' '+unidade(it.apres)[1]:''}</p>
-      <p class="fine">${i.geral?'O tipo de remédio vem da classificação registrada na Anvisa. ':i.bula?'Trechos da bula do paciente ('+esc(i.bula)+'). ':''}${it.hosp?'Uso hospitalar. ':''}Código ${esc(code)} · Registro Anvisa ${esc(it.registro)}</p>
+      <p class="fine">${i.geral?'O tipo de remédio vem da classificação registrada na Anvisa. ':i.bula?'Trechos da bula do paciente ('+esc(i.bula)+'). ':''}${it.hosp?'Uso hospitalar. ':''}${code?'Código '+esc(code)+' · ':''}Registro Anvisa ${esc(it.registro)}</p>
     </div></details>
   </article>`;
   $('#bOuvir').onclick=()=>ouvir(textoFala(it));
@@ -3280,6 +3372,7 @@ function mostrarResultado(it,code,falarAgora){
 /* caixa nova de um remédio que já está na lista: soma na conta (só com o toque, nunca sozinho) */
 let cxSomada='';
 function cxNovaBtn(ag,it,code){
+  if(!code) return '';
   if(!contavel(ag) || !(+it.qtd)) return '';
   if(cxSomada===code) return `<div class="msg ok">${CHECK.replace('<svg','<svg width="20" height="20" style="vertical-align:-4px"')} Caixa somada. Restam uns ${esc(restamTxt(ag))}.</div>`;
   return `<button class="opn o-ghost" id="bCxNova" type="button"><span class="n">3</span><span>Comprei esta caixa<small>Somar ${esc(it.qtd)} ${esc(unEst(ag)[1])} na conta, para avisar antes de acabar</small></span></button>`;
@@ -3822,7 +3915,7 @@ function abasGratis(){ return `<div class="seg seg-g" role="tablist">
 function ligarAbas(){ document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{ gratisAba=b.dataset.aba; bairroSel=''; cupomAberto=false; renderGratis(); }); }
 /* remédio que não é de graça: as farmácias perto (todas) e o mapa do celular. O BULA não indica farmácia. */
 /* "Uma ida só" e a lista do que não é grátis: em espera para o Demoday (aba Farmácias mais simples). Para voltar, troque para true. */
-const FARM_COMPLETO=false;
+const FARM_COMPLETO=true;
 /* modelo de negócio: farmácias pagam para aparecer. Ainda não há anunciante: os exemplos aparecem só na demonstração.
    Nunca anuncia remédio, nunca usa os remédios da pessoa para escolher, e o grátis vem sempre primeiro (outra aba). */
 const PATRO_EX=[{n:'Farmácia Exemplo',d:'450 m',i:'Aberta até as 22h · Entrega em casa',fp:true,img:'img/farmacia-exemplo.svg'},
